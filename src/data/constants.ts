@@ -31,3 +31,26 @@ export const FIELD_DEFAULTS = {
 
 // 画面のデフォルト背景色
 export const SCREEN_BACKGROUND = '#0a0a1a';
+
+// AoEのデフォルト色
+export const AOE_COLORS = {
+  danger: '#ff6600', // オレンジ（通常の危険範囲）
+  safe: '#00ff00', // 緑（安全地帯表示用）
+  stack: '#ffff00', // 黄（頭割り）
+  spread: '#ff00ff', // 紫（散開）
+} as const;
+
+// AoEのデフォルト設定
+export const AOE_DEFAULTS = {
+  color: '#ff6600',
+  opacity: 0.5,
+} as const;
+
+// デバフアイコンの仮色（アイコン画像がない場合）
+export const DEBUFF_COLORS = {
+  spread: '#ff00ff', // 散開
+  stack: '#ffff00', // 頭割り
+  fire: '#ff3300', // 炎
+  ice: '#00ccff', // 氷
+  lightning: '#cc00ff', // 雷
+} as const;

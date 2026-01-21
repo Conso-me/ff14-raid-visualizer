@@ -1,9 +1,16 @@
-import { useCurrentFrame, interpolate } from 'remotion';
+import { useCurrentFrame } from 'remotion';
 import { Field } from './components/field/Field';
 import { Player } from './components/player/Player';
 import { FieldMarker } from './components/marker/FieldMarker';
-import { SCREEN_BACKGROUND, FIELD_DEFAULTS } from './data/constants';
-import { Role, Position, MarkerType } from './data/types';
+import { CircleAoE } from './components/aoe/CircleAoE';
+import {
+  SCREEN_BACKGROUND,
+  FIELD_DEFAULTS,
+  AOE_COLORS,
+  DEBUFF_COLORS,
+} from './data/constants';
+import { Role, Position, MarkerType, Debuff } from './data/types';
+import { animatePosition, animateOpacity } from './utils/animation';
 
 // マーカーの位置
 const MARKER_POSITIONS: Record<MarkerType, Position> = {
@@ -38,22 +45,48 @@ const ALL_ROLES: Role[] = ['MT', 'ST', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
 // 全マーカーのリスト
 const ALL_MARKERS: MarkerType[] = ['A', 'B', 'C', 'D', '1', '2', '3', '4'];
 
+// タイムライン定数
+const FPS = 30;
+const DEBUFF_START_FRAME = 0; // デバフ付与開始
+const DEBUFF_DURATION = 3; // デバフ持続時間（秒）
+const MOVE_START_FRAME = 30; // 移動開始
+const MOVE_END_FRAME = 90; // 移動終了
+const AOE_START_FRAME = 90; // AoE出現
+const AOE_END_FRAME = 150; // AoE消滅
+const AOE_FADE_DURATION = 15; // フェードイン/アウトのフレーム数
+
+// 散開デバフを生成
+const createSpreadDebuff = (role: Role): Debuff => ({
+  id: `spread-${role}`,
+  name: '散開',
+  color: DEBUFF_COLORS.spread,
+  duration: DEBUFF_DURATION,
+  startFrame: DEBUFF_START_FRAME,
+});
+
 export const RaidMechanicVideo: React.FC = () => {
   const frame = useCurrentFrame();
 
-  // プレイヤーの位置を計算（フレーム30-90で移動）
+  // プレイヤーの位置を計算
   const getPlayerPosition = (role: Role): Position => {
-    const targetPos = SPREAD_POSITIONS[role];
-    const x = interpolate(frame, [30, 90], [INITIAL_POSITION.x, targetPos.x], {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    });
-    const y = interpolate(frame, [30, 90], [INITIAL_POSITION.y, targetPos.y], {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    });
-    return { x, y };
+    return animatePosition(
+      frame,
+      MOVE_START_FRAME,
+      MOVE_END_FRAME,
+      INITIAL_POSITION,
+      SPREAD_POSITIONS[role]
+    );
   };
+
+  // AoEの不透明度を計算
+  const aoeOpacity = animateOpacity(
+    frame,
+    AOE_START_FRAME,
+    AOE_FADE_DURATION,
+    AOE_END_FRAME,
+    AOE_FADE_DURATION,
+    0.6
+  );
 
   return (
     <div
@@ -81,9 +114,28 @@ export const RaidMechanicVideo: React.FC = () => {
           />
         ))}
 
+        {/* AoE（散開発動後） */}
+        {frame >= AOE_START_FRAME &&
+          ALL_ROLES.map((role) => (
+            <CircleAoE
+              key={`aoe-${role}`}
+              position={SPREAD_POSITIONS[role]}
+              radius={5}
+              color={AOE_COLORS.spread}
+              opacity={aoeOpacity}
+            />
+          ))}
+
         {/* プレイヤー */}
         {ALL_ROLES.map((role) => (
-          <Player key={role} role={role} position={getPlayerPosition(role)} />
+          <Player
+            key={role}
+            role={role}
+            position={getPlayerPosition(role)}
+            debuffs={[createSpreadDebuff(role)]}
+            currentFrame={frame}
+            fps={FPS}
+          />
         ))}
       </Field>
     </div>
