@@ -36,6 +36,7 @@ interface EditorContextValue {
   toggleMultiSelect: (id: string, objectType: SelectedObjectType) => void;
   setMultiSelect: (ids: string[]) => void;
   clearMultiSelect: () => void;
+  selectAllPlayers: () => void;
   // Move event methods
   startMoveEvent: (playerIds: string[], fromPositions: Map<string, Position>) => void;
   completeMoveEvent: (toPosition: Position, startFrame: number, duration: number, easing: MoveEvent['easing']) => void;
@@ -259,6 +260,13 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
   const clearMultiSelect = useCallback(() => {
     dispatch({ type: 'CLEAR_MULTI_SELECT' });
   }, []);
+
+  const selectAllPlayers = useCallback(() => {
+    const playerIds = state.mechanic.initialPlayers.map(p => p.id);
+    if (playerIds.length > 0) {
+      dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: playerIds, objectType: 'player' } });
+    }
+  }, [state.mechanic.initialPlayers]);
 
   const startMoveEvent = useCallback((playerIds: string[], fromPositions: Map<string, Position>) => {
     dispatch({ type: 'START_MOVE_EVENT', payload: { playerIds, fromPositions } });
@@ -495,6 +503,7 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     toggleMultiSelect,
     setMultiSelect,
     clearMultiSelect,
+    selectAllPlayers,
     startMoveEvent,
     completeMoveEvent,
     cancelMoveEvent,

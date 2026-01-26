@@ -289,8 +289,8 @@ function ActionToolbar() {
 
 // Main ObjectListPanel component
 export function ObjectListPanel() {
-  const { state, selectObject } = useEditor();
-  const { mechanic, currentFrame, selectedObjectId, selectedObjectType } = state;
+  const { state, selectObject, selectAllPlayers, clearMultiSelect } = useEditor();
+  const { mechanic, currentFrame, selectedObjectId, selectedObjectType, selectedObjectIds } = state;
 
   // Get current player positions
   const playersWithPositions = getPlayersAtFrame(mechanic, currentFrame);
@@ -327,18 +327,56 @@ export function ObjectListPanel() {
             プレイヤーがいません
           </div>
         ) : (
-          playersWithPositions.map((player) => (
-            <ObjectItem
-              key={player.id}
-              id={player.id}
-              objectType="player"
-              name={player.role}
-              subtitle={formatPosition(player.position)}
-              color={getRoleColor(player.role)}
-              isSelected={selectedObjectId === player.id && selectedObjectType === 'player'}
-              onSelect={() => selectObject(player.id, 'player')}
-            />
-          ))
+          <>
+            {/* Select all / Clear selection buttons */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+              <button
+                onClick={selectAllPlayers}
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  background: selectedObjectIds.length === mechanic.initialPlayers.length && selectedObjectType === 'player' ? '#3753c7' : '#2a2a4a',
+                  border: '1px solid #3a3a5a',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                }}
+                title="全プレイヤーを選択"
+              >
+                全選択
+              </button>
+              <button
+                onClick={clearMultiSelect}
+                disabled={selectedObjectIds.length === 0}
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  background: selectedObjectIds.length === 0 ? '#1a1a2e' : '#2a2a4a',
+                  border: '1px solid #3a3a5a',
+                  borderRadius: '4px',
+                  color: selectedObjectIds.length === 0 ? '#555' : '#fff',
+                  fontSize: '10px',
+                  cursor: selectedObjectIds.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+                title="選択を解除"
+              >
+                選択解除
+              </button>
+            </div>
+            {playersWithPositions.map((player) => (
+              <ObjectItem
+                key={player.id}
+                id={player.id}
+                objectType="player"
+                name={player.role}
+                subtitle={formatPosition(player.position)}
+                color={getRoleColor(player.role)}
+                isSelected={selectedObjectIds.includes(player.id) || (selectedObjectId === player.id && selectedObjectType === 'player')}
+                onSelect={() => selectObject(player.id, 'player')}
+              />
+            ))}
+          </>
         )}
       </CollapsibleGroup>
 
