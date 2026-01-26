@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "remotion studio",
-    "build": "remotion render src/index.ts SampleMechanic out/video.mp4",
+    "build": "npx vite build",
+    "build:video": "remotion render src/index.ts SampleMechanic out/video.mp4",
     "build:phase2": "remotion render src/index.ts RaidMechanicVideo out/phase2.mp4",
     "upgrade": "remotion upgrade",
     "dev:editor": "vite --config vite.config.ts",
