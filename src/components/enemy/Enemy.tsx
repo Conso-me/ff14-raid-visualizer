@@ -2,6 +2,7 @@ import React from 'react';
 import { Position } from '../../data/types';
 import { FIELD_DEFAULTS } from '../../data/constants';
 import { gameToScreen } from '../../utils/coordinates';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface EnemyProps {
   name: string;
@@ -64,7 +65,7 @@ export const Enemy: React.FC<EnemyProps> = ({
           transform: 'translateX(-50%)',
           color: 'white',
           fontSize: '12px',
-          fontFamily: 'sans-serif',
+          fontFamily: FONT_FAMILY,
           fontWeight: 'bold',
           whiteSpace: 'nowrap',
           textShadow: '0 1px 2px rgba(0,0,0,0.8)',

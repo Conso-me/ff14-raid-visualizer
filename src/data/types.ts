@@ -5,7 +5,9 @@ export interface Position {
 }
 
 // ロール定義
-export type Role = 'MT' | 'ST' | 'H1' | 'H2' | 'D1' | 'D2' | 'D3' | 'D4';
+export type Role =
+  | 'T1' | 'T2' | 'H1' | 'H2' | 'D1' | 'D2' | 'D3' | 'D4'
+  | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6' | 'P7' | 'P8';
 
 // デバフ
 export interface Debuff {
@@ -57,10 +59,37 @@ export interface AoE {
 
 // フィールド
 export interface Field {
-  type: 'circle' | 'square' | 'polygon';
+  type: 'circle' | 'square' | 'rectangle';
   size: number; // 直径 or 辺の長さ
+  width?: number; // rectangle用
+  height?: number; // rectangle用
   backgroundColor: string;
   gridEnabled: boolean;
+  backgroundImage?: string; // Base64画像データ
+  backgroundOpacity?: number; // 0-1
+}
+
+// テキスト注釈
+export interface TextAnnotation {
+  id: string;
+  text: string;
+  position: Position;
+  fontSize: number;
+  color: string;
+  backgroundColor?: string;
+  align: 'left' | 'center' | 'right';
+}
+
+// ギミックオブジェクト
+export interface GimmickObject {
+  id: string;
+  name: string;
+  position: Position;
+  shape: 'circle' | 'square' | 'triangle' | 'diamond';
+  size: number;
+  color: string;
+  icon?: string;
+  opacity?: number;
 }
 
 // フィールドマーカー
@@ -83,7 +112,11 @@ export type TimelineEventType =
   | 'debuff_remove' // デバフ解除
   | 'text' // テキスト表示
   | 'cast' // 詠唱バー表示
-  | 'boss_move'; // ボスの移動
+  | 'boss_move' // ボスの移動
+  | 'text_show' // テキスト注釈表示
+  | 'text_hide' // テキスト注釈非表示
+  | 'object_show' // オブジェクト表示
+  | 'object_hide'; // オブジェクト非表示
 
 // タイムラインイベント基底
 export interface TimelineEventBase {
@@ -164,6 +197,32 @@ export interface BossMoveEvent extends TimelineEventBase {
   teleport?: boolean; // true: 瞬間移動
 }
 
+// テキスト注釈表示イベント
+export interface TextShowEvent extends TimelineEventBase {
+  type: 'text_show';
+  annotation: TextAnnotation;
+}
+
+// テキスト注釈非表示イベント
+export interface TextHideEvent extends TimelineEventBase {
+  type: 'text_hide';
+  annotationId: string;
+}
+
+// オブジェクト表示イベント
+export interface ObjectShowEvent extends TimelineEventBase {
+  type: 'object_show';
+  object: GimmickObject;
+  fadeInDuration?: number;
+}
+
+// オブジェクト非表示イベント
+export interface ObjectHideEvent extends TimelineEventBase {
+  type: 'object_hide';
+  objectId: string;
+  fadeOutDuration?: number;
+}
+
 // 全イベント型
 export type TimelineEvent =
   | MoveEvent
@@ -173,7 +232,11 @@ export type TimelineEvent =
   | DebuffRemoveEvent
   | TextEvent
   | CastEvent
-  | BossMoveEvent;
+  | BossMoveEvent
+  | TextShowEvent
+  | TextHideEvent
+  | ObjectShowEvent
+  | ObjectHideEvent;
 
 // 敵（ボス）
 export interface Enemy {

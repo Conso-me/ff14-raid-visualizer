@@ -26,21 +26,26 @@ const MARKER_POSITIONS: Record<MarkerType, Position> = {
 
 // プレイヤーの散開位置（ロールごとのマーカー割り当て）
 const SPREAD_POSITIONS: Record<Role, Position> = {
-  MT: MARKER_POSITIONS['A'], // 北
-  ST: MARKER_POSITIONS['C'], // 南
+  T1: MARKER_POSITIONS['A'], // 北
+  T2: MARKER_POSITIONS['C'], // 南
   H1: MARKER_POSITIONS['4'], // 北西
   H2: MARKER_POSITIONS['2'], // 南東
   D1: MARKER_POSITIONS['D'], // 西
   D2: MARKER_POSITIONS['B'], // 東
   D3: MARKER_POSITIONS['1'], // 北東
   D4: MARKER_POSITIONS['3'], // 南西
+  // P1-P8: ログインポート時の汎用プレイヤー用
+  P1: MARKER_POSITIONS['A'], P2: MARKER_POSITIONS['C'],
+  P3: MARKER_POSITIONS['4'], P4: MARKER_POSITIONS['2'],
+  P5: MARKER_POSITIONS['D'], P6: MARKER_POSITIONS['B'],
+  P7: MARKER_POSITIONS['1'], P8: MARKER_POSITIONS['3'],
 };
 
 // 初期位置（全員中央）
 const INITIAL_POSITION: Position = { x: 0, y: 0 };
 
 // 全ロールのリスト
-const ALL_ROLES: Role[] = ['MT', 'ST', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
+const ALL_ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
 
 // 全マーカーのリスト
 const ALL_MARKERS: MarkerType[] = ['A', 'B', 'C', 'D', '1', '2', '3', '4'];

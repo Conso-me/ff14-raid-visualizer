@@ -1,6 +1,7 @@
 import React from 'react';
 import { Debuff } from '../../data/types';
 import { animateBlink } from '../../utils/animation';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface DebuffIconProps {
   debuff: Debuff;
@@ -65,7 +66,7 @@ export const DebuffIcon: React.FC<DebuffIconProps> = ({
               color: 'white',
               fontSize: '10px',
               fontWeight: 'bold',
-              fontFamily: 'sans-serif',
+              fontFamily: FONT_FAMILY,
             }}
           >
             {debuff.name.charAt(0).toUpperCase()}
@@ -77,7 +78,7 @@ export const DebuffIcon: React.FC<DebuffIconProps> = ({
         style={{
           color: remainingSeconds < 1 ? '#ff6666' : 'white',
           fontSize: '9px',
-          fontFamily: 'sans-serif',
+          fontFamily: FONT_FAMILY,
           textShadow: '0 1px 2px rgba(0,0,0,0.8)',
           marginTop: 1,
         }}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { RoleText, Role } from '../../data/types';
 import { ROLE_COLORS } from '../../data/constants';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface RoleExplanationProps {
   roleTexts: RoleText[];
@@ -13,7 +14,7 @@ function formatRoles(roles: Role[]): string {
   if (roles.length === 0) return '';
 
   // タンク、ヒーラー、DPSでグループ化
-  const tanks = roles.filter((r) => r === 'MT' || r === 'ST');
+  const tanks = roles.filter((r) => r === 'T1' || r === 'T2');
   const healers = roles.filter((r) => r === 'H1' || r === 'H2');
   const dps = roles.filter((r) => r.startsWith('D'));
 
@@ -93,7 +94,7 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
               color: 'white',
               fontSize: 14,
               fontWeight: 'bold',
-              fontFamily: 'sans-serif',
+              fontFamily: FONT_FAMILY,
               padding: '4px 8px',
               borderRadius: 4,
               minWidth: 80,
@@ -107,7 +108,7 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
             style={{
               color: 'white',
               fontSize: 20,
-              fontFamily: 'sans-serif',
+              fontFamily: FONT_FAMILY,
               textShadow: '0 1px 2px rgba(0,0,0,0.5)',
             }}
           >

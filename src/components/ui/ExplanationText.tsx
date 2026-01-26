@@ -1,4 +1,5 @@
 import React from 'react';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface ExplanationTextProps {
   text: string;
@@ -45,7 +46,7 @@ export const ExplanationText: React.FC<ExplanationTextProps> = ({
           color: 'white',
           fontSize: 28,
           fontWeight: 'bold',
-          fontFamily: 'sans-serif',
+          fontFamily: FONT_FAMILY,
           textShadow: '0 2px 4px rgba(0,0,0,0.5)',
           whiteSpace: 'nowrap',
         }}

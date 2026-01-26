@@ -7,7 +7,11 @@
     "start": "remotion studio",
     "build": "remotion render src/index.ts SampleMechanic out/video.mp4",
     "build:phase2": "remotion render src/index.ts RaidMechanicVideo out/phase2.mp4",
-    "upgrade": "remotion upgrade"
+    "upgrade": "remotion upgrade",
+    "dev:editor": "vite --config vite.config.ts",
+    "dev:server": "npx tsx watch src/server/renderServer.ts",
+    "dev:all": "concurrently \"npm run dev:editor\" \"npm run dev:server\"",
+    "build:editor": "vite build --config vite.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,18 +19,30 @@
   "type": "commonjs",
   "dependencies": {
     "@remotion/cli": "^4.0.407",
+    "@remotion/google-fonts": "^4.0.407",
+    "@remotion/player": "^4.0.407",
     "@remotion/renderer": "^4.0.407",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "remotion": "^4.0.407",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "uuid": "^13.0.0",
+    "vite": "^7.3.1"
   },
   "devDependencies": {
     "@remotion/tailwind": "^4.0.407",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.23",
+    "concurrently": "^9.2.1",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.19"
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.21.0"
   }
 }

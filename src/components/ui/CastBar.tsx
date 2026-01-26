@@ -1,4 +1,5 @@
 import React from 'react';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface CastBarProps {
   skillName: string;
@@ -37,7 +38,7 @@ export const CastBar: React.FC<CastBarProps> = ({
           style={{
             color: '#ffcc00',
             fontSize: 14,
-            fontFamily: 'sans-serif',
+            fontFamily: FONT_FAMILY,
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
           }}
         >
@@ -62,7 +63,7 @@ export const CastBar: React.FC<CastBarProps> = ({
             color: '#ff6600',
             fontSize: 18,
             fontWeight: 'bold',
-            fontFamily: 'sans-serif',
+            fontFamily: FONT_FAMILY,
             minWidth: 120,
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
           }}
@@ -110,7 +111,7 @@ export const CastBar: React.FC<CastBarProps> = ({
           style={{
             color: 'white',
             fontSize: 16,
-            fontFamily: 'sans-serif',
+            fontFamily: FONT_FAMILY,
             minWidth: 50,
             textAlign: 'right',
           }}

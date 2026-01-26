@@ -2,6 +2,7 @@ import React from 'react';
 import { Position, MarkerType } from '../../data/types';
 import { MARKER_COLORS, FIELD_DEFAULTS } from '../../data/constants';
 import { gameToScreen } from '../../utils/coordinates';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface FieldMarkerProps {
   type: MarkerType;
@@ -43,7 +44,7 @@ export const FieldMarker: React.FC<FieldMarkerProps> = ({
           color: isLetter ? 'white' : color,
           fontSize: '14px',
           fontWeight: 'bold',
-          fontFamily: 'sans-serif',
+          fontFamily: FONT_FAMILY,
           textShadow: isLetter ? '0 1px 2px rgba(0,0,0,0.8)' : 'none',
         }}
       >

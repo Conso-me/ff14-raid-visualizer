@@ -3,6 +3,7 @@ import { Position, Role, Debuff } from '../../data/types';
 import { ROLE_COLORS, FIELD_DEFAULTS } from '../../data/constants';
 import { gameToScreen } from '../../utils/coordinates';
 import { DebuffList } from '../debuff/DebuffList';
+import { FONT_FAMILY } from '../../utils/font';
 
 interface PlayerProps {
   role: Role;
@@ -69,7 +70,7 @@ export const Player: React.FC<PlayerProps> = ({
             color: 'white',
             fontSize: '12px',
             fontWeight: 'bold',
-            fontFamily: 'sans-serif',
+            fontFamily: FONT_FAMILY,
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
           }}
         >
@@ -86,7 +87,7 @@ export const Player: React.FC<PlayerProps> = ({
             transform: 'translateX(-50%)',
             color: 'white',
             fontSize: '10px',
-            fontFamily: 'sans-serif',
+            fontFamily: FONT_FAMILY,
             whiteSpace: 'nowrap',
             textShadow: '0 1px 2px rgba(0,0,0,0.8)',
           }}

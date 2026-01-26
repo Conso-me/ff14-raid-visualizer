@@ -1,424 +1,406 @@
 import { MechanicData, TimelineEvent } from './types';
 
 export const sampleMechanic: MechanicData = {
-  id: 'sample-spread-stack',
-  name: '散開→頭割り',
-  description: 'デバフに応じて散開と頭割りを処理するギミック',
-  durationFrames: 300, // 10秒
-  fps: 30,
-  field: {
-    type: 'circle',
-    size: 40,
-    backgroundColor: '#1a1a3e',
-    gridEnabled: true,
+  "id": "new-mechanic",
+  "name": "New Mechanic",
+  "description": "",
+  "durationFrames": 300,
+  "fps": 30,
+  "field": {
+    "type": "square",
+    "size": 40,
+    "backgroundColor": "#1a1a3e",
+    "gridEnabled": true
   },
-  markers: [
-    { type: 'A', position: { x: 0, y: -15 } },
-    { type: 'B', position: { x: 15, y: 0 } },
-    { type: 'C', position: { x: 0, y: 15 } },
-    { type: 'D', position: { x: -15, y: 0 } },
-    { type: '1', position: { x: 10, y: -10 } },
-    { type: '2', position: { x: 10, y: 10 } },
-    { type: '3', position: { x: -10, y: 10 } },
-    { type: '4', position: { x: -10, y: -10 } },
+  "markers": [
+    {
+      "type": "A",
+      "position": {
+        "x": 0,
+        "y": -15
+      }
+    },
+    {
+      "type": "B",
+      "position": {
+        "x": 15,
+        "y": 0
+      }
+    },
+    {
+      "type": "C",
+      "position": {
+        "x": 0,
+        "y": 15
+      }
+    },
+    {
+      "type": "D",
+      "position": {
+        "x": -15,
+        "y": 0
+      }
+    },
+    {
+      "type": "1",
+      "position": {
+        "x": -10.6,
+        "y": -10.6
+      }
+    },
+    {
+      "type": "2",
+      "position": {
+        "x": 10.6,
+        "y": -10.6
+      }
+    },
+    {
+      "type": "3",
+      "position": {
+        "x": 10.6,
+        "y": 10.6
+      }
+    },
+    {
+      "type": "4",
+      "position": {
+        "x": -10.6,
+        "y": 10.6
+      }
+    }
   ],
-  initialPlayers: [
-    { id: 'mt', role: 'MT', position: { x: 0, y: -2 } },
-    { id: 'st', role: 'ST', position: { x: 0, y: 2 } },
-    { id: 'h1', role: 'H1', position: { x: -2, y: 0 } },
-    { id: 'h2', role: 'H2', position: { x: 2, y: 0 } },
-    { id: 'd1', role: 'D1', position: { x: -2, y: -2 } },
-    { id: 'd2', role: 'D2', position: { x: 2, y: -2 } },
-    { id: 'd3', role: 'D3', position: { x: -2, y: 2 } },
-    { id: 'd4', role: 'D4', position: { x: 2, y: 2 } },
+  "initialPlayers": [
+    {
+      "id": "player_T1",
+      "role": "T1",
+      "position": {
+        "x": 0,
+        "y": -3.5
+      }
+    }
   ],
-  enemies: [{ id: 'boss', name: 'ボス', position: { x: 0, y: 0 }, size: 3 }],
-  timeline: [
-    // ====== 0秒: 説明テキスト + デバフ付与 ======
+  "enemies": [
     {
-      id: 'text-1',
-      type: 'text',
-      frame: 0,
-      textType: 'main',
-      content: 'デバフ確認：散開 or 頭割り',
-      position: 'top',
-      duration: 90,
-      fadeIn: 15,
-      fadeOut: 15,
-    },
-    // 散開組にデバフ付与（MT, H1, D1, D3）
-    {
-      id: 'debuff-spread-mt',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'mt',
-      debuff: { id: 'spread', name: '散開', color: '#ff00ff', duration: 3 },
-    },
-    {
-      id: 'debuff-spread-h1',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'h1',
-      debuff: { id: 'spread', name: '散開', color: '#ff00ff', duration: 3 },
-    },
-    {
-      id: 'debuff-spread-d1',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'd1',
-      debuff: { id: 'spread', name: '散開', color: '#ff00ff', duration: 3 },
-    },
-    {
-      id: 'debuff-spread-d3',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'd3',
-      debuff: { id: 'spread', name: '散開', color: '#ff00ff', duration: 3 },
-    },
-    // 頭割り組にデバフ付与（ST, H2, D2, D4）
-    {
-      id: 'debuff-stack-st',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'st',
-      debuff: { id: 'stack', name: '頭割り', color: '#ffff00', duration: 3 },
-    },
-    {
-      id: 'debuff-stack-h2',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'h2',
-      debuff: { id: 'stack', name: '頭割り', color: '#ffff00', duration: 3 },
-    },
-    {
-      id: 'debuff-stack-d2',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'd2',
-      debuff: { id: 'stack', name: '頭割り', color: '#ffff00', duration: 3 },
-    },
-    {
-      id: 'debuff-stack-d4',
-      type: 'debuff_add',
-      frame: 0,
-      targetId: 'd4',
-      debuff: { id: 'stack', name: '頭割り', color: '#ffff00', duration: 3 },
-    },
-
-    // ====== 1秒: ロール別説明 + 移動開始 ======
-    {
-      id: 'text-role-1',
-      type: 'text',
-      frame: 30,
-      textType: 'role',
-      content: [
-        { roles: ['MT', 'H1', 'D1', 'D3'], text: '外周マーカーへ移動' },
-        { roles: ['ST', 'H2', 'D2', 'D4'], text: 'Cマーカーに集合' },
-      ],
-      position: 'bottom',
-      duration: 60,
-      fadeIn: 10,
-      fadeOut: 10,
-    },
-    // 散開組の移動
-    {
-      id: 'move-mt',
-      type: 'move',
-      frame: 30,
-      targetId: 'mt',
-      to: { x: 0, y: -15 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-h1',
-      type: 'move',
-      frame: 30,
-      targetId: 'h1',
-      to: { x: -15, y: 0 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-d1',
-      type: 'move',
-      frame: 30,
-      targetId: 'd1',
-      to: { x: -10, y: -10 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-d3',
-      type: 'move',
-      frame: 30,
-      targetId: 'd3',
-      to: { x: -10, y: 10 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    // 頭割り組の移動（Cマーカー付近に集合）
-    {
-      id: 'move-st',
-      type: 'move',
-      frame: 30,
-      targetId: 'st',
-      to: { x: 0, y: 12 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-h2',
-      type: 'move',
-      frame: 30,
-      targetId: 'h2',
-      to: { x: 2, y: 12 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-d2',
-      type: 'move',
-      frame: 30,
-      targetId: 'd2',
-      to: { x: -2, y: 12 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-    {
-      id: 'move-d4',
-      type: 'move',
-      frame: 30,
-      targetId: 'd4',
-      to: { x: 0, y: 14 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-
-    // ====== 3秒: AoE発動 ======
-    // 散開AoE
-    {
-      id: 'aoe-show-mt',
-      type: 'aoe_show',
-      frame: 90,
-      aoe: {
-        id: 'aoe-mt',
-        type: 'circle',
-        position: { x: 0, y: -15 },
-        radius: 5,
-        color: '#ff00ff',
+      "id": "enemy_1769257057335",
+      "name": "Boss",
+      "position": {
+        "x": 0,
+        "y": 0
       },
-      fadeInDuration: 10,
-    },
+      "size": 3,
+      "color": "#ff0000"
+    }
+  ],
+  "timeline": [
     {
-      id: 'aoe-show-h1',
-      type: 'aoe_show',
-      frame: 90,
-      aoe: {
-        id: 'aoe-h1',
-        type: 'circle',
-        position: { x: -15, y: 0 },
-        radius: 5,
-        color: '#ff00ff',
+      "id": "move-player_T1-1769256980142",
+      "type": "move",
+      "frame": 0,
+      "targetId": "player_T1",
+      "from": {
+        "x": 0,
+        "y": -3.5
       },
-      fadeInDuration: 10,
-    },
-    {
-      id: 'aoe-show-d1',
-      type: 'aoe_show',
-      frame: 90,
-      aoe: {
-        id: 'aoe-d1',
-        type: 'circle',
-        position: { x: -10, y: -10 },
-        radius: 5,
-        color: '#ff00ff',
+      "to": {
+        "x": -2.5,
+        "y": 1
       },
-      fadeInDuration: 10,
+      "duration": 30,
+      "easing": "easeInOut"
     },
     {
-      id: 'aoe-show-d3',
-      type: 'aoe_show',
-      frame: 90,
-      aoe: {
-        id: 'aoe-d3',
-        type: 'circle',
-        position: { x: -10, y: 10 },
-        radius: 5,
-        color: '#ff00ff',
+      "id": "aoe-1769255285789-show",
+      "type": "aoe_show",
+      "frame": 29,
+      "aoe": {
+        "id": "aoe-1769255285789",
+        "type": "cone",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "angle": 90,
+        "direction": 180,
+        "length": 29,
+        "color": "#eb0000",
+        "opacity": 0.5
       },
-      fadeInDuration: 10,
+      "fadeInDuration": 10
     },
-    // 頭割りAoE
     {
-      id: 'aoe-show-stack',
-      type: 'aoe_show',
-      frame: 90,
-      aoe: {
-        id: 'aoe-stack',
-        type: 'circle',
-        position: { x: 0, y: 12 },
-        radius: 6,
-        color: '#ffff00',
+      "id": "aoe-1769255347283-show",
+      "type": "aoe_show",
+      "frame": 29,
+      "aoe": {
+        "id": "aoe-1769255347283",
+        "type": "line",
+        "position": {
+          "x": -15,
+          "y": 20
+        },
+        "direction": 0,
+        "length": 40,
+        "width": 10,
+        "color": "#ff6600",
+        "opacity": 0.5
       },
-      fadeInDuration: 10,
-    },
-
-    // ====== 3.5秒: 発動テキスト ======
-    {
-      id: 'text-2',
-      type: 'text',
-      frame: 105,
-      textType: 'main',
-      content: '散開・頭割り発動！',
-      position: 'center',
-      duration: 30,
-      fadeIn: 5,
-      fadeOut: 10,
-    },
-
-    // ====== 4秒: AoE非表示 ======
-    {
-      id: 'aoe-hide-mt',
-      type: 'aoe_hide',
-      frame: 120,
-      aoeId: 'aoe-mt',
-      fadeOutDuration: 15,
+      "fadeInDuration": 10
     },
     {
-      id: 'aoe-hide-h1',
-      type: 'aoe_hide',
-      frame: 120,
-      aoeId: 'aoe-h1',
-      fadeOutDuration: 15,
+      "id": "aoe-1769255252941-show",
+      "type": "aoe_show",
+      "frame": 30,
+      "aoe": {
+        "id": "aoe-1769255252941",
+        "type": "cone",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "angle": 90,
+        "direction": 0,
+        "length": 29,
+        "color": "#eb0000",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
     },
     {
-      id: 'aoe-hide-d1',
-      type: 'aoe_hide',
-      frame: 120,
-      aoeId: 'aoe-d1',
-      fadeOutDuration: 15,
+      "id": "aoe-1769255419865-show",
+      "type": "aoe_show",
+      "frame": 30,
+      "aoe": {
+        "id": "aoe-1769255419865",
+        "type": "line",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "direction": 0,
+        "length": 10,
+        "width": 40,
+        "color": "#ff6600",
+        "opacity": 0.5,
+        "rotation": 0
+      },
+      "fadeInDuration": 10
     },
     {
-      id: 'aoe-hide-d3',
-      type: 'aoe_hide',
-      frame: 120,
-      aoeId: 'aoe-d3',
-      fadeOutDuration: 15,
+      "id": "move-player_T1-1769255892081",
+      "type": "move",
+      "frame": 64,
+      "targetId": "player_T1",
+      "from": {
+        "x": -2.5,
+        "y": 1
+      },
+      "to": {
+        "x": 2,
+        "y": -2
+      },
+      "duration": 30,
+      "easing": "easeInOut"
     },
     {
-      id: 'aoe-hide-stack',
-      type: 'aoe_hide',
-      frame: 120,
-      aoeId: 'aoe-stack',
-      fadeOutDuration: 15,
-    },
-
-    // ====== 5秒: 集合 ======
-    {
-      id: 'text-3',
-      type: 'text',
-      frame: 150,
-      textType: 'main',
-      content: '中央に集合',
-      position: 'top',
-      duration: 60,
-      fadeIn: 10,
-      fadeOut: 10,
-    },
-    // 全員中央へ戻る
-    {
-      id: 'move-mt-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'mt',
-      to: { x: 0, y: -2 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255252941-hide",
+      "type": "aoe_hide",
+      "frame": 89,
+      "aoeId": "aoe-1769255252941",
+      "fadeOutDuration": 15
     },
     {
-      id: 'move-st-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'st',
-      to: { x: 0, y: 2 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255419865-hide",
+      "type": "aoe_hide",
+      "frame": 89,
+      "aoeId": "aoe-1769255419865",
+      "fadeOutDuration": 15
     },
     {
-      id: 'move-h1-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'h1',
-      to: { x: -2, y: 0 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255285789-hide",
+      "type": "aoe_hide",
+      "frame": 90,
+      "aoeId": "aoe-1769255285789",
+      "fadeOutDuration": 15
     },
     {
-      id: 'move-h2-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'h2',
-      to: { x: 2, y: 0 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255347283-hide",
+      "type": "aoe_hide",
+      "frame": 90,
+      "aoeId": "aoe-1769255347283",
+      "fadeOutDuration": 15
     },
     {
-      id: 'move-d1-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'd1',
-      to: { x: -2, y: -2 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255525732-show",
+      "type": "aoe_show",
+      "frame": 105,
+      "aoe": {
+        "id": "aoe-1769255525732",
+        "type": "line",
+        "position": {
+          "x": -5,
+          "y": 20
+        },
+        "direction": 0,
+        "length": 40,
+        "width": 10,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
     },
     {
-      id: 'move-d2-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'd2',
-      to: { x: 2, y: -2 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "aoe-1769255557367-show",
+      "type": "aoe_show",
+      "frame": 105,
+      "aoe": {
+        "id": "aoe-1769255557367",
+        "type": "line",
+        "position": {
+          "x": 0,
+          "y": 10
+        },
+        "direction": 0,
+        "length": 10,
+        "width": 40,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
     },
     {
-      id: 'move-d3-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'd3',
-      to: { x: -2, y: 2 },
-      duration: 45,
-      easing: 'easeInOut',
+      "id": "move-player_T1-1769255907030",
+      "type": "move",
+      "frame": 154,
+      "targetId": "player_T1",
+      "from": {
+        "x": 2,
+        "y": -2
+      },
+      "to": {
+        "x": -2,
+        "y": 2
+      },
+      "duration": 30,
+      "easing": "easeInOut"
     },
     {
-      id: 'move-d4-back',
-      type: 'move',
-      frame: 150,
-      targetId: 'd4',
-      to: { x: 2, y: 2 },
-      duration: 45,
-      easing: 'easeInOut',
-    },
-
-    // ====== 8秒: ボス詠唱 ======
-    {
-      id: 'cast-1',
-      type: 'cast',
-      frame: 240,
-      casterId: 'boss',
-      skillName: 'ギガフレア',
-      duration: 60,
+      "id": "aoe-1769255525732-hide",
+      "type": "aoe_hide",
+      "frame": 164,
+      "aoeId": "aoe-1769255525732",
+      "fadeOutDuration": 15
     },
     {
-      id: 'text-4',
-      type: 'text',
-      frame: 240,
-      textType: 'main',
-      content: '全体攻撃：軽減を入れる',
-      position: 'top',
-      duration: 60,
-      fadeIn: 10,
-      fadeOut: 10,
+      "id": "aoe-1769255557367-hide",
+      "type": "aoe_hide",
+      "frame": 164,
+      "aoeId": "aoe-1769255557367",
+      "fadeOutDuration": 15
     },
-  ] as TimelineEvent[],
+    {
+      "id": "aoe-1769255610368-show",
+      "type": "aoe_show",
+      "frame": 179,
+      "aoe": {
+        "id": "aoe-1769255610368",
+        "type": "line",
+        "position": {
+          "x": 15,
+          "y": 20
+        },
+        "direction": 0,
+        "length": 40,
+        "width": 10,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
+    },
+    {
+      "id": "aoe-1769255628232-show",
+      "type": "aoe_show",
+      "frame": 179,
+      "aoe": {
+        "id": "aoe-1769255628232",
+        "type": "line",
+        "position": {
+          "x": 0,
+          "y": 20
+        },
+        "direction": 0,
+        "length": 10,
+        "width": 40,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
+    },
+    {
+      "id": "aoe-1769255610368-hide",
+      "type": "aoe_hide",
+      "frame": 239,
+      "aoeId": "aoe-1769255610368",
+      "fadeOutDuration": 15
+    },
+    {
+      "id": "aoe-1769255628232-hide",
+      "type": "aoe_hide",
+      "frame": 239,
+      "aoeId": "aoe-1769255628232",
+      "fadeOutDuration": 15
+    },
+    {
+      "id": "aoe-1769255705033-show",
+      "type": "aoe_show",
+      "frame": 254,
+      "aoe": {
+        "id": "aoe-1769255705033",
+        "type": "line",
+        "position": {
+          "x": 5,
+          "y": 20
+        },
+        "direction": 0,
+        "length": 40,
+        "width": 10,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
+    },
+    {
+      "id": "aoe-1769255714725-show",
+      "type": "aoe_show",
+      "frame": 254,
+      "aoe": {
+        "id": "aoe-1769255714725",
+        "type": "line",
+        "position": {
+          "x": 0,
+          "y": -10
+        },
+        "direction": 0,
+        "length": 10,
+        "width": 40,
+        "color": "#ff6600",
+        "opacity": 0.5
+      },
+      "fadeInDuration": 10
+    },
+    {
+      "id": "aoe-1769255705033-hide",
+      "type": "aoe_hide",
+      "frame": 299,
+      "aoeId": "aoe-1769255705033",
+      "fadeOutDuration": 15
+    },
+    {
+      "id": "aoe-1769255714725-hide",
+      "type": "aoe_hide",
+      "frame": 299,
+      "aoeId": "aoe-1769255714725",
+      "fadeOutDuration": 15
+    }
+  ]
 };
