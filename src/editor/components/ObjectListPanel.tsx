@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useEditor } from '../context/EditorContext';
 import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
 import { getActiveAnnotations, getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getActiveObjects, getObjectEventPairs } from '../utils/getActiveObjects';
-import type { Role, MarkerType, AoEType, Position, GimmickObject } from '../../data/types';
+import { DraggableList } from './DraggableList';
+import type { Role, MarkerType, AoEType, Position, GimmickObject, Player } from '../../data/types';
 
 // Role colors (match existing player rendering)
 const ROLE_COLORS: Record<Role, string> = {
@@ -289,8 +290,13 @@ function ActionToolbar() {
 
 // Main ObjectListPanel component
 export function ObjectListPanel() {
-  const { state, selectObject, selectAllPlayers, clearMultiSelect } = useEditor();
+  const { state, selectObject, selectAllPlayers, clearMultiSelect, updatePlayersOrder } = useEditor();
   const { mechanic, currentFrame, selectedObjectId, selectedObjectType, selectedObjectIds } = state;
+
+  // Handle player reorder via drag and drop
+  const handlePlayersReorder = useCallback((reorderedPlayers: Player[]) => {
+    updatePlayersOrder(reorderedPlayers);
+  }, [updatePlayersOrder]);
 
   // Get current player positions
   const playersWithPositions = getPlayersAtFrame(mechanic, currentFrame);
@@ -364,18 +370,26 @@ export function ObjectListPanel() {
                 選択解除
               </button>
             </div>
-            {playersWithPositions.map((player) => (
-              <ObjectItem
-                key={player.id}
-                id={player.id}
-                objectType="player"
-                name={player.role}
-                subtitle={formatPosition(player.position)}
-                color={getRoleColor(player.role)}
-                isSelected={selectedObjectIds.includes(player.id) || (selectedObjectId === player.id && selectedObjectType === 'player')}
-                onSelect={() => selectObject(player.id, 'player')}
-              />
-            ))}
+            <DraggableList
+              items={mechanic.initialPlayers}
+              onReorder={handlePlayersReorder}
+              renderItem={(player, isDragging, isDropTarget) => {
+                const playerWithPosition = playersWithPositions.find(p => p.id === player.id);
+                const position = playerWithPosition?.position || player.position;
+                return (
+                  <ObjectItem
+                    key={player.id}
+                    id={player.id}
+                    objectType="player"
+                    name={player.role}
+                    subtitle={formatPosition(position)}
+                    color={getRoleColor(player.role)}
+                    isSelected={selectedObjectIds.includes(player.id) || (selectedObjectId === player.id && selectedObjectType === 'player')}
+                    onSelect={() => selectObject(player.id, 'player')}
+                  />
+                );
+              }}
+            />
           </>
         )}
       </CollapsibleGroup>

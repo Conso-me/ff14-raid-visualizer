@@ -11,6 +11,7 @@ interface EditorContextValue {
   updatePlayer: (id: string, updates: Partial<Player>) => void;
   addPlayer: (player: Player) => void;
   deletePlayer: (id: string) => void;
+  updatePlayersOrder: (players: Player[]) => void;
   updateEnemy: (id: string, updates: Partial<Enemy>) => void;
   addEnemy: (enemy: Enemy) => void;
   deleteEnemy: (id: string) => void;
@@ -163,6 +164,10 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
 
   const deletePlayer = useCallback((id: string) => {
     dispatch({ type: 'DELETE_PLAYER', payload: id });
+  }, []);
+
+  const updatePlayersOrder = useCallback((players: Player[]) => {
+    dispatch({ type: 'UPDATE_PLAYERS_ORDER', payload: players });
   }, []);
 
   const updateEnemy = useCallback((id: string, updates: Partial<Enemy>) => {
@@ -479,6 +484,7 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     updatePlayer,
     addPlayer,
     deletePlayer,
+    updatePlayersOrder,
     updateEnemy,
     addEnemy,
     deleteEnemy,

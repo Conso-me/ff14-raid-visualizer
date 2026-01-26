@@ -2,32 +2,32 @@ import React, { useRef, useState } from 'react';
 import { useEditor } from '../context/EditorContext';
 import type { MechanicData } from '../../data/types';
 import { VideoExportDialog } from './VideoExportDialog';
+import { ExportDialog } from './ExportDialog';
+import { ShareDialog } from './ShareDialog';
+import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
 // Log import feature is incomplete - hidden for now
 // import { LogImportDialog } from './LogImportDialog';
 // import { LogBrowserDialog } from './LogBrowserDialog';
 
 interface EditorHeaderProps {
   onOpenPreview: () => void;
+  onOpenShortcutHelp?: () => void;
 }
 
-export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
+export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeaderProps) {
   const { state, setMechanic, undo, redo, canUndo, canRedo, updateMechanicMeta } = useEditor();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   // Log import feature is incomplete - hidden for now
   // const [isLogImportOpen, setIsLogImportOpen] = useState(false);
   // const [isLogBrowserOpen, setIsLogBrowserOpen] = useState(false);
 
   const handleExport = () => {
-    const json = JSON.stringify(state.mechanic, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${state.mechanic.id || 'mechanic'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setIsExportDialogOpen(true);
   };
 
   const handleImport = () => {
@@ -38,18 +38,33 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setImportError(null);
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string) as MechanicData;
-        // Basic validation
-        if (!json.id || !json.field || !json.timeline) {
-          alert('Invalid mechanic file format');
+        const rawData = JSON.parse(event.target?.result as string);
+
+        // Validate the data
+        const validation = validateMechanic(rawData);
+
+        if (!validation.isValid) {
+          const errorMessages = validation.errors.map(e => `- ${e.field}: ${e.message}`).join('\n');
+          setImportError(`インポートエラー:\n${errorMessages}`);
           return;
         }
-        setMechanic(json);
+
+        // Show warnings if any
+        if (validation.warnings.length > 0) {
+          const warningMessages = validation.warnings.map(w => `- ${w.message}`).join('\n');
+          console.warn('Import warnings:', warningMessages);
+        }
+
+        // Sanitize and set the mechanic
+        const sanitized = sanitizeMechanic(rawData);
+        setMechanic(sanitized);
       } catch (err) {
-        alert('Failed to parse JSON file');
+        setImportError('JSONファイルの解析に失敗しました。ファイル形式を確認してください。');
       }
     };
     reader.readAsText(file);
@@ -171,6 +186,16 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
         <button onClick={handleExport} style={buttonStyle}>
           Export JSON
         </button>
+        <button
+          onClick={() => setIsShareDialogOpen(true)}
+          style={{
+            ...buttonStyle,
+            background: '#2c6e49',
+            borderColor: '#3c8e59',
+          }}
+        >
+          Share URL
+        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -224,12 +249,104 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
         動画出力
       </button>
 
+      {/* Shortcut Help */}
+      {onOpenShortcutHelp && (
+        <button
+          onClick={onOpenShortcutHelp}
+          style={{
+            ...buttonStyle,
+            minWidth: '32px',
+            padding: '6px 10px',
+          }}
+          title="キーボードショートカット (?)"
+        >
+          ?
+        </button>
+      )}
+
+      {/* Export Dialog */}
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        mechanic={state.mechanic}
+        onClose={() => setIsExportDialogOpen(false)}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={isShareDialogOpen}
+        mechanic={state.mechanic}
+        onClose={() => setIsShareDialogOpen(false)}
+      />
+
       {/* Video Export Dialog */}
       <VideoExportDialog
         isOpen={isVideoExportOpen}
         mechanic={state.mechanic}
         onClose={() => setIsVideoExportOpen(false)}
       />
+
+      {/* Import Error Modal */}
+      {importError && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setImportError(null)}
+        >
+          <div
+            style={{
+              background: '#1a1a2e',
+              borderRadius: '8px',
+              border: '1px solid #c73737',
+              padding: '24px',
+              maxWidth: '500px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 16px', color: '#ff6b6b', fontSize: '16px' }}>
+              インポートエラー
+            </h3>
+            <pre
+              style={{
+                background: '#12121f',
+                padding: '12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                color: '#ff9999',
+                whiteSpace: 'pre-wrap',
+                margin: '0 0 16px',
+              }}
+            >
+              {importError}
+            </pre>
+            <button
+              onClick={() => setImportError(null)}
+              style={{
+                padding: '8px 24px',
+                background: '#3753c7',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Log import feature is incomplete - hidden for now
       <LogImportDialog

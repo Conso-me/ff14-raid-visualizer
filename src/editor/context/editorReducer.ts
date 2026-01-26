@@ -141,7 +141,8 @@ export type EditorAction =
   | { type: 'COMPLETE_OBJECT_PLACEMENT'; payload: ObjectSettings }
   | { type: 'CANCEL_OBJECT_PLACEMENT' }
   | { type: 'UPDATE_OBJECT'; payload: { id: string; updates: Partial<GimmickObject> } }
-  | { type: 'DELETE_OBJECT'; payload: string };
+  | { type: 'DELETE_OBJECT'; payload: string }
+  | { type: 'UPDATE_PLAYERS_ORDER'; payload: Player[] };
 
 function pushHistory(state: EditorState): EditorState {
   const newHistory = state.history.slice(0, state.historyIndex + 1);
@@ -243,6 +244,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         },
         selectedObjectId: state.selectedObjectId === action.payload ? null : state.selectedObjectId,
         selectedObjectType: state.selectedObjectId === action.payload ? null : state.selectedObjectType,
+      };
+    }
+
+    case 'UPDATE_PLAYERS_ORDER': {
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          initialPlayers: action.payload,
+        },
       };
     }
 

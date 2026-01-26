@@ -106,32 +106,6 @@ export function TimelineEditor() {
     }
   }, [selectedEventId, deleteTimelineEvent]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      if (e.key === ' ') {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedEventId) {
-          e.preventDefault();
-          handleDeleteEvent();
-        }
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setCurrentFrame(Math.max(0, currentFrame - (e.shiftKey ? 10 : 1)));
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setCurrentFrame(Math.min(mechanic.durationFrames - 1, currentFrame + (e.shiftKey ? 10 : 1)));
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, selectedEventId, handleDeleteEvent, currentFrame, mechanic.durationFrames, setCurrentFrame]);
-
   const playerIds = mechanic.initialPlayers.map((p) => p.id);
   const enemyIds = mechanic.enemies.map((e) => e.id);
 
