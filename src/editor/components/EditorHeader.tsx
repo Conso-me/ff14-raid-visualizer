@@ -2,8 +2,9 @@ import React, { useRef, useState } from 'react';
 import { useEditor } from '../context/EditorContext';
 import type { MechanicData } from '../../data/types';
 import { VideoExportDialog } from './VideoExportDialog';
-import { LogImportDialog } from './LogImportDialog';
-import { LogBrowserDialog } from './LogBrowserDialog';
+// Log import feature is incomplete - hidden for now
+// import { LogImportDialog } from './LogImportDialog';
+// import { LogBrowserDialog } from './LogBrowserDialog';
 
 interface EditorHeaderProps {
   onOpenPreview: () => void;
@@ -14,8 +15,9 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
-  const [isLogImportOpen, setIsLogImportOpen] = useState(false);
-  const [isLogBrowserOpen, setIsLogBrowserOpen] = useState(false);
+  // Log import feature is incomplete - hidden for now
+  // const [isLogImportOpen, setIsLogImportOpen] = useState(false);
+  // const [isLogBrowserOpen, setIsLogBrowserOpen] = useState(false);
 
   const handleExport = () => {
     const json = JSON.stringify(state.mechanic, null, 2);
@@ -158,12 +160,14 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
         <button onClick={handleImport} style={buttonStyle}>
           Import JSON
         </button>
+        {/* Log import feature is incomplete - hidden for now
         <button onClick={() => setIsLogImportOpen(true)} style={buttonStyle}>
           Log Import
         </button>
         <button onClick={() => setIsLogBrowserOpen(true)} style={buttonStyle}>
           Log Browser
         </button>
+        */}
         <button onClick={handleExport} style={buttonStyle}>
           Export JSON
         </button>
@@ -227,17 +231,16 @@ export function EditorHeader({ onOpenPreview }: EditorHeaderProps) {
         onClose={() => setIsVideoExportOpen(false)}
       />
 
-      {/* Log Import Dialog */}
+      {/* Log import feature is incomplete - hidden for now
       <LogImportDialog
         isOpen={isLogImportOpen}
         onClose={() => setIsLogImportOpen(false)}
       />
-
-      {/* Log Browser Dialog */}
       <LogBrowserDialog
         isOpen={isLogBrowserOpen}
         onClose={() => setIsLogBrowserOpen(false)}
       />
+      */}
     </header>
   );
 }
