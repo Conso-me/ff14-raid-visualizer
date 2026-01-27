@@ -288,9 +288,103 @@ function ActionToolbar() {
   );
 }
 
+// PlayerItem component with move button
+interface PlayerItemProps {
+  player: Player;
+  position: Position;
+  isSelected: boolean;
+  onSelect: () => void;
+  onAddMove: () => void;
+}
+
+function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: PlayerItemProps) {
+  return (
+    <div
+      onClick={onSelect}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        padding: '6px 8px',
+        marginBottom: '2px',
+        background: isSelected ? '#3753c7' : 'transparent',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        color: '#fff',
+        fontSize: '11px',
+        textAlign: 'left',
+        gap: '8px',
+      }}
+      onMouseEnter={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.background = '#2a2a4a';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.background = 'transparent';
+        }
+      }}
+    >
+      {/* Color indicator */}
+      <div
+        style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '2px',
+          background: getRoleColor(player.role),
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Name and position */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          {player.role}
+        </div>
+        <div style={{ fontSize: '10px', color: '#888' }}>
+          {formatPosition(position)}
+        </div>
+      </div>
+
+      {/* Move button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddMove();
+        }}
+        style={{
+          padding: '3px 8px',
+          background: '#2c9c3c',
+          border: 'none',
+          borderRadius: '3px',
+          color: '#fff',
+          fontSize: '10px',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#3cb54c';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = '#2c9c3c';
+        }}
+        title="移動イベントを追加"
+      >
+        移動
+      </button>
+    </div>
+  );
+}
+
 // Main ObjectListPanel component
 export function ObjectListPanel() {
-  const { state, selectObject, selectAllPlayers, clearMultiSelect, updatePlayersOrder } = useEditor();
+  const { state, selectObject, selectAllPlayers, clearMultiSelect, updatePlayersOrder, startMoveFromList } = useEditor();
   const { mechanic, currentFrame, selectedObjectId, selectedObjectType, selectedObjectIds } = state;
 
   // Handle player reorder via drag and drop
@@ -377,15 +471,13 @@ export function ObjectListPanel() {
                 const playerWithPosition = playersWithPositions.find(p => p.id === player.id);
                 const position = playerWithPosition?.position || player.position;
                 return (
-                  <ObjectItem
+                  <PlayerItem
                     key={player.id}
-                    id={player.id}
-                    objectType="player"
-                    name={player.role}
-                    subtitle={formatPosition(position)}
-                    color={getRoleColor(player.role)}
+                    player={player}
+                    position={position}
                     isSelected={selectedObjectIds.includes(player.id) || (selectedObjectId === player.id && selectedObjectType === 'player')}
                     onSelect={() => selectObject(player.id, 'player')}
+                    onAddMove={() => startMoveFromList(player.id)}
                   />
                 );
               }}

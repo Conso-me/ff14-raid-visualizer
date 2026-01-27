@@ -5,6 +5,7 @@ import { VideoExportDialog } from './VideoExportDialog';
 import { ExportDialog } from './ExportDialog';
 import { ShareDialog } from './ShareDialog';
 import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
+import { clearAutoSave } from '../hooks/useAutoSave';
 // Log import feature is incomplete - hidden for now
 // import { LogImportDialog } from './LogImportDialog';
 // import { LogBrowserDialog } from './LogBrowserDialog';
@@ -79,6 +80,8 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeader
         return;
       }
     }
+    // Clear auto-save data when creating new mechanic
+    clearAutoSave();
     setMechanic({
       id: `mechanic_${Date.now()}`,
       name: 'New Mechanic',

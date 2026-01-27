@@ -30,9 +30,10 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
     setTool,
     selectAllPlayers,
     clearMultiSelect,
+    movePlayerPosition,
   } = useEditor();
 
-  const { mechanic, currentFrame } = state;
+  const { mechanic, currentFrame, selectedObjectId, selectedObjectType } = state;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -100,6 +101,25 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
         return;
       }
 
+      // Alt + Arrow keys: Move selected player position
+      if (e.altKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (selectedObjectId && selectedObjectType === 'player') {
+          e.preventDefault();
+          const step = e.shiftKey ? 1 : 0.5; // Shift for larger movement
+          let dx = 0, dy = 0;
+
+          switch (e.key) {
+            case 'ArrowUp': dy = -step; break;
+            case 'ArrowDown': dy = step; break;
+            case 'ArrowLeft': dx = -step; break;
+            case 'ArrowRight': dx = step; break;
+          }
+
+          movePlayerPosition(selectedObjectId, dx, dy, currentFrame);
+          return;
+        }
+      }
+
       // Arrow keys: Frame navigation
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -153,8 +173,11 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
       setTool,
       selectAllPlayers,
       clearMultiSelect,
+      movePlayerPosition,
       currentFrame,
       mechanic.durationFrames,
+      selectedObjectId,
+      selectedObjectType,
       options,
     ]
   );
@@ -174,6 +197,9 @@ export const SHORTCUTS = [
   { keys: ['Shift', '→'], description: '10フレーム進む' },
   { keys: ['Home'], description: '最初のフレームへ' },
   { keys: ['End'], description: '最後のフレームへ' },
+  { divider: true },
+  { keys: ['Alt', '矢印'], description: 'プレイヤーを移動 (0.5単位)' },
+  { keys: ['Alt', 'Shift', '矢印'], description: 'プレイヤーを移動 (1単位)' },
   { divider: true },
   { keys: ['Delete'], description: '選択中のオブジェクトを削除' },
   { keys: ['Escape'], description: '選択解除 & ツールリセット' },

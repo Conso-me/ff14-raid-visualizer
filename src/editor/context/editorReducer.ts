@@ -70,6 +70,11 @@ export interface AoESettings {
   fadeOutDuration: number;
 }
 
+export interface MoveFromListMode {
+  active: boolean;
+  playerId: string | null;
+}
+
 export interface EditorState {
   mechanic: MechanicData;
   selectedObjectId: string | null;
@@ -88,6 +93,8 @@ export interface EditorState {
   pendingDebuff: PendingDebuff | null;
   pendingText: PendingText | null;
   pendingObject: PendingObject | null;
+  // Mode for adding move from object list
+  moveFromListMode: MoveFromListMode;
 }
 
 export type EditorAction =
@@ -142,7 +149,12 @@ export type EditorAction =
   | { type: 'CANCEL_OBJECT_PLACEMENT' }
   | { type: 'UPDATE_OBJECT'; payload: { id: string; updates: Partial<GimmickObject> } }
   | { type: 'DELETE_OBJECT'; payload: string }
-  | { type: 'UPDATE_PLAYERS_ORDER'; payload: Player[] };
+  | { type: 'UPDATE_PLAYERS_ORDER'; payload: Player[] }
+  // Move from list mode
+  | { type: 'START_MOVE_FROM_LIST'; payload: { playerId: string } }
+  | { type: 'CANCEL_MOVE_FROM_LIST' }
+  // Direct position movement (arrow keys)
+  | { type: 'MOVE_PLAYER_POSITION'; payload: { playerId: string; dx: number; dy: number; frame: number } };
 
 function pushHistory(state: EditorState): EditorState {
   const newHistory = state.history.slice(0, state.historyIndex + 1);
@@ -886,6 +898,116 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       };
     }
 
+    case 'START_MOVE_FROM_LIST': {
+      return {
+        ...state,
+        moveFromListMode: {
+          active: true,
+          playerId: action.payload.playerId,
+        },
+        selectedObjectId: action.payload.playerId,
+        selectedObjectType: 'player',
+        selectedObjectIds: [action.payload.playerId],
+      };
+    }
+
+    case 'CANCEL_MOVE_FROM_LIST': {
+      return {
+        ...state,
+        moveFromListMode: {
+          active: false,
+          playerId: null,
+        },
+      };
+    }
+
+    case 'MOVE_PLAYER_POSITION': {
+      const { playerId, dx, dy, frame } = action.payload;
+      const halfSize = state.mechanic.field.size / 2;
+
+      // Get current position at frame
+      const player = state.mechanic.initialPlayers.find(p => p.id === playerId);
+      if (!player) return state;
+
+      // Calculate current position accounting for move events
+      const moveEvents = state.mechanic.timeline
+        .filter((e): e is MoveEvent => e.type === 'move' && e.targetId === playerId)
+        .sort((a, b) => a.frame - b.frame);
+
+      let currentPos = player.position;
+      for (const event of moveEvents) {
+        if (frame >= event.frame + event.duration) {
+          currentPos = event.to;
+        } else if (frame >= event.frame) {
+          // In the middle of a move
+          const progress = (frame - event.frame) / event.duration;
+          const fromPos = event.from ?? currentPos;
+          currentPos = {
+            x: fromPos.x + (event.to.x - fromPos.x) * progress,
+            y: fromPos.y + (event.to.y - fromPos.y) * progress,
+          };
+          break;
+        } else {
+          break;
+        }
+      }
+
+      const newPos = {
+        x: Math.max(-halfSize, Math.min(halfSize, currentPos.x + dx)),
+        y: Math.max(-halfSize, Math.min(halfSize, currentPos.y + dy)),
+      };
+
+      // Frame 0: update initial position
+      if (frame === 0) {
+        const stateWithHistory = pushHistory(state);
+        const newPlayers = stateWithHistory.mechanic.initialPlayers.map(p =>
+          p.id === playerId ? { ...p, position: newPos } : p
+        );
+        return {
+          ...stateWithHistory,
+          mechanic: { ...stateWithHistory.mechanic, initialPlayers: newPlayers },
+        };
+      }
+
+      // Check for existing move event at this frame
+      const existingMoveIndex = state.mechanic.timeline.findIndex(
+        e => e.type === 'move' && e.targetId === playerId && e.frame === frame
+      );
+
+      const stateWithHistory = pushHistory(state);
+
+      if (existingMoveIndex >= 0) {
+        // Update existing event's 'to' position
+        const newTimeline = [...stateWithHistory.mechanic.timeline];
+        newTimeline[existingMoveIndex] = {
+          ...newTimeline[existingMoveIndex],
+          to: newPos,
+        } as MoveEvent;
+        return {
+          ...stateWithHistory,
+          mechanic: { ...stateWithHistory.mechanic, timeline: newTimeline },
+        };
+      } else {
+        // Add new instant move event
+        const newEvent: MoveEvent = {
+          id: `move-${playerId}-${frame}-${Date.now()}`,
+          type: 'move',
+          frame,
+          targetId: playerId,
+          from: currentPos,
+          to: newPos,
+          duration: 1,
+          easing: 'linear',
+        };
+        const newTimeline = [...stateWithHistory.mechanic.timeline, newEvent]
+          .sort((a, b) => a.frame - b.frame);
+        return {
+          ...stateWithHistory,
+          mechanic: { ...stateWithHistory.mechanic, timeline: newTimeline },
+        };
+      }
+    }
+
     default:
       return state;
   }
@@ -910,5 +1032,9 @@ export function createInitialState(mechanic: MechanicData): EditorState {
     pendingDebuff: null,
     pendingText: null,
     pendingObject: null,
+    moveFromListMode: {
+      active: false,
+      playerId: null,
+    },
   };
 }

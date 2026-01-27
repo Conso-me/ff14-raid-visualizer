@@ -7,18 +7,25 @@ import { PropertyPanel } from './components/PropertyPanel';
 import { TimelineEditor } from './components/TimelineEditor';
 import { PreviewModal } from './components/PreviewModal';
 import { ShortcutHelpDialog } from './components/ShortcutHelpDialog';
+import { RecoveryDialog } from './components/RecoveryDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAutoSave, loadAutoSave, hasAutoSave, clearAutoSave } from './hooks/useAutoSave';
 import { hasSharedData, decodeMechanicFromUrl, clearSharedDataFromUrl } from './utils/shareUrl';
 
 function EditorContent() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
   const [urlLoadError, setUrlLoadError] = useState<string | null>(null);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const { state, setMechanic } = useEditor();
   const exportRef = useRef<(() => void) | null>(null);
 
-  // Load mechanic from URL on mount
+  // Auto-save
+  useAutoSave(state.mechanic);
+
+  // Load mechanic from URL or check for auto-save on mount
   useEffect(() => {
+    // URL parameters take priority
     if (hasSharedData()) {
       const result = decodeMechanicFromUrl();
       if (result.success && result.mechanic) {
@@ -29,8 +36,28 @@ function EditorContent() {
         setUrlLoadError(result.error);
         clearSharedDataFromUrl();
       }
+      return;
+    }
+
+    // Check for auto-save data
+    if (hasAutoSave()) {
+      setShowRecoveryDialog(true);
     }
   }, [setMechanic]);
+
+  // Handle recovery
+  const handleRecover = useCallback(() => {
+    const saved = loadAutoSave();
+    if (saved) {
+      setMechanic(saved);
+    }
+    setShowRecoveryDialog(false);
+  }, [setMechanic]);
+
+  const handleDiscard = useCallback(() => {
+    clearAutoSave();
+    setShowRecoveryDialog(false);
+  }, []);
 
   // Export handler for Ctrl+S
   const handleExport = useCallback(() => {
@@ -80,6 +107,14 @@ function EditorContent() {
 
       <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
       <ShortcutHelpDialog isOpen={isShortcutHelpOpen} onClose={() => setIsShortcutHelpOpen(false)} />
+
+      {/* Recovery Dialog */}
+      {showRecoveryDialog && (
+        <RecoveryDialog
+          onRecover={handleRecover}
+          onDiscard={handleDiscard}
+        />
+      )}
 
       {/* URL Load Error Modal */}
       {urlLoadError && (

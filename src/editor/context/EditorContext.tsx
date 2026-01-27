@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
 import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, TextAnnotation, GimmickObject } from '../../data/types';
-import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings } from './editorReducer';
+import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type MoveFromListMode } from './editorReducer';
 
 interface EditorContextValue {
   state: EditorState;
@@ -66,6 +66,11 @@ interface EditorContextValue {
   // Selection actions
   deleteSelectedObject: () => void;
   copySelectedObject: () => void;
+  // Move from list mode
+  startMoveFromList: (playerId: string) => void;
+  cancelMoveFromList: () => void;
+  // Arrow key movement
+  movePlayerPosition: (playerId: string, dx: number, dy: number, frame: number) => void;
   // Computed values
   canUndo: boolean;
   canRedo: boolean;
@@ -353,6 +358,18 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'DELETE_OBJECT', payload: id });
   }, []);
 
+  const startMoveFromList = useCallback((playerId: string) => {
+    dispatch({ type: 'START_MOVE_FROM_LIST', payload: { playerId } });
+  }, []);
+
+  const cancelMoveFromList = useCallback(() => {
+    dispatch({ type: 'CANCEL_MOVE_FROM_LIST' });
+  }, []);
+
+  const movePlayerPosition = useCallback((playerId: string, dx: number, dy: number, frame: number) => {
+    dispatch({ type: 'MOVE_PLAYER_POSITION', payload: { playerId, dx, dy, frame } });
+  }, []);
+
   // Delete the currently selected object
   const deleteSelectedObject = useCallback(() => {
     const { selectedObjectId, selectedObjectType } = state;
@@ -532,6 +549,9 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     deleteObject,
     deleteSelectedObject,
     copySelectedObject,
+    startMoveFromList,
+    cancelMoveFromList,
+    movePlayerPosition,
     canUndo: state.historyIndex > 0,
     canRedo: state.historyIndex < state.history.length - 1,
     getAoEsAtFrame,

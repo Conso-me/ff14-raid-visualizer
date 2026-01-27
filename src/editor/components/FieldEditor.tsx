@@ -51,9 +51,10 @@ export function FieldEditor() {
     completeObjectPlacement,
     cancelObjectPlacement,
     updateObject,
+    cancelMoveFromList,
   } = useEditor();
 
-  const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, pendingDebuff } = state;
+  const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, pendingDebuff, moveFromListMode } = state;
 
   const [dragging, setDragging] = useState<{
     id: string;
@@ -200,6 +201,25 @@ export function FieldEditor() {
 
       const gamePos = clampToField(getGamePosFromEvent(e));
 
+      // Move from list mode (player was selected from ObjectListPanel)
+      if (moveFromListMode.active && moveFromListMode.playerId) {
+        const playerId = moveFromListMode.playerId;
+        const playerPos = playersAtCurrentFrame.find(p => p.id === playerId)?.position;
+
+        if (playerPos) {
+          // Start a pending move event and open dialog
+          const fromPositions = new Map<string, Position>();
+          fromPositions.set(playerId, playerPos);
+          startMoveEvent([playerId], fromPositions);
+          setPendingToPosition(gamePos);
+          setShowMoveDialog(true);
+        }
+
+        // Cancel moveFromListMode
+        cancelMoveFromList();
+        return;
+      }
+
       // Move event mode
       if (tool === 'add_move_event') {
         if (!pendingMoveEvent) {
@@ -284,7 +304,7 @@ export function FieldEditor() {
         selectObject(null, null);
       }
     },
-    [getGamePosFromEvent, clampToField, findObjectAtPos, findPlayerAtPos, selectObject, toggleMultiSelect, tool, pendingMoveEvent, startMoveEvent, playersAtCurrentFrame, selectedObjectIds, selectedObjectType]
+    [getGamePosFromEvent, clampToField, findObjectAtPos, findPlayerAtPos, selectObject, toggleMultiSelect, tool, pendingMoveEvent, startMoveEvent, playersAtCurrentFrame, selectedObjectIds, selectedObjectType, moveFromListMode, cancelMoveFromList]
   );
 
   const handleMouseMove = useCallback(
@@ -360,6 +380,9 @@ export function FieldEditor() {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (moveFromListMode.active) {
+          cancelMoveFromList();
+        }
         if (pendingMoveEvent || showMoveDialog) {
           cancelMoveEvent();
           setShowMoveDialog(false);
@@ -387,7 +410,7 @@ export function FieldEditor() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement]);
+  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, moveFromListMode, cancelMoveFromList]);
 
   // Use activeAoEsForLookup as activeAoEs for rendering (already computed earlier)
   const activeAoEs = activeAoEsForLookup;
@@ -664,6 +687,7 @@ export function FieldEditor() {
   // Get cursor style
   const getCursor = () => {
     if (dragging) return 'grabbing';
+    if (moveFromListMode.active) return 'crosshair';
     if (tool === 'add_move_event') {
       if (pendingMoveEvent) return 'crosshair';
       return 'pointer';
@@ -677,6 +701,10 @@ export function FieldEditor() {
 
   // Get info text
   const getInfoText = () => {
+    if (moveFromListMode.active && moveFromListMode.playerId) {
+      const player = mechanic.initialPlayers.find(p => p.id === moveFromListMode.playerId);
+      return `フィールドをクリックして ${player?.role || 'プレイヤー'} の移動先を指定 | Escでキャンセル`;
+    }
     if (tool === 'add_move_event') {
       if (pendingMoveEvent) {
         const playerCount = pendingMoveEvent.playerIds.length;
@@ -1038,7 +1066,7 @@ export function FieldEditor() {
       </div>
 
       {/* Info bar */}
-      <div style={{ marginTop: '12px', fontSize: '11px', color: tool === 'add_move_event' ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : tool === 'add_move_event' ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
         {getInfoText()}
       </div>
 
