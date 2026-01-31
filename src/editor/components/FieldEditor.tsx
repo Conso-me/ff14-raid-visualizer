@@ -2,12 +2,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useEditor } from '../context/EditorContext';
 import { useFieldCoordinates } from '../hooks/useFieldCoordinates';
 import { Field } from '../../components/field/Field';
-import { Player } from '../../components/player/Player';
+import { Player as PlayerComponent } from '../../components/player/Player';
+import type { Player } from '../../data/types';
 import { Enemy } from '../../components/enemy/Enemy';
 import { FieldMarker } from '../../components/marker/FieldMarker';
 import { AoE } from '../../components/aoe/AoE';
 import { gameToScreen, screenToGame } from '../../utils/coordinates';
 import { MoveEventDialog, type MoveEventSettings } from './MoveEventDialog';
+import { PlayerSelectionDialog } from './PlayerSelectionDialog';
 import { AoEDialog } from './AoEDialog';
 import { AoEPreview } from './AoEPreview';
 import { MovementPaths } from './MovementPaths';
@@ -68,6 +70,10 @@ export function FieldEditor() {
   const [pendingAoEPosition, setPendingAoEPosition] = useState<Position | null>(null);
   const [showDebuffDialog, setShowDebuffDialog] = useState(false);
   const [pendingDebuffTargetId, setPendingDebuffTargetId] = useState<string | null>(null);
+  const [showPlayerSelectionDialog, setShowPlayerSelectionDialog] = useState(false);
+  const [overlappingPlayers, setOverlappingPlayers] = useState<Player[]>([]);
+  const [overlappingPlayerPositions, setOverlappingPlayerPositions] = useState<Map<string, Position>>(new Map());
+  const [pendingMoveStartPos, setPendingMoveStartPos] = useState<Position | null>(null);
   const [showTextDialog, setShowTextDialog] = useState(false);
   const [pendingTextPosition, setPendingTextPosition] = useState<Position | null>(null);
   const [showObjectDialog, setShowObjectDialog] = useState(false);
@@ -120,20 +126,29 @@ export function FieldEditor() {
   // Get active objects - moved up for use in findObjectAtPos
   const activeObjects = useMemo(() => getActiveObjects(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);
 
-  // Find player at position (using calculated positions)
-  const findPlayerAtPos = useCallback((gamePos: Position) => {
+  // Find all players at position (using calculated positions)
+  const findPlayersAtPos = useCallback((gamePos: Position): Player[] => {
     const tolerance = 1.5;
+    const found: Player[] = [];
     for (const player of playersAtCurrentFrame) {
       const dx = player.position.x - gamePos.x;
       const dy = player.position.y - gamePos.y;
       if (Math.sqrt(dx * dx + dy * dy) < tolerance) {
-        // Return the original player with calculated position
+        // Return the original player
         const originalPlayer = mechanic.initialPlayers.find(p => p.id === player.id);
-        return originalPlayer ? { ...originalPlayer, calculatedPosition: player.position } : null;
+        if (originalPlayer) {
+          found.push(originalPlayer);
+        }
       }
     }
-    return null;
+    return found;
   }, [playersAtCurrentFrame, mechanic.initialPlayers]);
+
+  // Find single player at position (legacy - for backward compatibility)
+  const findPlayerAtPos = useCallback((gamePos: Position): Player | null => {
+    const players = findPlayersAtPos(gamePos);
+    return players.length > 0 ? players[0] : null;
+  }, [findPlayersAtPos]);
 
   // Find object at position (using calculated positions)
   const findObjectAtPos = useCallback((gamePos: Position) => {
@@ -224,8 +239,22 @@ export function FieldEditor() {
       if (tool === 'add_move_event') {
         if (!pendingMoveEvent) {
           // Step 1: Select player(s) to move
-          const player = findPlayerAtPos(gamePos);
-          if (player) {
+          const playersAtPos = findPlayersAtPos(gamePos);
+          
+          if (playersAtPos.length > 1) {
+            // Multiple players overlapping - show selection dialog
+            const positions = new Map<string, Position>();
+            playersAtPos.forEach(p => {
+              const pos = playersAtCurrentFrame.find(player => player.id === p.id)?.position;
+              if (pos) positions.set(p.id, pos);
+            });
+            setOverlappingPlayers(playersAtPos);
+            setOverlappingPlayerPositions(positions);
+            setPendingMoveStartPos(gamePos);
+            setShowPlayerSelectionDialog(true);
+          } else if (playersAtPos.length === 1) {
+            // Single player - proceed as before
+            const player = playersAtPos[0];
             // Check if we already have multi-selected players
             if (selectedObjectIds.length > 0 && selectedObjectType === 'player') {
               // If clicked player is part of selection, use all selected players
@@ -325,6 +354,34 @@ export function FieldEditor() {
   }, []);
 
   // Handle drag - update position based on whether there's an active move event
+  // Handle player selection from overlapping dialog (defined before useEffect that uses it)
+  const handlePlayerSelection = useCallback((playerIds: string[]) => {
+    setShowPlayerSelectionDialog(false);
+    
+    if (playerIds.length === 0) return;
+    
+    // Get positions for all selected players
+    const fromPositions = new Map<string, Position>();
+    for (const id of playerIds) {
+      const pos = playersAtCurrentFrame.find(p => p.id === id)?.position;
+      if (pos) fromPositions.set(id, pos);
+    }
+    
+    // Start move event with all selected players
+    startMoveEvent(playerIds, fromPositions);
+    
+    setOverlappingPlayers([]);
+    setOverlappingPlayerPositions(new Map());
+    setPendingMoveStartPos(null);
+  }, [playersAtCurrentFrame, startMoveEvent]);
+
+  const handlePlayerSelectionCancel = useCallback(() => {
+    setShowPlayerSelectionDialog(false);
+    setOverlappingPlayers([]);
+    setOverlappingPlayerPositions(new Map());
+    setPendingMoveStartPos(null);
+  }, []);
+
   React.useEffect(() => {
     if (!dragging) return;
 
@@ -406,11 +463,14 @@ export function FieldEditor() {
           setPendingObjectPosition(null);
           cancelObjectPlacement();
         }
+        if (showPlayerSelectionDialog) {
+          handlePlayerSelectionCancel();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, moveFromListMode, cancelMoveFromList]);
+  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, showPlayerSelectionDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, moveFromListMode, cancelMoveFromList, handlePlayerSelectionCancel]);
 
   // Use activeAoEsForLookup as activeAoEs for rendering (already computed earlier)
   const activeAoEs = activeAoEsForLookup;
@@ -866,7 +926,7 @@ export function FieldEditor() {
 
             {/* Players - using calculated positions */}
             {playersAtCurrentFrame.map((player) => (
-              <Player
+<PlayerComponent
                 key={player.id}
                 {...player}
                 debuffs={playerDebuffs.get(player.id) || []}
@@ -1133,6 +1193,15 @@ export function FieldEditor() {
           onCancel={handleObjectDialogCancel}
         />
       )}
+
+      {/* Player Selection Dialog */}
+      <PlayerSelectionDialog
+        isOpen={showPlayerSelectionDialog}
+        players={overlappingPlayers}
+        currentPositions={overlappingPlayerPositions}
+        onSelect={handlePlayerSelection}
+        onCancel={handlePlayerSelectionCancel}
+      />
     </div>
   );
 }

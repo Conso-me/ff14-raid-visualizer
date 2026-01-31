@@ -13,9 +13,10 @@ import { clearAutoSave } from '../hooks/useAutoSave';
 interface EditorHeaderProps {
   onOpenPreview: () => void;
   onOpenShortcutHelp?: () => void;
+  onOpenSaveLoad?: () => void;
 }
 
-export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeaderProps) {
+export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad }: EditorHeaderProps) {
   const { state, setMechanic, undo, redo, canUndo, canRedo, updateMechanicMeta } = useEditor();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -99,6 +100,11 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeader
       enemies: [],
       timeline: [],
     });
+  };
+
+  const handleResetWelcome = () => {
+    localStorage.removeItem('ff14-raid-visualizer-welcome-shown');
+    window.location.reload();
   };
 
   const buttonStyle: React.CSSProperties = {
@@ -228,6 +234,27 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeader
         </button>
       </div>
 
+      {/* Save/Load */}
+      {onOpenSaveLoad && (
+        <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid #3a3a5a', paddingLeft: '12px' }}>
+          <button
+            onClick={onOpenSaveLoad}
+            style={{
+              ...buttonStyle,
+              background: '#2c5f7c',
+              borderColor: '#3c7a9c',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="データの保存・読み込み"
+          >
+            💾
+            <span>保存・読込</span>
+          </button>
+        </div>
+      )}
+
       {/* Preview */}
       <button
         onClick={onOpenPreview}
@@ -252,18 +279,27 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp }: EditorHeader
         動画出力
       </button>
 
-      {/* Shortcut Help */}
+      {/* Shortcut Help - Prominent button with label */}
       {onOpenShortcutHelp && (
         <button
           onClick={onOpenShortcutHelp}
           style={{
-            ...buttonStyle,
-            minWidth: '32px',
-            padding: '6px 10px',
+            padding: '6px 14px',
+            background: '#4a5568',
+            border: '2px solid #5a6578',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontWeight: 'bold',
           }}
           title="キーボードショートカット (?)"
         >
-          ?
+          <span style={{ fontSize: '14px' }}>?</span>
+          <span>ヘルプ</span>
         </button>
       )}
 

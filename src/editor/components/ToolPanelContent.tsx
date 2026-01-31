@@ -98,15 +98,16 @@ export function ToolPanelContent() {
 
   const handlePreset8Players = () => {
     // Standard 8-player spread positions (clock positions)
+    // DPS positions swapped: D1/D3, D2/D4
     const positions: { role: Role; x: number; y: number }[] = [
       { role: 'T1', x: 0, y: -8 },
       { role: 'T2', x: 0, y: 8 },
       { role: 'H1', x: -8, y: 0 },
       { role: 'H2', x: 8, y: 0 },
-      { role: 'D1', x: -6, y: -6 },
-      { role: 'D2', x: 6, y: -6 },
-      { role: 'D3', x: -6, y: 6 },
-      { role: 'D4', x: 6, y: 6 },
+      { role: 'D1', x: -6, y: 6 },
+      { role: 'D2', x: 6, y: 6 },
+      { role: 'D3', x: -6, y: -6 },
+      { role: 'D4', x: 6, y: -6 },
     ];
 
     positions.forEach(({ role, x, y }) => {

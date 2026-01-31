@@ -7,23 +7,22 @@ import { PropertyPanel } from './components/PropertyPanel';
 import { TimelineEditor } from './components/TimelineEditor';
 import { PreviewModal } from './components/PreviewModal';
 import { ShortcutHelpDialog } from './components/ShortcutHelpDialog';
-import { RecoveryDialog } from './components/RecoveryDialog';
+import { WelcomeDialog } from './components/WelcomeDialog';
+import { SaveLoadDialog } from './components/SaveLoadDialog';
+import type { MechanicData } from '../data/types';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { useAutoSave, loadAutoSave, hasAutoSave, clearAutoSave } from './hooks/useAutoSave';
 import { hasSharedData, decodeMechanicFromUrl, clearSharedDataFromUrl } from './utils/shareUrl';
 
 function EditorContent() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
   const [urlLoadError, setUrlLoadError] = useState<string | null>(null);
-  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [showSaveLoadDialog, setShowSaveLoadDialog] = useState(false);
   const { state, setMechanic } = useEditor();
   const exportRef = useRef<(() => void) | null>(null);
 
-  // Auto-save
-  useAutoSave(state.mechanic);
-
-  // Load mechanic from URL or check for auto-save on mount
+  // Load mechanic from URL on mount
   useEffect(() => {
     // URL parameters take priority
     if (hasSharedData()) {
@@ -39,25 +38,27 @@ function EditorContent() {
       return;
     }
 
-    // Check for auto-save data
-    if (hasAutoSave()) {
-      setShowRecoveryDialog(true);
+    // Show welcome dialog for first-time users
+    const hasSeenWelcome = localStorage.getItem('ff14-raid-visualizer-welcome-shown');
+    if (!hasSeenWelcome) {
+      setShowWelcomeDialog(true);
     }
   }, [setMechanic]);
 
-  // Handle recovery
-  const handleRecover = useCallback(() => {
-    const saved = loadAutoSave();
-    if (saved) {
-      setMechanic(saved);
-    }
-    setShowRecoveryDialog(false);
-  }, [setMechanic]);
-
-  const handleDiscard = useCallback(() => {
-    clearAutoSave();
-    setShowRecoveryDialog(false);
+  // Handle welcome dialog close
+  const handleWelcomeClose = useCallback(() => {
+    setShowWelcomeDialog(false);
   }, []);
+
+  const handleWelcomeDontShowAgain = useCallback(() => {
+    localStorage.setItem('ff14-raid-visualizer-welcome-shown', 'true');
+  }, []);
+
+  // Handle load from save slot
+  const handleLoadMechanic = useCallback((mechanic: MechanicData) => {
+    setMechanic(mechanic);
+    setShowSaveLoadDialog(false);
+  }, [setMechanic]);
 
   // Export handler for Ctrl+S
   const handleExport = useCallback(() => {
@@ -89,6 +90,7 @@ function EditorContent() {
       <EditorHeader
         onOpenPreview={() => setIsPreviewOpen(true)}
         onOpenShortcutHelp={() => setIsShortcutHelpOpen(true)}
+        onOpenSaveLoad={() => setShowSaveLoadDialog(true)}
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -108,13 +110,21 @@ function EditorContent() {
       <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
       <ShortcutHelpDialog isOpen={isShortcutHelpOpen} onClose={() => setIsShortcutHelpOpen(false)} />
 
-      {/* Recovery Dialog */}
-      {showRecoveryDialog && (
-        <RecoveryDialog
-          onRecover={handleRecover}
-          onDiscard={handleDiscard}
-        />
-      )}
+      {/* Welcome Dialog */}
+      <WelcomeDialog 
+        isOpen={showWelcomeDialog} 
+        onClose={handleWelcomeClose}
+        onDontShowAgain={handleWelcomeDontShowAgain}
+      />
+
+      {/* Save/Load Dialog */}
+      <SaveLoadDialog
+        isOpen={showSaveLoadDialog}
+        onClose={() => setShowSaveLoadDialog(false)}
+        currentMechanic={state.mechanic}
+        currentFrame={state.currentFrame}
+        onLoad={handleLoadMechanic}
+      />
 
       {/* URL Load Error Modal */}
       {urlLoadError && (

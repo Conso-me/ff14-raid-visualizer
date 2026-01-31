@@ -48,6 +48,42 @@ export function TimelineEditor() {
     setScrollOffset(e.currentTarget.scrollLeft);
   }, []);
 
+  // Arrow key navigation for timeline (left/right: frame navigation)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      // Ignore if dialog is open
+      const modals = document.querySelectorAll('[style*="position: fixed"][style*="z-index: 1000"]');
+      if (modals.length > 0) return;
+
+      const step = e.shiftKey ? 10 : 1;
+      
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          setCurrentFrame(Math.max(0, currentFrame - step));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          setCurrentFrame(Math.min(mechanic.durationFrames, currentFrame + step));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          // Reserved for future use
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          // Reserved for future use
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentFrame, mechanic.durationFrames, setCurrentFrame]);
+
   const handleTimelineClick = useCallback(
     (e: React.MouseEvent) => {
       if (!trackContentRef.current) return;

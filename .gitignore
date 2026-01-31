@@ -5,3 +5,5 @@ temp/
 .env
 *.log
 .DS_Store
+opencode.jsonc
+.github_token
