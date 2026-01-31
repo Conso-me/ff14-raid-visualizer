@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Position, GimmickObject } from '../../data/types';
 import type { ObjectSettings } from '../context/editorReducer';
 
@@ -53,13 +53,7 @@ export function ObjectDialog({
   const [fadeInDuration, setFadeInDuration] = useState(10);
   const [fadeOutDuration, setFadeOutDuration] = useState(15);
 
-  // Reset start frame when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setStartFrame(currentFrame);
-      setEndFrame(currentFrame + 90);
-    }
-  }, [isOpen, currentFrame]);
+
 
   if (!isOpen) return null;
 

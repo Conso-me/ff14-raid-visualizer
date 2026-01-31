@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Position, AoEType } from '../../data/types';
 import type { AoESettings } from '../context/editorReducer';
 
@@ -57,17 +57,7 @@ export function AoEDialog({
   const [fadeInDuration, setFadeInDuration] = useState(10);
   const [fadeOutDuration, setFadeOutDuration] = useState(15);
 
-  // Reset params when type changes
-  useEffect(() => {
-    setParams(getDefaultParams(type));
-  }, [type]);
 
-  // Reset start frame when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setStartFrame(currentFrame);
-    }
-  }, [isOpen, currentFrame]);
 
   if (!isOpen) return null;
 

@@ -1147,6 +1147,7 @@ export function FieldEditor() {
       {/* AoE Dialog */}
       {showAoEDialog && pendingAoEPosition && (
         <AoEDialog
+          key={`${selectedAoEType}-${currentFrame}`}
           isOpen={showAoEDialog}
           position={pendingAoEPosition}
           type={selectedAoEType}
@@ -1185,6 +1186,7 @@ export function FieldEditor() {
       {/* Object Dialog */}
       {showObjectDialog && pendingObjectPosition && (
         <ObjectDialog
+          key={currentFrame}
           isOpen={showObjectDialog}
           position={pendingObjectPosition}
           currentFrame={currentFrame}

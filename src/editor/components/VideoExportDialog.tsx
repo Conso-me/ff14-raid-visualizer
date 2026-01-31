@@ -50,16 +50,7 @@ export function VideoExportDialog({ isOpen, mechanic, onClose }: VideoExportDial
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose, status]);
 
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setFileName(mechanic.id || 'mechanic');
-      setStatus('idle');
-      setProgress(0);
-      setError(null);
-      setJobId(null);
-    }
-  }, [isOpen, mechanic.id]);
+
 
   if (!isOpen) return null;
 

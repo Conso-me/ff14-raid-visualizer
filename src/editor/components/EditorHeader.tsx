@@ -319,6 +319,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
 
       {/* Video Export Dialog */}
       <VideoExportDialog
+        key={state.mechanic.id}
         isOpen={isVideoExportOpen}
         mechanic={state.mechanic}
         onClose={() => setIsVideoExportOpen(false)}
