@@ -397,7 +397,7 @@ export function ObjectListPanel() {
 
   // Get AoE info
   const aoeEventPairs = getAoEEventPairs(mechanic.timeline);
-  const activeAoEs = getActiveAoEs(mechanic.timeline, currentFrame);
+  const activeAoEs = getActiveAoEs(mechanic.timeline, currentFrame, mechanic);
   const activeAoEIds = new Set(activeAoEs.map(a => a.id));
 
   // Get text annotations

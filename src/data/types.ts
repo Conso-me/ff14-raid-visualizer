@@ -32,6 +32,12 @@ export interface Player {
 // AoE（攻撃範囲）の種類
 export type AoEType = 'circle' | 'cone' | 'line' | 'donut' | 'cross';
 
+// AoEの起点タイプ
+export type AoESourceType = 'fixed' | 'boss' | 'object' | 'player' | 'debuff';
+
+// AoEの追従モード
+export type AoETrackingMode = 'static' | 'track_source' | 'track_target';
+
 // AoE（攻撃範囲）
 export interface AoE {
   id: string;
@@ -55,6 +61,24 @@ export interface AoE {
   armWidth?: number;
   armLength?: number;
   rotation?: number; // 回転角度（度）
+  // ===== 新規: 起点設定 =====
+  sourceType?: AoESourceType; // 'fixed'=紐づけなし（従来通り）
+  sourceId?: string; // boss/object/player ID
+  sourceDebuffId?: string; // debuffの場合のデバフID
+  // ===== 新規: 追従設定 =====
+  trackingMode?: AoETrackingMode;
+  // 'static' = 設置型: 設置時の位置に固定（避けられる）
+  // 'track_source' = ソース追従: ソースの位置に追従
+  // 'track_target' = ターゲット追従: ターゲットプレイヤーを追従（避けられない）
+  targetPlayerId?: string; // ターゲット追従時のプレイヤーID
+  // ===== 新規: 設置遅延 =====
+  placementDelay?: number; // 設置までの遅延フレーム数（0=即時）
+  // 設置型で使用: マーカー表示→placementDelay後にAoE設置
+  // ===== 新規: 方向自動計算 =====
+  autoDirection?: boolean; // trueの場合、起点→ターゲットの方向を自動計算
+  // line/coneタイプで使用: 起点からターゲットへの方向を自動設定
+  // ソースからのオフセット
+  offsetFromSource?: Position;
 }
 
 // フィールド

@@ -95,6 +95,7 @@ export function PropertyPanel() {
                 aoe={event.aoe}
                 onUpdate={(updates) => updateAoE(selectedObjectId, updates)}
                 onDelete={() => deleteAoE(selectedObjectId)}
+                players={mechanic.initialPlayers}
               />
             );
           }
@@ -105,6 +106,7 @@ export function PropertyPanel() {
             aoe={aoe}
             onUpdate={(updates) => updateAoE(selectedObjectId, updates)}
             onDelete={() => deleteAoE(selectedObjectId)}
+            players={mechanic.initialPlayers}
           />
         );
       }

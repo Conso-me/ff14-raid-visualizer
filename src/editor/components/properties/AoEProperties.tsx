@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AoE, AoEType } from '../../../data/types';
+import type { AoE, AoEType, Player, AoESourceType, AoETrackingMode } from '../../../data/types';
 import { PositionInput } from './inputs/PositionInput';
 import { NumberInput } from './inputs/NumberInput';
 import { ColorInput } from './inputs/ColorInput';
@@ -9,6 +9,7 @@ interface AoEPropertiesProps {
   aoe: AoE;
   onUpdate: (updates: Partial<AoE>) => void;
   onDelete: () => void;
+  players?: Player[];
 }
 
 const AOE_TYPE_OPTIONS = [
@@ -19,7 +20,21 @@ const AOE_TYPE_OPTIONS = [
   { value: 'cross', label: 'Cross' },
 ];
 
-export function AoEProperties({ aoe, onUpdate, onDelete }: AoEPropertiesProps) {
+const SOURCE_TYPE_OPTIONS = [
+  { value: 'fixed', label: 'Fixed (None)' },
+  { value: 'boss', label: 'Boss' },
+  { value: 'object', label: 'Object' },
+  { value: 'player', label: 'Player' },
+  { value: 'debuff', label: 'Debuff' },
+];
+
+const TRACKING_MODE_OPTIONS = [
+  { value: 'static', label: 'Static (Placement)' },
+  { value: 'track_source', label: 'Track Source' },
+  { value: 'track_target', label: 'Track Target Player' },
+];
+
+export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEPropertiesProps) {
   const renderTypeSpecificProps = () => {
     switch (aoe.type) {
       case 'circle':
@@ -190,6 +205,144 @@ export function AoEProperties({ aoe, onUpdate, onDelete }: AoEPropertiesProps) {
           Type-specific Properties
         </label>
         {renderTypeSpecificProps()}
+      </div>
+
+      <div style={{ marginTop: '16px', borderTop: '1px solid #3a3a5a', paddingTop: '16px' }}>
+        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '8px' }}>
+          Source & Tracking Settings
+        </label>
+
+        <SelectInput
+          label="Source Type"
+          value={aoe.sourceType || 'fixed'}
+          onChange={(value) => onUpdate({ sourceType: value as AoESourceType })}
+          options={SOURCE_TYPE_OPTIONS}
+        />
+
+        {aoe.sourceType && aoe.sourceType !== 'fixed' && (
+          <>
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
+                Source ID
+              </label>
+              <input
+                type="text"
+                value={aoe.sourceId || ''}
+                onChange={(e) => onUpdate({ sourceId: e.target.value })}
+                placeholder="Enter source ID..."
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  background: '#2a2a4a',
+                  border: '1px solid #3a3a5a',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  fontSize: '13px',
+                }}
+              />
+            </div>
+
+            {aoe.sourceType === 'debuff' && (
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
+                  Debuff ID
+                </label>
+                <input
+                  type="text"
+                  value={aoe.sourceDebuffId || ''}
+                  onChange={(e) => onUpdate({ sourceDebuffId: e.target.value })}
+                  placeholder="Enter debuff ID..."
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    background: '#2a2a4a',
+                    border: '1px solid #3a3a5a',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '13px',
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        <SelectInput
+          label="Tracking Mode"
+          value={aoe.trackingMode || 'static'}
+          onChange={(value) => onUpdate({ trackingMode: value as AoETrackingMode })}
+          options={TRACKING_MODE_OPTIONS}
+        />
+
+        {aoe.trackingMode === 'track_target' && players.length > 0 && (
+          <div style={{ marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
+              Target Player
+            </label>
+            <select
+              value={aoe.targetPlayerId || ''}
+              onChange={(e) => onUpdate({ targetPlayerId: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                background: '#2a2a4a',
+                border: '1px solid #3a3a5a',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">Select a player...</option>
+              {players.map((player) => (
+                <option key={player.id} value={player.id}>
+                  {player.name || player.role} ({player.role})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {aoe.trackingMode === 'static' && (
+          <NumberInput
+            label="Placement Delay (frames)"
+            value={aoe.placementDelay || 0}
+            onChange={(value) => onUpdate({ placementDelay: value })}
+            min={0}
+            max={300}
+            step={1}
+          />
+        )}
+
+        {aoe.sourceType && aoe.sourceType !== 'fixed' && (
+          <>
+            <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px', marginTop: '8px' }}>
+              Offset from Source
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <NumberInput
+                label="X"
+                value={aoe.offsetFromSource?.x || 0}
+                onChange={(value) => onUpdate({
+                  offsetFromSource: { x: value, y: aoe.offsetFromSource?.y || 0 }
+                })}
+                min={-50}
+                max={50}
+                step={0.5}
+              />
+              <NumberInput
+                label="Y"
+                value={aoe.offsetFromSource?.y || 0}
+                onChange={(value) => onUpdate({
+                  offsetFromSource: { x: aoe.offsetFromSource?.x || 0, y: value }
+                })}
+                min={-50}
+                max={50}
+                step={0.5}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <button

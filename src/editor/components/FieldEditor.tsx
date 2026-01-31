@@ -118,7 +118,7 @@ export function FieldEditor() {
   }, [mechanic.field.size]);
 
   // Use getActiveAoEs for fade in/out animation in editor - moved up for use in findObjectAtPos
-  const activeAoEsForLookup = useMemo(() => getActiveAoEs(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);
+  const activeAoEsForLookup = useMemo(() => getActiveAoEs(mechanic.timeline, currentFrame, mechanic), [mechanic.timeline, currentFrame, mechanic]);
 
   // Get active text annotations - moved up for use in findObjectAtPos
   const activeAnnotations = useMemo(() => getActiveAnnotations(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);

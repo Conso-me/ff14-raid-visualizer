@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import type { Position, AoEType } from '../../data/types';
+import type { Position, AoEType, AoESourceType, AoETrackingMode, Enemy, Player } from '../../data/types';
 import type { AoESettings } from '../context/editorReducer';
+import { useEditor } from '../context/EditorContext';
 
 interface AoEDialogProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export function AoEDialog({
   onConfirm,
   onCancel,
 }: AoEDialogProps) {
+  const { state } = useEditor();
   const [params, setParams] = useState<Record<string, number>>(getDefaultParams(type));
   const [color, setColor] = useState('#ff6600');
   const [opacity, setOpacity] = useState(0.5);
@@ -57,7 +59,16 @@ export function AoEDialog({
   const [fadeInDuration, setFadeInDuration] = useState(10);
   const [fadeOutDuration, setFadeOutDuration] = useState(15);
 
-
+  // 新規: 起点・追従設定
+  const [sourceType, setSourceType] = useState<AoESourceType>('fixed');
+  const [sourceId, setSourceId] = useState<string>('');
+  const [sourceDebuffId, setSourceDebuffId] = useState<string>('');
+  const [trackingMode, setTrackingMode] = useState<AoETrackingMode>('static');
+  const [targetPlayerId, setTargetPlayerId] = useState<string>('');
+  const [placementDelay, setPlacementDelay] = useState(0);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [autoDirection, setAutoDirection] = useState(false);
 
   if (!isOpen) return null;
 
@@ -72,6 +83,18 @@ export function AoEDialog({
       duration,
       fadeInDuration,
       fadeOutDuration,
+      sourceType,
+      sourceId: sourceId || undefined,
+      sourceDebuffId: sourceDebuffId || undefined,
+      trackingMode,
+      targetPlayerId: targetPlayerId || undefined,
+      placementDelay,
+      offsetFromSource: (sourceType !== 'fixed' && (offsetX !== 0 || offsetY !== 0)) 
+        ? { x: offsetX, y: offsetY } 
+        : undefined,
+      autoDirection: (type === 'line' || type === 'cone') && sourceType !== 'fixed' && targetPlayerId && autoDirection 
+        ? true 
+        : undefined,
     });
   };
 
@@ -100,6 +123,11 @@ export function AoEDialog({
     marginBottom: '8px',
   };
 
+  const selectStyle = {
+    ...inputStyle,
+    cursor: 'pointer',
+  };
+
   return (
     <div
       style={{
@@ -117,8 +145,8 @@ export function AoEDialog({
           background: '#1a1a2e',
           borderRadius: '8px',
           padding: '24px',
-          width: '420px',
-          maxHeight: '80vh',
+          width: '480px',
+          maxHeight: '85vh',
           overflowY: 'auto',
           border: '1px solid #3a3a5a',
         }}
@@ -140,6 +168,195 @@ export function AoEDialog({
           <p style={{ margin: '4px 0 0', color: '#fff', fontSize: '13px' }}>
             X: {position.x.toFixed(1)}, Y: {position.y.toFixed(1)}
           </p>
+        </div>
+
+        {/* 起点設定 */}
+        <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
+          <div style={sectionTitleStyle}>起点設定（オプション）</div>
+          
+          <label style={labelStyle}>
+            起点タイプ
+            <select
+              value={sourceType}
+              onChange={(e) => {
+                setSourceType(e.target.value as AoESourceType);
+                setSourceId('');
+                setSourceDebuffId('');
+              }}
+              style={selectStyle}
+            >
+              <option value="fixed">紐づけなし（固定位置）</option>
+              <option value="boss">ボス</option>
+              <option value="object">オブジェクト</option>
+              <option value="player">プレイヤー</option>
+              <option value="debuff">デバフ持ちプレイヤー</option>
+            </select>
+          </label>
+
+          {sourceType === 'boss' && (
+            <label style={labelStyle}>
+              ボス選択
+              <select
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">選択してください</option>
+                {state.mechanic.enemies.map((enemy: Enemy) => (
+                  <option key={enemy.id} value={enemy.id}>
+                    {enemy.name || enemy.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {sourceType === 'player' && (
+            <label style={labelStyle}>
+              プレイヤー選択
+              <select
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">選択してください</option>
+                {state.mechanic.initialPlayers.map((player: Player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.name || player.role} ({player.role})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {sourceType === 'debuff' && (
+            <label style={labelStyle}>
+              デバフID
+              <input
+                type="text"
+                value={sourceDebuffId}
+                onChange={(e) => setSourceDebuffId(e.target.value)}
+                placeholder="デバフのIDを入力"
+                style={inputStyle}
+              />
+            </label>
+          )}
+
+          {sourceType === 'object' && (
+            <label style={labelStyle}>
+              オブジェクトID
+              <input
+                type="text"
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                placeholder="オブジェクトのIDを入力"
+                style={inputStyle}
+              />
+            </label>
+          )}
+
+          {sourceType !== 'fixed' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+                <label style={labelStyle}>
+                  Xオフセット
+                  <input
+                    type="number"
+                    value={offsetX}
+                    onChange={(e) => setOffsetX(parseFloat(e.target.value) || 0)}
+                    step={0.5}
+                    style={inputStyle}
+                  />
+                </label>
+                <label style={labelStyle}>
+                  Yオフセット
+                  <input
+                    type="number"
+                    value={offsetY}
+                    onChange={(e) => setOffsetY(parseFloat(e.target.value) || 0)}
+                    step={0.5}
+                    style={inputStyle}
+                  />
+                </label>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 追従モード設定 */}
+        <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
+          <div style={sectionTitleStyle}>追従モード</div>
+          
+          <label style={labelStyle}>
+            モード
+            <select
+              value={trackingMode}
+              onChange={(e) => {
+                setTrackingMode(e.target.value as AoETrackingMode);
+                if (e.target.value !== 'track_target') {
+                  setTargetPlayerId('');
+                }
+              }}
+              style={selectStyle}
+            >
+              <option value="static">
+                設置型（固定位置で発生、避けられる）
+              </option>
+              <option value="track_source">
+                ソース追従（ソースの位置に追従）
+              </option>
+              <option value="track_target">
+                ターゲット追従（プレイヤーを追従、避けられない）
+              </option>
+            </select>
+          </label>
+
+          {trackingMode === 'track_target' && (
+            <label style={labelStyle}>
+              追従対象プレイヤー
+              <select
+                value={targetPlayerId}
+                onChange={(e) => setTargetPlayerId(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">選択してください</option>
+                {state.mechanic.initialPlayers.map((player: Player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.name || player.role} ({player.role})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {(type === 'line' || type === 'cone') && sourceType !== 'fixed' && targetPlayerId && (
+            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={autoDirection}
+                onChange={(e) => setAutoDirection(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              <span>方向を自動計算（起点→ターゲット）</span>
+            </label>
+          )}
+
+          {trackingMode === 'static' && (
+            <label style={labelStyle}>
+              設置遅延（フレーム）
+              <input
+                type="number"
+                value={placementDelay}
+                onChange={(e) => setPlacementDelay(parseInt(e.target.value) || 0)}
+                min={0}
+                step={1}
+                style={inputStyle}
+              />
+              <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                マーカー表示から設置までの遅延（0=即時）
+              </p>
+            </label>
+          )}
         </div>
 
         {/* Size settings */}

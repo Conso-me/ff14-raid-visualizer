@@ -1,4 +1,4 @@
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent } from '../../data/types';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent } from '../../data/types';
 
 export type Tool = 'select' | 'move' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object';
 export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | null;
@@ -68,6 +68,15 @@ export interface AoESettings {
   duration: number;
   fadeInDuration: number;
   fadeOutDuration: number;
+  // ===== 新規: 起点・追従設定 =====
+  sourceType: AoESourceType;
+  sourceId?: string;
+  sourceDebuffId?: string;
+  trackingMode: AoETrackingMode;
+  targetPlayerId?: string;
+  placementDelay: number;
+  offsetFromSource?: Position;
+  autoDirection?: boolean;
 }
 
 export interface MoveFromListMode {
@@ -608,6 +617,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           ...(settings.width !== undefined && { width: settings.width }),
           color: settings.color,
           opacity: settings.opacity,
+          // 起点・追従設定
+          sourceType: settings.sourceType,
+          ...(settings.sourceId !== undefined && { sourceId: settings.sourceId }),
+          ...(settings.sourceDebuffId !== undefined && { sourceDebuffId: settings.sourceDebuffId }),
+          trackingMode: settings.trackingMode,
+          ...(settings.targetPlayerId !== undefined && { targetPlayerId: settings.targetPlayerId }),
+          placementDelay: settings.placementDelay,
+          ...(settings.offsetFromSource !== undefined && { offsetFromSource: settings.offsetFromSource }),
+          ...(settings.autoDirection !== undefined && { autoDirection: settings.autoDirection }),
         },
         fadeInDuration: settings.fadeInDuration,
       };

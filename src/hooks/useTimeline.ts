@@ -5,9 +5,12 @@ import {
   MechanicData,
   Player,
   Enemy,
+  GimmickObject,
   Position,
   Debuff,
   AoEDisplay,
+  AoESourceType,
+  AoETrackingMode,
   TextDisplay,
   CastDisplay,
   MoveEvent,
@@ -17,6 +20,8 @@ import {
   TextEvent,
   CastEvent,
   BossMoveEvent,
+  ObjectShowEvent,
+  ObjectHideEvent,
 } from '../data/types';
 import { animatePosition, animateOpacity } from '../utils/animation';
 
@@ -24,6 +29,7 @@ import { animatePosition, animateOpacity } from '../utils/animation';
 export interface TimelineState {
   players: Player[];
   enemies: Enemy[];
+  activeObjects: GimmickObject[];
   activeAoEs: AoEDisplay[];
   activeTexts: TextDisplay[];
   activeCasts: CastDisplay[];
@@ -36,6 +42,8 @@ interface AoETracker {
   fadeIn: number;
   hideFrame?: number;
   fadeOut?: number;
+  fixedPosition?: Position; // 設置型（static）で使用する固定位置
+  placementFrame?: number; // 実際に設置されたフレーム（placementDelay考慮）
 }
 
 // 内部で使用するテキスト追跡用の型
@@ -48,6 +56,15 @@ interface TextTracker {
 interface CastTracker {
   event: CastEvent;
   endFrame: number;
+}
+
+// 内部で使用するオブジェクト追跡用の型
+interface ObjectTracker {
+  object: GimmickObject;
+  showFrame: number;
+  fadeInDuration?: number;
+  hideFrame?: number;
+  fadeOutDuration?: number;
 }
 
 // 移動イベント追跡用の型
@@ -72,6 +89,19 @@ function getEasingFunction(
   }
 }
 
+// 2点間の角度を計算（度、北=0、時計回り）
+function calculateDirection(from: Position, to: Position): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  // atan2は弧度法で返すので度に変換
+  // 座標系: Yが上向きが正、Xが右向きが正
+  // 北=0度とするため、角度を調整
+  // dyとdxを入れ替えることで北基準になり、符号を反転して時計回りに
+  const angleRad = Math.atan2(dx, -dy); // 北基準、時計回り
+  const angleDeg = (angleRad * 180) / Math.PI;
+  return angleDeg;
+}
+
 export function useTimeline(mechanic: MechanicData): TimelineState {
   const frame = useCurrentFrame();
 
@@ -93,6 +123,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
     const textTrackers: Map<string, TextTracker> = new Map();
     const castTrackers: Map<string, CastTracker> = new Map();
     const moveTrackers: Map<string, MoveTracker[]> = new Map();
+    const objectTrackers: Map<string, ObjectTracker> = new Map();
 
     // プレイヤーIDから現在位置を取得するヘルパー
     const getPlayerPosition = (playerId: string): Position => {
@@ -104,6 +135,23 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
     const getEnemyPosition = (enemyId: string): Position => {
       const enemy = enemies.find((e) => e.id === enemyId);
       return enemy?.position ?? { x: 0, y: 0 };
+    };
+
+    // オブジェクトIDから現在位置を取得するヘルパー
+    const getObjectPosition = (objectId: string): Position => {
+      const tracker = objectTrackers.get(objectId);
+      return tracker?.object.position ?? { x: 0, y: 0 };
+    };
+
+    // デバフIDから現在持っているプレイヤーの位置を取得するヘルパー
+    const getDebuffHolderPosition = (debuffId: string): Position | null => {
+      for (const player of players) {
+        const hasDebuff = player.debuffs?.some((d) => d.id === debuffId);
+        if (hasDebuff) {
+          return player.position;
+        }
+      }
+      return null;
     };
 
     // イベントを時系列順にソート
@@ -167,10 +215,65 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
         case 'aoe_show': {
           const aoeEvent = event as AoEShowEvent;
           if (event.frame <= frame) {
-            aoeTrackers.set(aoeEvent.aoe.id, {
-              aoe: { ...aoeEvent.aoe, opacity: 0.5 },
+            const aoe = aoeEvent.aoe;
+            const sourceType = aoe.sourceType ?? 'fixed';
+            const trackingMode = aoe.trackingMode ?? 'static';
+            const placementDelay = aoe.placementDelay ?? 0;
+            const placementFrame = event.frame + placementDelay;
+
+            // 初期位置を計算
+            let initialPosition: Position = { ...aoe.position };
+
+            // ソースが指定されている場合、ソースの現在位置を取得
+            if (sourceType !== 'fixed') {
+              const offset = aoe.offsetFromSource ?? { x: 0, y: 0 };
+              let sourcePos: Position | null = null;
+
+              switch (sourceType) {
+                case 'boss':
+                  if (aoe.sourceId) {
+                    sourcePos = getEnemyPosition(aoe.sourceId);
+                  }
+                  break;
+                case 'object':
+                  if (aoe.sourceId) {
+                    sourcePos = getObjectPosition(aoe.sourceId);
+                  }
+                  break;
+                case 'player':
+                  if (aoe.sourceId) {
+                    sourcePos = getPlayerPosition(aoe.sourceId);
+                  }
+                  break;
+                case 'debuff':
+                  if (aoe.sourceDebuffId) {
+                    sourcePos = getDebuffHolderPosition(aoe.sourceDebuffId);
+                  }
+                  break;
+              }
+
+              if (sourcePos) {
+                initialPosition = {
+                  x: sourcePos.x + offset.x,
+                  y: sourcePos.y + offset.y,
+                };
+              }
+            }
+
+            // 設置型（static）の場合は、設置フレーム時の位置を固定
+            // 追従型の場合は、後で毎フレーム計算
+            let fixedPosition: Position | undefined;
+            if (trackingMode === 'static' && frame >= placementFrame) {
+              // 設置時点での位置を記録
+              fixedPosition = { ...initialPosition };
+            }
+
+            aoeTrackers.set(aoe.id, {
+              aoe: { ...aoe, opacity: 0.5, position: initialPosition },
               showFrame: event.frame,
               fadeIn: aoeEvent.fadeInDuration ?? 0,
+              fixedPosition,
+              placementFrame,
             });
           }
           break;
@@ -249,6 +352,30 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
           });
           break;
         }
+
+        case 'object_show': {
+          const objEvent = event as ObjectShowEvent;
+          if (event.frame <= frame) {
+            objectTrackers.set(objEvent.object.id, {
+              object: objEvent.object,
+              showFrame: event.frame,
+              fadeInDuration: objEvent.fadeInDuration ?? 0,
+            });
+          }
+          break;
+        }
+
+        case 'object_hide': {
+          const hideEvent = event as ObjectHideEvent;
+          if (event.frame <= frame) {
+            const tracker = objectTrackers.get(hideEvent.objectId);
+            if (tracker) {
+              tracker.hideFrame = event.frame;
+              tracker.fadeOutDuration = hideEvent.fadeOutDuration ?? 0;
+            }
+          }
+          break;
+        }
       }
     }
 
@@ -285,15 +412,22 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       player.position = currentPos;
     }
 
-    // AoEの不透明度を計算
+    // AoEの不透明度と位置を計算
     const activeAoEs: AoEDisplay[] = [];
     for (const [, tracker] of aoeTrackers) {
-      const { aoe, showFrame, fadeIn, hideFrame, fadeOut } = tracker;
+      const { aoe, showFrame, fadeIn, hideFrame, fadeOut, fixedPosition, placementFrame } = tracker;
+      const trackingMode = aoe.trackingMode ?? 'static';
+      const sourceType = aoe.sourceType ?? 'fixed';
 
       // 非表示フレームを過ぎたら表示しない
       if (hideFrame !== undefined && fadeOut !== undefined) {
         const fadeOutEnd = hideFrame + fadeOut;
         if (frame > fadeOutEnd) continue;
+      }
+
+      // 設置遅延中は表示しない
+      if (placementFrame !== undefined && frame < placementFrame) {
+        continue;
       }
 
       // 不透明度を計算
@@ -327,7 +461,115 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       }
 
       if (opacity > 0) {
-        activeAoEs.push({ ...aoe, opacity });
+        // 位置と方向を計算
+        let finalPosition: Position;
+        let finalDirection = aoe.direction;
+
+        // 方向自動計算モード（line/coneタイプでautoDirectionが有効な場合）
+        // 位置はソース、方向はソース→ターゲット
+        if (aoe.autoDirection && (aoe.type === 'line' || aoe.type === 'cone')) {
+          const offset = aoe.offsetFromSource ?? { x: 0, y: 0 };
+          let sourcePos: Position | null = null;
+          
+          // 起点位置を取得
+          if (sourceType !== 'fixed') {
+            switch (sourceType) {
+              case 'boss':
+                if (aoe.sourceId) {
+                  sourcePos = getEnemyPosition(aoe.sourceId);
+                }
+                break;
+              case 'object':
+                if (aoe.sourceId) {
+                  sourcePos = getObjectPosition(aoe.sourceId);
+                }
+                break;
+              case 'player':
+                if (aoe.sourceId) {
+                  sourcePos = getPlayerPosition(aoe.sourceId);
+                }
+                break;
+              case 'debuff':
+                if (aoe.sourceDebuffId) {
+                  sourcePos = getDebuffHolderPosition(aoe.sourceDebuffId);
+                }
+                break;
+            }
+          }
+          
+          // 位置をソースの位置に設定
+          if (sourcePos) {
+            finalPosition = {
+              x: sourcePos.x + offset.x,
+              y: sourcePos.y + offset.y,
+            };
+          } else {
+            finalPosition = aoe.position;
+          }
+          
+          // ターゲット位置を取得して方向を計算
+          let targetPos: Position | null = null;
+          if (aoe.targetPlayerId) {
+            targetPos = getPlayerPosition(aoe.targetPlayerId);
+          }
+          
+          // 起点とターゲットが両方存在する場合、方向を計算
+          if (sourcePos && targetPos) {
+            finalDirection = calculateDirection(sourcePos, targetPos);
+          }
+        } else if (trackingMode === 'static' && fixedPosition) {
+          // 設置型: 設置時の位置を使用
+          finalPosition = fixedPosition;
+        } else if (trackingMode === 'track_source') {
+          // ソース追従: ソースの現在位置を使用
+          const offset = aoe.offsetFromSource ?? { x: 0, y: 0 };
+          let sourcePos: Position | null = null;
+
+          switch (sourceType) {
+            case 'boss':
+              if (aoe.sourceId) {
+                sourcePos = getEnemyPosition(aoe.sourceId);
+              }
+              break;
+            case 'object':
+              if (aoe.sourceId) {
+                sourcePos = getObjectPosition(aoe.sourceId);
+              }
+              break;
+            case 'player':
+              if (aoe.sourceId) {
+                sourcePos = getPlayerPosition(aoe.sourceId);
+              }
+              break;
+            case 'debuff':
+              if (aoe.sourceDebuffId) {
+                sourcePos = getDebuffHolderPosition(aoe.sourceDebuffId);
+              }
+              break;
+          }
+
+          if (sourcePos) {
+            finalPosition = {
+              x: sourcePos.x + offset.x,
+              y: sourcePos.y + offset.y,
+            };
+          } else {
+            finalPosition = aoe.position;
+          }
+        } else if (trackingMode === 'track_target' && aoe.targetPlayerId) {
+          // ターゲット追従: ターゲットプレイヤーの位置を追従
+          finalPosition = getPlayerPosition(aoe.targetPlayerId);
+        } else {
+          // デフォルト: 保存されている位置
+          finalPosition = aoe.position;
+        }
+
+        activeAoEs.push({ 
+          ...aoe, 
+          position: finalPosition, 
+          opacity,
+          ...(finalDirection !== undefined && { direction: finalDirection })
+        });
       }
     }
 
@@ -378,9 +620,55 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       });
     }
 
+    // オブジェクトの不透明度を計算
+    const activeObjects: GimmickObject[] = [];
+    for (const [, tracker] of objectTrackers) {
+      const { object, showFrame, fadeInDuration, hideFrame, fadeOutDuration } = tracker;
+
+      // 非表示フレームを過ぎたら表示しない
+      if (hideFrame !== undefined && fadeOutDuration !== undefined) {
+        const fadeOutEnd = hideFrame + fadeOutDuration;
+        if (frame > fadeOutEnd) continue;
+      }
+
+      let opacity = object.opacity ?? 1;
+
+      // フェードイン
+      if (fadeInDuration && fadeInDuration > 0 && frame < showFrame + fadeInDuration) {
+        opacity = animateOpacity(
+          frame,
+          showFrame,
+          fadeInDuration,
+          showFrame + fadeInDuration + 1000,
+          0,
+          opacity
+        );
+      }
+
+      // フェードアウト
+      if (hideFrame !== undefined && fadeOutDuration !== undefined && fadeOutDuration > 0) {
+        if (frame >= hideFrame) {
+          const fadeOutEnd = hideFrame + fadeOutDuration;
+          opacity = animateOpacity(
+            frame,
+            hideFrame - fadeOutDuration,
+            0,
+            fadeOutEnd,
+            fadeOutDuration,
+            opacity
+          );
+        }
+      }
+
+      if (opacity > 0) {
+        activeObjects.push({ ...object, opacity });
+      }
+    }
+
     return {
       players,
       enemies,
+      activeObjects,
       activeAoEs,
       activeTexts,
       activeCasts,
