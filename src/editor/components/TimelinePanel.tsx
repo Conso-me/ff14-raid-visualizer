@@ -30,7 +30,7 @@ export function TimelinePanel() {
 
   // 表示時間は現在時間からオフセットを引く（最初のギミックを0秒として表示）
   const currentSeconds = currentFrame / fps;
-  const displayTime = Math.max(0, currentSeconds - timeOffset);
+  const displayTime = Math.max(0, currentSeconds);
   const displayTimeStr = formatTime(displayTime * fps, fps);
   
   // 表示時間（オフセット適用後）に基づいて現在のエントリーを特定
@@ -48,13 +48,13 @@ export function TimelinePanel() {
     if (timelineEntries.length === 0 || !updateMechanicMeta) return;
     
     const lastEntry = timelineEntries[timelineEntries.length - 1];
-    // 最後のイベント時間 + 2秒余白
-    const newDurationSeconds = lastEntry.time + 2;
+    // 最後のイベント時間（オフセット適用後）+ 2秒余白
+    const newDurationSeconds = (lastEntry.time - timeOffset) + 2;
     const newDurationFrames = Math.ceil(newDurationSeconds * fps);
-    
+
     updateMechanicMeta({ durationFrames: newDurationFrames });
     alert(`ビデオ長さを ${newDurationSeconds.toFixed(1)}秒 (${newDurationFrames}フレーム) に調整しました`);
-  }, [timelineEntries, fps, updateMechanicMeta]);
+  }, [timelineEntries, fps, updateMechanicMeta, timeOffset]);
 
   // TimelineImportDialogからのインポートを処理
   const handleImport = useCallback((events: Partial<TimelineEvent>[]) => {
@@ -119,8 +119,8 @@ export function TimelinePanel() {
 
   const handleEntryClick = useCallback((time: number) => {
     if (setCurrentFrame) {
-      // オフセットを加えて実際のフレームを計算
-      setCurrentFrame(Math.round((time + timeOffset) * fps));
+      // オフセットを引いてリベース済みフレームを計算
+      setCurrentFrame(Math.round((time - timeOffset) * fps));
     }
   }, [setCurrentFrame, fps, timeOffset]);
 
