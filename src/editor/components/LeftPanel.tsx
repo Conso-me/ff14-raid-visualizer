@@ -1,39 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ToolPanelContent } from './ToolPanelContent';
 import { ObjectListPanel } from './ObjectListPanel';
-
-type TabType = 'tools' | 'objects';
-
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-function TabButton({ active, onClick, children }: TabButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        padding: '10px 12px',
-        background: active ? '#2a2a4a' : 'transparent',
-        border: 'none',
-        borderBottom: active ? '2px solid #4a4a7a' : '2px solid transparent',
-        color: active ? '#fff' : '#888',
-        fontSize: '12px',
-        cursor: 'pointer',
-        transition: 'all 0.15s ease',
-      }}
-    >
-      {children}
-    </button>
-  );
-}
+import { TimelinePanel } from './TimelinePanel';
 
 export function LeftPanel() {
-  const [activeTab, setActiveTab] = useState<TabType>('tools');
-
   return (
     <div style={{
       display: 'flex',
@@ -41,28 +11,63 @@ export function LeftPanel() {
       height: '100%',
       background: '#1a1a2e',
     }}>
-      {/* タブヘッダー */}
+      {/* Section 1: Tools */}
       <div style={{
-        display: 'flex',
+        flex: '0 0 auto',
+        maxHeight: '35%',
+        overflow: 'auto',
         borderBottom: '1px solid #3a3a5a',
       }}>
-        <TabButton
-          active={activeTab === 'tools'}
-          onClick={() => setActiveTab('tools')}
-        >
+        <div style={{
+          padding: '8px 12px',
+          background: '#252540',
+          fontSize: '13px',
+          fontWeight: 'bold',
+          color: '#fff',
+          borderBottom: '1px solid #3a3a5a',
+        }}>
           ツール
-        </TabButton>
-        <TabButton
-          active={activeTab === 'objects'}
-          onClick={() => setActiveTab('objects')}
-        >
-          オブジェクト
-        </TabButton>
+        </div>
+        <ToolPanelContent />
       </div>
 
-      {/* タブコンテンツ */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {activeTab === 'tools' ? <ToolPanelContent /> : <ObjectListPanel />}
+      {/* Section 2: Objects */}
+      <div style={{
+        flex: '0 0 auto',
+        maxHeight: '35%',
+        overflow: 'auto',
+        borderBottom: '1px solid #3a3a5a',
+      }}>
+        <div style={{
+          padding: '8px 12px',
+          background: '#252540',
+          fontSize: '13px',
+          fontWeight: 'bold',
+          color: '#fff',
+          borderBottom: '1px solid #3a3a5a',
+        }}>
+          オブジェクト
+        </div>
+        <ObjectListPanel />
+      </div>
+
+      {/* Section 3: Timeline */}
+      <div style={{
+        flex: '1 1 auto',
+        overflow: 'auto',
+        minHeight: '30%',
+      }}>
+        <div style={{
+          padding: '8px 12px',
+          background: '#252540',
+          fontSize: '13px',
+          fontWeight: 'bold',
+          color: '#fff',
+          borderBottom: '1px solid #3a3a5a',
+        }}>
+          タイムライン
+        </div>
+        <TimelinePanel />
       </div>
     </div>
   );

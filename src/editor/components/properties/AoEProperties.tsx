@@ -35,6 +35,25 @@ const TRACKING_MODE_OPTIONS = [
 ];
 
 export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEPropertiesProps) {
+  // Get source options based on sourceType
+  const getSourceOptions = () => {
+    switch (aoe.sourceType) {
+      case 'boss':
+        return [];
+      case 'player':
+        return players.map(p => ({
+          value: p.id,
+          label: `${p.role}${p.name ? ` (${p.name})` : ''}`,
+        }));
+      case 'object':
+        return [];
+      case 'debuff':
+        return [];
+      default:
+        return [];
+    }
+  };
+
   const renderTypeSpecificProps = () => {
     switch (aoe.type) {
       case 'circle':
@@ -166,6 +185,8 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
     }
   };
 
+  const sourceOptions = getSourceOptions();
+
   return (
     <div>
       <h3 style={{ margin: '0 0 16px', fontSize: '14px', color: '#fff', borderBottom: '1px solid #3a3a5a', paddingBottom: '8px' }}>
@@ -215,7 +236,7 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
         <SelectInput
           label="Source Type"
           value={aoe.sourceType || 'fixed'}
-          onChange={(value) => onUpdate({ sourceType: value as AoESourceType })}
+          onChange={(value) => onUpdate({ sourceType: value as AoESourceType, sourceId: undefined })}
           options={SOURCE_TYPE_OPTIONS}
         />
 
@@ -223,23 +244,47 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
           <>
             <div style={{ marginBottom: '8px' }}>
               <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
-                Source ID
+                Source
               </label>
-              <input
-                type="text"
-                value={aoe.sourceId || ''}
-                onChange={(e) => onUpdate({ sourceId: e.target.value })}
-                placeholder="Enter source ID..."
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  background: '#2a2a4a',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '13px',
-                }}
-              />
+              {sourceOptions.length > 0 ? (
+                <select
+                  value={aoe.sourceId || ''}
+                  onChange={(e) => onUpdate({ sourceId: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    background: '#2a2a4a',
+                    border: '1px solid #3a3a5a',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">Select {aoe.sourceType}...</option>
+                  {sourceOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={aoe.sourceId || ''}
+                  onChange={(e) => onUpdate({ sourceId: e.target.value })}
+                  placeholder={`Enter ${aoe.sourceType} ID...`}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    background: '#2a2a4a',
+                    border: '1px solid #3a3a5a',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '13px',
+                  }}
+                />
+              )}
             </div>
 
             {aoe.sourceType === 'debuff' && (
@@ -274,6 +319,8 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
           options={TRACKING_MODE_OPTIONS}
         />
 
+        {/* 
+        // [COMMENTED OUT] Debuff target player feature - to be temporarily disabled per Issue #4
         {aoe.trackingMode === 'track_target' && players.length > 0 && (
           <div style={{ marginBottom: '8px' }}>
             <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
@@ -302,6 +349,7 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
             </select>
           </div>
         )}
+        */}
 
         {aoe.trackingMode === 'static' && (
           <NumberInput

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useEditor } from '../context/EditorContext';
 import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
@@ -95,32 +95,32 @@ function CollapsibleGroup({ title, count, defaultOpen = true, children }: Collap
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div style={{ marginBottom: '8px' }}>
+    <div style={{ marginBottom: '10px' }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
           display: 'flex',
           alignItems: 'center',
           width: '100%',
-          padding: '6px 8px',
+          padding: '8px 10px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           color: '#fff',
-          fontSize: '12px',
+          fontSize: '13px',
           textAlign: 'left',
         }}
       >
-        <span style={{ marginRight: '6px', fontSize: '10px' }}>
+        <span style={{ marginRight: '8px', fontSize: '11px' }}>
           {isOpen ? '▼' : '▶'}
         </span>
         <span style={{ flex: 1 }}>{title}</span>
         <span
           style={{
             background: '#3a3a5a',
-            padding: '2px 6px',
+            padding: '3px 8px',
             borderRadius: '8px',
-            fontSize: '10px',
+            fontSize: '11px',
             color: '#888',
           }}
         >
@@ -128,7 +128,7 @@ function CollapsibleGroup({ title, count, defaultOpen = true, children }: Collap
         </span>
       </button>
       {isOpen && (
-        <div style={{ paddingLeft: '8px' }}>
+        <div style={{ paddingLeft: '10px' }}>
           {children}
         </div>
       )}
@@ -146,7 +146,7 @@ interface ObjectItemProps {
   icon?: React.ReactNode;
   isSelected: boolean;
   isActive?: boolean;
-  onSelect: () => void;
+  onSelect: (e: React.MouseEvent) => void;
 }
 
 function ObjectItem({
@@ -165,16 +165,16 @@ function ObjectItem({
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        padding: '6px 8px',
-        marginBottom: '2px',
+        padding: '8px 10px',
+        marginBottom: '3px',
         background: isSelected ? '#3753c7' : 'transparent',
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer',
         color: '#fff',
-        fontSize: '11px',
+        fontSize: '13px',
         textAlign: 'left',
-        gap: '8px',
+        gap: '10px',
       }}
       onMouseEnter={(e) => {
         if (!isSelected) {
@@ -191,8 +191,8 @@ function ObjectItem({
       {icon || (
         <div
           style={{
-            width: '12px',
-            height: '12px',
+            width: '14px',
+            height: '14px',
             borderRadius: '2px',
             background: color || '#888',
             flexShrink: 0,
@@ -210,18 +210,18 @@ function ObjectItem({
           {name}
         </div>
         {subtitle && (
-          <div style={{ fontSize: '10px', color: '#888' }}>
+          <div style={{ fontSize: '11px', color: '#888' }}>
             {subtitle}
           </div>
         )}
       </div>
 
-      {/* Active indicator for AoEs */}
+      {/* Active indicator for AoEs, texts, and objects */}
       {isActive !== undefined && (
         <div
           style={{
-            width: '8px',
-            height: '8px',
+            width: '10px',
+            height: '10px',
             borderRadius: '50%',
             background: isActive ? '#22c55e' : '#4b5563',
             flexShrink: 0,
@@ -243,24 +243,24 @@ function ActionToolbar() {
   const canCopy = hasSelection && (selectedObjectType === 'enemy' || selectedObjectType === 'aoe');
 
   const buttonStyle = (disabled: boolean) => ({
-    padding: '6px 10px',
+    padding: '8px 12px',
     background: disabled ? '#1a1a2e' : '#2a2a4a',
     border: '1px solid #3a3a5a',
     borderRadius: '4px',
     color: disabled ? '#555' : '#fff',
-    fontSize: '11px',
+    fontSize: '12px',
     cursor: disabled ? 'not-allowed' : 'pointer',
     display: 'flex',
     alignItems: 'center',
-    gap: '4px',
+    gap: '6px',
   });
 
   return (
     <div style={{
       display: 'flex',
-      gap: '6px',
-      marginBottom: '12px',
-      paddingBottom: '12px',
+      gap: '8px',
+      marginBottom: '14px',
+      paddingBottom: '14px',
       borderBottom: '1px solid #3a3a5a',
     }}>
       <button
@@ -293,7 +293,7 @@ interface PlayerItemProps {
   player: Player;
   position: Position;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (e: React.MouseEvent) => void;
   onAddMove: () => void;
 }
 
@@ -305,16 +305,16 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        padding: '6px 8px',
-        marginBottom: '2px',
+        padding: '8px 10px',
+        marginBottom: '3px',
         background: isSelected ? '#3753c7' : 'transparent',
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer',
         color: '#fff',
-        fontSize: '11px',
+        fontSize: '13px',
         textAlign: 'left',
-        gap: '8px',
+        gap: '10px',
       }}
       onMouseEnter={(e) => {
         if (!isSelected) {
@@ -330,8 +330,8 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
       {/* Color indicator */}
       <div
         style={{
-          width: '12px',
-          height: '12px',
+          width: '14px',
+          height: '14px',
           borderRadius: '2px',
           background: getRoleColor(player.role),
           flexShrink: 0,
@@ -347,7 +347,7 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
         }}>
           {player.role}
         </div>
-        <div style={{ fontSize: '10px', color: '#888' }}>
+        <div style={{ fontSize: '11px', color: '#888' }}>
           {formatPosition(position)}
         </div>
       </div>
@@ -359,12 +359,12 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
           onAddMove();
         }}
         style={{
-          padding: '3px 8px',
+          padding: '4px 10px',
           background: '#2c9c3c',
           border: 'none',
           borderRadius: '3px',
           color: '#fff',
-          fontSize: '10px',
+          fontSize: '11px',
           cursor: 'pointer',
           flexShrink: 0,
         }}
@@ -382,9 +382,79 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
   );
 }
 
+// Selection toolbar component for multi-select support
+interface SelectionToolbarProps {
+  allSelected: boolean;
+  hasSelection: boolean;
+  onSelectAll: () => void;
+  onClearSelection: () => void;
+  selectAllTitle?: string;
+  clearTitle?: string;
+}
+
+function SelectionToolbar({
+  allSelected,
+  hasSelection,
+  onSelectAll,
+  onClearSelection,
+  selectAllTitle = '全選択',
+  clearTitle = '選択解除',
+}: SelectionToolbarProps) {
+  return (
+    <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+      <button
+        onClick={onSelectAll}
+        style={{
+          flex: 1,
+          padding: '4px 8px',
+          background: allSelected ? '#3753c7' : '#2a2a4a',
+          border: '1px solid #3a3a5a',
+          borderRadius: '4px',
+          color: '#fff',
+          fontSize: '10px',
+          cursor: 'pointer',
+        }}
+        title={selectAllTitle}
+      >
+        全選択
+      </button>
+      <button
+        onClick={onClearSelection}
+        disabled={!hasSelection}
+        style={{
+          flex: 1,
+          padding: '4px 8px',
+          background: !hasSelection ? '#1a1a2e' : '#2a2a4a',
+          border: '1px solid #3a3a5a',
+          borderRadius: '4px',
+          color: !hasSelection ? '#555' : '#fff',
+          fontSize: '10px',
+          cursor: !hasSelection ? 'not-allowed' : 'pointer',
+        }}
+        title={clearTitle}
+      >
+        選択解除
+      </button>
+    </div>
+  );
+}
+
 // Main ObjectListPanel component
 export function ObjectListPanel() {
-  const { state, selectObject, selectAllPlayers, clearMultiSelect, updatePlayersOrder, startMoveFromList } = useEditor();
+  const {
+    state,
+    selectObject,
+    toggleMultiSelect,
+    selectAllPlayers,
+    selectAllEnemies,
+    selectAllAoEs,
+    selectAllAnnotations,
+    selectAllObjects,
+    clearMultiSelect,
+    updatePlayersOrder,
+    startMoveFromList
+  } = useEditor();
+
   const { mechanic, currentFrame, selectedObjectId, selectedObjectType, selectedObjectIds } = state;
 
   // Handle player reorder via drag and drop
@@ -393,22 +463,115 @@ export function ObjectListPanel() {
   }, [updatePlayersOrder]);
 
   // Get current player positions
-  const playersWithPositions = getPlayersAtFrame(mechanic, currentFrame);
+  const playersWithPositions = useMemo(() =>
+    getPlayersAtFrame(mechanic, currentFrame),
+    [mechanic, currentFrame]
+  );
 
   // Get AoE info
-  const aoeEventPairs = getAoEEventPairs(mechanic.timeline);
-  const activeAoEs = getActiveAoEs(mechanic.timeline, currentFrame, mechanic);
-  const activeAoEIds = new Set(activeAoEs.map(a => a.id));
+  const aoeEventPairs = useMemo(() =>
+    getAoEEventPairs(mechanic.timeline),
+    [mechanic.timeline]
+  );
+  const activeAoEs = useMemo(() =>
+    getActiveAoEs(mechanic.timeline, currentFrame, mechanic),
+    [mechanic.timeline, currentFrame, mechanic]
+  );
+  const activeAoEIds = useMemo(() =>
+    new Set(activeAoEs.map(a => a.id)),
+    [activeAoEs]
+  );
 
   // Get text annotations
-  const annotationEventPairs = getAnnotationEventPairs(mechanic.timeline);
-  const activeAnnotations = getActiveAnnotations(mechanic.timeline, currentFrame);
-  const activeAnnotationIds = new Set(activeAnnotations.map(a => a.id));
+  const annotationEventPairs = useMemo(() =>
+    getAnnotationEventPairs(mechanic.timeline),
+    [mechanic.timeline]
+  );
+  const activeAnnotations = useMemo(() =>
+    getActiveAnnotations(mechanic.timeline, currentFrame),
+    [mechanic.timeline, currentFrame]
+  );
+  const activeAnnotationIds = useMemo(() =>
+    new Set(activeAnnotations.map(a => a.id)),
+    [activeAnnotations]
+  );
 
   // Get objects
-  const objectEventPairs = getObjectEventPairs(mechanic.timeline);
-  const activeObjectsAtFrame = getActiveObjects(mechanic.timeline, currentFrame);
-  const activeObjectIds = new Set(activeObjectsAtFrame.map(o => o.id));
+  const objectEventPairs = useMemo(() =>
+    getObjectEventPairs(mechanic.timeline),
+    [mechanic.timeline]
+  );
+  const activeObjectsAtFrame = useMemo(() =>
+    getActiveObjects(mechanic.timeline, currentFrame),
+    [mechanic.timeline, currentFrame]
+  );
+  const activeObjectIds = useMemo(() =>
+    new Set(activeObjectsAtFrame.map(o => o.id)),
+    [activeObjectsAtFrame]
+  );
+
+  // Selection state helpers
+  const isPlayerSelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'player');
+
+  const isEnemySelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'enemy');
+
+  const isAoESelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'aoe');
+
+  const isAnnotationSelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'text');
+
+  const isObjectSelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'object');
+
+  // Handle multi-select clicks
+  const handlePlayerSelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'player');
+    } else {
+      selectObject(id, 'player');
+    }
+  };
+
+  const handleEnemySelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'enemy');
+    } else {
+      selectObject(id, 'enemy');
+    }
+  };
+
+  const handleAoESelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'aoe');
+    } else {
+      selectObject(id, 'aoe');
+    }
+  };
+
+  const handleAnnotationSelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'text');
+    } else {
+      selectObject(id, 'text');
+    }
+  };
+
+  const handleObjectSelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'object');
+    } else {
+      selectObject(id, 'object');
+    }
+  };
+
+  // Get selected IDs by type
+  const selectedEnemyIds = selectedObjectType === 'enemy' ? selectedObjectIds : [];
+  const selectedAoEIds = selectedObjectType === 'aoe' ? selectedObjectIds : [];
+  const selectedAnnotationIds = selectedObjectType === 'text' ? selectedObjectIds : [];
+  const selectedObjectIdsOfType = selectedObjectType === 'object' ? selectedObjectIds : [];
 
   return (
     <div
@@ -428,46 +591,18 @@ export function ObjectListPanel() {
           </div>
         ) : (
           <>
-            {/* Select all / Clear selection buttons */}
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-              <button
-                onClick={selectAllPlayers}
-                style={{
-                  flex: 1,
-                  padding: '4px 8px',
-                  background: selectedObjectIds.length === mechanic.initialPlayers.length && selectedObjectType === 'player' ? '#3753c7' : '#2a2a4a',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '10px',
-                  cursor: 'pointer',
-                }}
-                title="全プレイヤーを選択"
-              >
-                全選択
-              </button>
-              <button
-                onClick={clearMultiSelect}
-                disabled={selectedObjectIds.length === 0}
-                style={{
-                  flex: 1,
-                  padding: '4px 8px',
-                  background: selectedObjectIds.length === 0 ? '#1a1a2e' : '#2a2a4a',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: '4px',
-                  color: selectedObjectIds.length === 0 ? '#555' : '#fff',
-                  fontSize: '10px',
-                  cursor: selectedObjectIds.length === 0 ? 'not-allowed' : 'pointer',
-                }}
-                title="選択を解除"
-              >
-                選択解除
-              </button>
-            </div>
+            <SelectionToolbar
+              allSelected={selectedObjectIds.length === mechanic.initialPlayers.length && selectedObjectType === 'player'}
+              hasSelection={selectedObjectType === 'player' && selectedObjectIds.length > 0}
+              onSelectAll={selectAllPlayers}
+              onClearSelection={clearMultiSelect}
+              selectAllTitle="全プレイヤーを選択"
+              clearTitle="選択を解除"
+            />
             <DraggableList
               items={mechanic.initialPlayers}
               onReorder={handlePlayersReorder}
-              renderItem={(player, isDragging, isDropTarget) => {
+              renderItem={(player) => {
                 const playerWithPosition = playersWithPositions.find(p => p.id === player.id);
                 const position = playerWithPosition?.position || player.position;
                 return (
@@ -475,8 +610,8 @@ export function ObjectListPanel() {
                     key={player.id}
                     player={player}
                     position={position}
-                    isSelected={selectedObjectIds.includes(player.id) || (selectedObjectId === player.id && selectedObjectType === 'player')}
-                    onSelect={() => selectObject(player.id, 'player')}
+                    isSelected={isPlayerSelected(player.id)}
+                    onSelect={(e) => handlePlayerSelect(e, player.id)}
                     onAddMove={() => startMoveFromList(player.id)}
                   />
                 );
@@ -486,7 +621,7 @@ export function ObjectListPanel() {
         )}
       </CollapsibleGroup>
 
-      {/* Markers group */}
+      {/* Markers group - no multi-selection needed as markers are unique */}
       <CollapsibleGroup title="フィールドマーカー" count={mechanic.markers.length}>
         {mechanic.markers.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
@@ -508,118 +643,158 @@ export function ObjectListPanel() {
         )}
       </CollapsibleGroup>
 
-      {/* Enemies group */}
+      {/* Enemies group with multi-selection */}
       <CollapsibleGroup title="エネミー" count={mechanic.enemies.length}>
         {mechanic.enemies.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
             エネミーがいません
           </div>
         ) : (
-          mechanic.enemies.map((enemy) => (
-            <ObjectItem
-              key={enemy.id}
-              id={enemy.id}
-              objectType="enemy"
-              name={enemy.name}
-              subtitle={formatPosition(enemy.position)}
-              color={enemy.color || '#ff0000'}
-              isSelected={selectedObjectId === enemy.id && selectedObjectType === 'enemy'}
-              onSelect={() => selectObject(enemy.id, 'enemy')}
+          <>
+            <SelectionToolbar
+              allSelected={selectedEnemyIds.length === mechanic.enemies.length}
+              hasSelection={selectedEnemyIds.length > 0}
+              onSelectAll={selectAllEnemies}
+              onClearSelection={clearMultiSelect}
+              selectAllTitle="全エネミーを選択"
+              clearTitle="選択を解除"
             />
-          ))
+            {mechanic.enemies.map((enemy) => (
+              <ObjectItem
+                key={enemy.id}
+                id={enemy.id}
+                objectType="enemy"
+                name={enemy.name}
+                subtitle={formatPosition(enemy.position)}
+                color={enemy.color || '#ff0000'}
+                isSelected={isEnemySelected(enemy.id)}
+                onSelect={(e) => handleEnemySelect(e, enemy.id)}
+              />
+            ))}
+          </>
         )}
       </CollapsibleGroup>
 
-      {/* AoEs group */}
+      {/* AoEs group with multi-selection */}
       <CollapsibleGroup title="AoE" count={aoeEventPairs.length}>
         {aoeEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
             AoEがありません
           </div>
         ) : (
-          aoeEventPairs.map(({ aoe, showFrame, hideFrame }) => {
-            const isActive = activeAoEIds.has(aoe.id);
-            const frameInfo = hideFrame !== null
-              ? `${showFrame}f - ${hideFrame}f`
-              : `${showFrame}f -`;
+          <>
+            <SelectionToolbar
+              allSelected={selectedAoEIds.length === aoeEventPairs.length}
+              hasSelection={selectedAoEIds.length > 0}
+              onSelectAll={selectAllAoEs}
+              onClearSelection={clearMultiSelect}
+              selectAllTitle="全AoEを選択"
+              clearTitle="選択を解除"
+            />
+            {aoeEventPairs.map(({ aoe, showFrame, hideFrame }) => {
+              const isActive = activeAoEIds.has(aoe.id);
+              const frameInfo = hideFrame !== null
+                ? `${showFrame}f - ${hideFrame}f`
+                : `${showFrame}f -`;
 
-            return (
-              <ObjectItem
-                key={aoe.id}
-                id={aoe.id}
-                objectType="aoe"
-                name={`${getAoETypeIcon(aoe.type)} ${getAoETypeName(aoe.type)}`}
-                subtitle={`${formatPosition(aoe.position)} [${frameInfo}]`}
-                color={aoe.color || '#ff6600'}
-                isSelected={selectedObjectId === aoe.id && selectedObjectType === 'aoe'}
-                isActive={isActive}
-                onSelect={() => selectObject(aoe.id, 'aoe')}
-              />
-            );
-          })
+              return (
+                <ObjectItem
+                  key={aoe.id}
+                  id={aoe.id}
+                  objectType="aoe"
+                  name={`${getAoETypeIcon(aoe.type)} ${getAoETypeName(aoe.type)}`}
+                  subtitle={`${formatPosition(aoe.position)} [${frameInfo}]`}
+                  color={aoe.color || '#ff6600'}
+                  isSelected={isAoESelected(aoe.id)}
+                  isActive={isActive}
+                  onSelect={(e) => handleAoESelect(e, aoe.id)}
+                />
+              );
+            })}
+          </>
         )}
       </CollapsibleGroup>
 
-      {/* Text annotations group */}
+      {/* Text annotations group with multi-selection */}
       <CollapsibleGroup title="テキスト" count={annotationEventPairs.length}>
         {annotationEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
             テキスト注釈がありません
           </div>
         ) : (
-          annotationEventPairs.map(({ annotation, showFrame, hideFrame }) => {
-            const isActive = activeAnnotationIds.has(annotation.id);
-            const frameInfo = hideFrame !== null
-              ? `${showFrame}f - ${hideFrame}f`
-              : `${showFrame}f -`;
-            const displayText = annotation.text.length > 20
-              ? annotation.text.slice(0, 20) + '...'
-              : annotation.text;
+          <>
+            <SelectionToolbar
+              allSelected={selectedAnnotationIds.length === annotationEventPairs.length}
+              hasSelection={selectedAnnotationIds.length > 0}
+              onSelectAll={selectAllAnnotations}
+              onClearSelection={clearMultiSelect}
+              selectAllTitle="全テキストを選択"
+              clearTitle="選択を解除"
+            />
+            {annotationEventPairs.map(({ annotation, showFrame, hideFrame }) => {
+              const isActive = activeAnnotationIds.has(annotation.id);
+              const frameInfo = hideFrame !== null
+                ? `${showFrame}f - ${hideFrame}f`
+                : `${showFrame}f -`;
+              const displayText = annotation.text.length > 20
+                ? annotation.text.slice(0, 20) + '...'
+                : annotation.text;
 
-            return (
-              <ObjectItem
-                key={annotation.id}
-                id={annotation.id}
-                objectType="text"
-                name={displayText}
-                subtitle={`${formatPosition(annotation.position)} [${frameInfo}]`}
-                color={annotation.color}
-                isSelected={selectedObjectId === annotation.id && selectedObjectType === 'text'}
-                isActive={isActive}
-                onSelect={() => selectObject(annotation.id, 'text')}
-              />
-            );
-          })
+              return (
+                <ObjectItem
+                  key={annotation.id}
+                  id={annotation.id}
+                  objectType="text"
+                  name={displayText}
+                  subtitle={`${formatPosition(annotation.position)} [${frameInfo}]`}
+                  color={annotation.color}
+                  isSelected={isAnnotationSelected(annotation.id)}
+                  isActive={isActive}
+                  onSelect={(e) => handleAnnotationSelect(e, annotation.id)}
+                />
+              );
+            })}
+          </>
         )}
       </CollapsibleGroup>
 
-      {/* Objects group */}
+      {/* Objects group with multi-selection */}
       <CollapsibleGroup title="オブジェクト" count={objectEventPairs.length}>
         {objectEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
             オブジェクトがありません
           </div>
         ) : (
-          objectEventPairs.map(({ object, showFrame, hideFrame }) => {
-            const isActive = activeObjectIds.has(object.id);
-            const frameInfo = hideFrame !== null
-              ? `${showFrame}f - ${hideFrame}f`
-              : `${showFrame}f -`;
+          <>
+            <SelectionToolbar
+              allSelected={selectedObjectIdsOfType.length === objectEventPairs.length}
+              hasSelection={selectedObjectIdsOfType.length > 0}
+              onSelectAll={selectAllObjects}
+              onClearSelection={clearMultiSelect}
+              selectAllTitle="全オブジェクトを選択"
+              clearTitle="選択を解除"
+            />
+            {objectEventPairs.map(({ object, showFrame, hideFrame }) => {
+              const isActive = activeObjectIds.has(object.id);
+              const frameInfo = hideFrame !== null
+                ? `${showFrame}f - ${hideFrame}f`
+                : `${showFrame}f -`;
 
-            return (
-              <ObjectItem
-                key={object.id}
-                id={object.id}
-                objectType="object"
-                name={`${object.icon || OBJECT_SHAPE_ICONS[object.shape]} ${object.name}`}
-                subtitle={`${formatPosition(object.position)} [${frameInfo}]`}
-                color={object.color}
-                isSelected={selectedObjectId === object.id && selectedObjectType === 'object'}
-                isActive={isActive}
-                onSelect={() => selectObject(object.id, 'object')}
-              />
-            );
-          })
+              return (
+                <ObjectItem
+                  key={object.id}
+                  id={object.id}
+                  objectType="object"
+                  name={`${object.icon || OBJECT_SHAPE_ICONS[object.shape]} ${object.name}`}
+                  subtitle={`${formatPosition(object.position)} [${frameInfo}]`}
+                  color={object.color}
+                  isSelected={isObjectSelected(object.id)}
+                  isActive={isActive}
+                  onSelect={(e) => handleObjectSelect(e, object.id)}
+                />
+              );
+            })}
+          </>
         )}
       </CollapsibleGroup>
     </div>

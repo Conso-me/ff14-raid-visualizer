@@ -110,7 +110,7 @@ export type EditorAction =
   | { type: 'SET_MECHANIC'; payload: MechanicData }
   | { type: 'SELECT_OBJECT'; payload: { id: string | null; objectType: SelectedObjectType } }
   | { type: 'TOGGLE_MULTI_SELECT'; payload: { id: string; objectType: SelectedObjectType } }
-  | { type: 'SET_MULTI_SELECT'; payload: { ids: string[] } }
+  | { type: 'SET_MULTI_SELECT'; payload: { ids: string[]; objectType: SelectedObjectType } }
   | { type: 'CLEAR_MULTI_SELECT' }
   | { type: 'UPDATE_PLAYER'; payload: { id: string; updates: Partial<Player> } }
   | { type: 'ADD_PLAYER'; payload: Player }
@@ -218,7 +218,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         ...state,
         selectedObjectIds: action.payload.ids,
         selectedObjectId: action.payload.ids.length === 1 ? action.payload.ids[0] : null,
-        selectedObjectType: action.payload.ids.length > 0 ? 'player' : null,
+        selectedObjectType: action.payload.ids.length > 0 ? action.payload.objectType : null,
       };
     }
 

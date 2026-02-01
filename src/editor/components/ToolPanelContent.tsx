@@ -26,19 +26,16 @@ export function ToolPanelContent() {
     addPlayer,
     addEnemy,
     addMarker,
-    updateField,
-    setMechanic,
     setAoEType,
-    updateMechanicMeta,
   } = useEditor();
 
   const buttonStyle = (active: boolean) => ({
-    padding: '8px 12px',
+    padding: '10px 14px',
     background: active ? '#4a4a7a' : '#2a2a4a',
     border: '1px solid #3a3a5a',
     borderRadius: '4px',
     color: '#fff',
-    fontSize: '12px',
+    fontSize: '13px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -46,14 +43,14 @@ export function ToolPanelContent() {
   });
 
   const sectionStyle = {
-    marginBottom: '20px',
+    marginBottom: '16px',
   };
 
   const sectionTitleStyle = {
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#888',
     textTransform: 'uppercase' as const,
-    marginBottom: '8px',
+    marginBottom: '10px',
     letterSpacing: '0.5px',
   };
 
@@ -148,7 +145,7 @@ export function ToolPanelContent() {
       {/* Tools */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>Tools</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {TOOLS.map((tool) => (
             <button
               key={tool.id}
@@ -165,7 +162,7 @@ export function ToolPanelContent() {
       {/* Grid Snap */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>Grid</div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={state.gridSnap}
@@ -178,7 +175,7 @@ export function ToolPanelContent() {
       {/* Add Players */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>Add Players</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
           {ROLES.map((role) => {
             const exists = state.mechanic.initialPlayers.find((p) => p.role === role);
             return (
@@ -188,7 +185,7 @@ export function ToolPanelContent() {
                 disabled={!!exists}
                 style={{
                   ...buttonStyle(false),
-                  padding: '6px',
+                  padding: '8px',
                   justifyContent: 'center',
                   opacity: exists ? 0.4 : 1,
                 }}
@@ -211,12 +208,12 @@ export function ToolPanelContent() {
       {/* Add Markers */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>Add Markers</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
           {MARKERS.map((type) => (
             <button
               key={type}
               onClick={() => handleAddMarker(type)}
-              style={{ ...buttonStyle(false), padding: '6px', justifyContent: 'center' }}
+              style={{ ...buttonStyle(false), padding: '8px', justifyContent: 'center' }}
             >
               {type}
             </button>
@@ -226,15 +223,12 @@ export function ToolPanelContent() {
 
       {/* Add AoE */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>AoE配置</div>
-
-        {/* AoE placement mode button */}
         <button
           onClick={handleSelectAoETool}
           style={{
             ...buttonStyle(state.tool === 'add_aoe'),
             width: '100%',
-            marginBottom: '8px',
+            marginBottom: '10px',
             background: state.tool === 'add_aoe' ? '#ff6600' : '#2a2a4a',
           }}
         >
@@ -243,22 +237,22 @@ export function ToolPanelContent() {
 
         {/* AoE type selection (shown when in add_aoe mode) */}
         {state.tool === 'add_aoe' && (
-          <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>
+          <div style={{ marginTop: '10px' }}>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
               タイプを選択:
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
               {AOE_TYPES.map(({ type, label, icon }) => (
                 <button
                   key={type}
                   onClick={() => handleSelectAoEType(type)}
                   style={{
-                    padding: '6px 8px',
+                    padding: '8px 10px',
                     background: state.selectedAoEType === type ? '#ff6600' : '#3a3a5a',
                     border: '1px solid #4a4a6a',
                     borderRadius: '4px',
                     color: '#fff',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -271,7 +265,7 @@ export function ToolPanelContent() {
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: '10px', color: '#666', marginTop: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
               フィールドをクリックして配置
             </div>
           </div>
@@ -280,15 +274,13 @@ export function ToolPanelContent() {
 
       {/* Add Debuff */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>デバフ付与</div>
-
         {/* Debuff mode button */}
         <button
           onClick={() => setTool('add_debuff')}
           style={{
             ...buttonStyle(state.tool === 'add_debuff'),
             width: '100%',
-            marginBottom: '8px',
+            marginBottom: '10px',
             background: state.tool === 'add_debuff' ? '#ff00ff' : '#2a2a4a',
           }}
         >
@@ -296,7 +288,7 @@ export function ToolPanelContent() {
         </button>
 
         {state.tool === 'add_debuff' && (
-          <div style={{ fontSize: '10px', color: '#666', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#666', textAlign: 'center' }}>
             プレイヤーをクリックして選択
           </div>
         )}
@@ -304,7 +296,6 @@ export function ToolPanelContent() {
 
       {/* Add Text Annotation */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>テキスト注釈</div>
         <button
           onClick={() => setTool('add_text')}
           style={{
@@ -316,7 +307,7 @@ export function ToolPanelContent() {
           {state.tool === 'add_text' ? '配置モード: ON' : 'テキスト配置'}
         </button>
         {state.tool === 'add_text' && (
-          <div style={{ fontSize: '10px', color: '#666', textAlign: 'center', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
             フィールドをクリックして配置
           </div>
         )}
@@ -324,7 +315,6 @@ export function ToolPanelContent() {
 
       {/* Add Object */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>オブジェクト配置</div>
         <button
           onClick={() => setTool('add_object')}
           style={{
@@ -336,7 +326,7 @@ export function ToolPanelContent() {
           {state.tool === 'add_object' ? '配置モード: ON' : 'オブジェクト配置'}
         </button>
         {state.tool === 'add_object' && (
-          <div style={{ fontSize: '10px', color: '#666', textAlign: 'center', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
             フィールドをクリックして配置
           </div>
         )}
@@ -345,7 +335,7 @@ export function ToolPanelContent() {
       {/* Presets */}
       <div style={sectionStyle}>
         <div style={sectionTitleStyle}>Presets</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <button onClick={handlePreset8Players} style={buttonStyle(false)}>
             8-Player Setup
           </button>
@@ -355,201 +345,7 @@ export function ToolPanelContent() {
         </div>
       </div>
 
-      {/* Field Settings */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Field</div>
-        <label style={{ display: 'block', fontSize: '12px', marginBottom: '8px' }}>
-          <span style={{ color: '#888' }}>Type</span>
-          <select
-            value={state.mechanic.field.type}
-            onChange={(e) => updateField({ type: e.target.value as 'circle' | 'square' | 'rectangle' })}
-            style={{
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              background: '#2a2a4a',
-              border: '1px solid #3a3a5a',
-              borderRadius: '4px',
-              color: '#fff',
-            }}
-          >
-            <option value="circle">Circle</option>
-            <option value="square">Square</option>
-            <option value="rectangle">Rectangle</option>
-          </select>
-        </label>
 
-        {/* Rectangle dimensions */}
-        {state.mechanic.field.type === 'rectangle' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-            <label style={{ display: 'block', fontSize: '12px' }}>
-              <span style={{ color: '#888' }}>Width</span>
-              <input
-                type="number"
-                value={state.mechanic.field.width || state.mechanic.field.size}
-                onChange={(e) => updateField({ width: parseFloat(e.target.value) || 40 })}
-                min={10}
-                max={100}
-                step={5}
-                style={{
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  background: '#2a2a4a',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: '4px',
-                  color: '#fff',
-                }}
-              />
-            </label>
-            <label style={{ display: 'block', fontSize: '12px' }}>
-              <span style={{ color: '#888' }}>Height</span>
-              <input
-                type="number"
-                value={state.mechanic.field.height || state.mechanic.field.size}
-                onChange={(e) => updateField({ height: parseFloat(e.target.value) || 40 })}
-                min={10}
-                max={100}
-                step={5}
-                style={{
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '6px',
-                  background: '#2a2a4a',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: '4px',
-                  color: '#fff',
-                }}
-              />
-            </label>
-          </div>
-        )}
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', cursor: 'pointer', marginBottom: '8px' }}>
-          <input
-            type="checkbox"
-            checked={state.mechanic.field.gridEnabled}
-            onChange={(e) => updateField({ gridEnabled: e.target.checked })}
-          />
-          Show grid
-        </label>
-
-        {/* Background image */}
-        <div style={{ marginTop: '12px', borderTop: '1px solid #3a3a5a', paddingTop: '12px' }}>
-          <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>背景画像</div>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  updateField({ backgroundImage: event.target?.result as string });
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            style={{
-              width: '100%',
-              fontSize: '11px',
-              marginBottom: '8px',
-            }}
-          />
-          {state.mechanic.field.backgroundImage && (
-            <>
-              <label style={{ display: 'block', fontSize: '11px', color: '#888', marginBottom: '4px' }}>
-                透明度: {Math.round((state.mechanic.field.backgroundOpacity ?? 0.5) * 100)}%
-                <input
-                  type="range"
-                  value={state.mechanic.field.backgroundOpacity ?? 0.5}
-                  onChange={(e) => updateField({ backgroundOpacity: parseFloat(e.target.value) })}
-                  min={0.1}
-                  max={1}
-                  step={0.1}
-                  style={{
-                    width: '100%',
-                    marginTop: '4px',
-                  }}
-                />
-              </label>
-              <button
-                onClick={() => updateField({ backgroundImage: undefined, backgroundOpacity: undefined })}
-                style={{
-                  padding: '4px 8px',
-                  background: '#6b2020',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: '#fff',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  marginTop: '4px',
-                }}
-              >
-                背景画像を削除
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Video Settings */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Video</div>
-        <label style={{ display: 'block', fontSize: '12px', marginBottom: '8px' }}>
-          <span style={{ color: '#888' }}>長さ (秒)</span>
-          <input
-            type="number"
-            min={1}
-            max={600}
-            step={1}
-            value={Math.round(state.mechanic.durationFrames / state.mechanic.fps)}
-            onChange={(e) => {
-              const seconds = Math.max(1, Math.min(600, parseInt(e.target.value) || 10));
-              updateMechanicMeta({ durationFrames: seconds * state.mechanic.fps });
-            }}
-            style={{
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              background: '#2a2a4a',
-              border: '1px solid #3a3a5a',
-              borderRadius: '4px',
-              color: '#fff',
-            }}
-          />
-          <span style={{ fontSize: '10px', color: '#666' }}>
-            {state.mechanic.durationFrames}フレーム @ {state.mechanic.fps}fps
-          </span>
-        </label>
-        <label style={{ display: 'block', fontSize: '12px', marginBottom: '8px' }}>
-          <span style={{ color: '#888' }}>FPS</span>
-          <select
-            value={state.mechanic.fps}
-            onChange={(e) => {
-              const newFps = parseInt(e.target.value);
-              const currentSeconds = state.mechanic.durationFrames / state.mechanic.fps;
-              updateMechanicMeta({
-                fps: newFps,
-                durationFrames: Math.round(currentSeconds * newFps)
-              });
-            }}
-            style={{
-              width: '100%',
-              marginTop: '4px',
-              padding: '6px',
-              background: '#2a2a4a',
-              border: '1px solid #3a3a5a',
-              borderRadius: '4px',
-              color: '#fff',
-            }}
-          >
-            <option value={24}>24 fps</option>
-            <option value={30}>30 fps</option>
-            <option value={60}>60 fps</option>
-          </select>
-        </label>
-      </div>
     </div>
   );
 }

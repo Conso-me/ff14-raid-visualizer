@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { EditorProvider, useEditor } from './context/EditorContext';
 import { EditorHeader } from './components/EditorHeader';
-import { LeftPanel } from './components/LeftPanel';
+import { ToolPanel } from './components/ToolPanel';
+import { ObjectListPanel } from './components/ObjectListPanel';
+import { TimelinePanel } from './components/TimelinePanel';
 import { FieldEditor } from './components/FieldEditor';
 import { PropertyPanel } from './components/PropertyPanel';
 import { TimelineEditor } from './components/TimelineEditor';
@@ -94,15 +96,74 @@ function EditorContent() {
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Left panel: Tab-based Tools/Objects */}
+        {/* Left: Tool Panel */}
+        <div style={{
+          width: '260px',
+          borderRight: '1px solid #3a3a5a',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          <ToolPanel />
+        </div>
+
+        {/* Timeline Panel - Left of stage */}
         <div style={{
           width: '280px',
           borderRight: '1px solid #3a3a5a',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          flexShrink: 0,
         }}>
-          <LeftPanel />
+          <TimelinePanel />
         </div>
+
+        {/* Center: Field Editor (Stage) */}
         <FieldEditor />
-        <PropertyPanel />
+
+        {/* Right Side: Object List | Property Panel */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          borderLeft: '1px solid #3a3a5a',
+          flexShrink: 0,
+        }}>
+          {/* Object List Panel */}
+          <div style={{
+            width: '280px',
+            borderRight: '1px solid #3a3a5a',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '8px 12px',
+              background: '#252540',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: '#fff',
+              borderBottom: '1px solid #3a3a5a',
+              flexShrink: 0,
+            }}>
+              オブジェクト
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <ObjectListPanel />
+            </div>
+          </div>
+
+          {/* Property Panel */}
+          <div style={{
+            width: '280px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            <PropertyPanel />
+          </div>
+        </div>
       </div>
 
       <TimelineEditor />

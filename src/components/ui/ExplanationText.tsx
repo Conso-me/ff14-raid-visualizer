@@ -14,19 +14,21 @@ export const ExplanationText: React.FC<ExplanationTextProps> = ({
 }) => {
   const positionStyles: React.CSSProperties = {
     position: 'absolute',
-    left: '50%',
-    transform:
-      position === 'center'
-        ? 'translate(-50%, -50%)'
-        : 'translateX(-50%)',
   };
 
   if (position === 'top') {
     positionStyles.top = 50;
+    positionStyles.left = '50%';
+    positionStyles.transform = 'translateX(-50%)';
   } else if (position === 'bottom') {
     positionStyles.bottom = 120; // タイムラインバーの上
+    positionStyles.left = '50%';
+    positionStyles.transform = 'translateX(-50%)';
   } else {
+    // center position - aligned to left side (next to timeline overlay)
     positionStyles.top = '50%';
+    positionStyles.left = 220; // 200px overlay + 20px margin
+    positionStyles.transform = 'translateY(-50%)';
   }
 
   return (

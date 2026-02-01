@@ -13,6 +13,7 @@ import {
   RoleExplanation,
   CastBar,
   TimelineBar,
+  TimelineOverlay,
 } from '../components/ui';
 
 export interface MechanicCompositionProps {
@@ -140,6 +141,13 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
         }
         return null;
       })}
+
+      {/* タイムラインオーバーレイ */}
+      <TimelineOverlay
+        timeline={mechanic.timeline}
+        currentFrame={frame}
+        fps={mechanic.fps}
+      />
 
       {/* タイムラインバー */}
       <TimelineBar

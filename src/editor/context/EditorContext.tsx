@@ -35,9 +35,13 @@ interface EditorContextValue {
   updateMechanicMeta: (updates: Partial<Pick<MechanicData, 'name' | 'description' | 'durationFrames' | 'fps'>>) => void;
   // Multi-select methods
   toggleMultiSelect: (id: string, objectType: SelectedObjectType) => void;
-  setMultiSelect: (ids: string[]) => void;
+  setMultiSelect: (ids: string[], objectType: SelectedObjectType) => void;
   clearMultiSelect: () => void;
   selectAllPlayers: () => void;
+  selectAllEnemies: () => void;
+  selectAllAoEs: () => void;
+  selectAllAnnotations: () => void;
+  selectAllObjects: () => void;
   // Move event methods
   startMoveEvent: (playerIds: string[], fromPositions: Map<string, Position>) => void;
   completeMoveEvent: (toPosition: Position, startFrame: number, duration: number, easing: MoveEvent['easing']) => void;
@@ -263,8 +267,8 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'TOGGLE_MULTI_SELECT', payload: { id, objectType } });
   }, []);
 
-  const setMultiSelect = useCallback((ids: string[]) => {
-    dispatch({ type: 'SET_MULTI_SELECT', payload: { ids } });
+  const setMultiSelect = useCallback((ids: string[], objectType: SelectedObjectType) => {
+    dispatch({ type: 'SET_MULTI_SELECT', payload: { ids, objectType } });
   }, []);
 
   const clearMultiSelect = useCallback(() => {
@@ -277,6 +281,52 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
       dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: playerIds, objectType: 'player' } });
     }
   }, [state.mechanic.initialPlayers]);
+
+  const selectAllEnemies = useCallback(() => {
+    const enemyIds = state.mechanic.enemies.map(e => e.id);
+    if (enemyIds.length > 0) {
+      dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: enemyIds, objectType: 'enemy' } });
+    }
+  }, [state.mechanic.enemies]);
+
+  const selectAllAoEs = useCallback(() => {
+    // Get all AoE IDs from timeline events
+    const aoeIds: string[] = [];
+    state.mechanic.timeline.forEach(event => {
+      if (event.type === 'aoe_show' && !aoeIds.includes(event.aoe.id)) {
+        aoeIds.push(event.aoe.id);
+      }
+    });
+    if (aoeIds.length > 0) {
+      dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: aoeIds, objectType: 'aoe' } });
+    }
+  }, [state.mechanic.timeline]);
+
+  const selectAllAnnotations = useCallback(() => {
+    // Get all text annotation IDs from timeline events
+    const annotationIds: string[] = [];
+    state.mechanic.timeline.forEach(event => {
+      if (event.type === 'text_show' && !annotationIds.includes(event.annotation.id)) {
+        annotationIds.push(event.annotation.id);
+      }
+    });
+    if (annotationIds.length > 0) {
+      dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: annotationIds, objectType: 'text' } });
+    }
+  }, [state.mechanic.timeline]);
+
+  const selectAllObjects = useCallback(() => {
+    // Get all object IDs from timeline events
+    const objectIds: string[] = [];
+    state.mechanic.timeline.forEach(event => {
+      if (event.type === 'object_show' && !objectIds.includes(event.object.id)) {
+        objectIds.push(event.object.id);
+      }
+    });
+    if (objectIds.length > 0) {
+      dispatch({ type: 'SET_MULTI_SELECT', payload: { ids: objectIds, objectType: 'object' } });
+    }
+  }, [state.mechanic.timeline]);
 
   const startMoveEvent = useCallback((playerIds: string[], fromPositions: Map<string, Position>) => {
     dispatch({ type: 'START_MOVE_EVENT', payload: { playerIds, fromPositions } });
@@ -527,6 +577,10 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     setMultiSelect,
     clearMultiSelect,
     selectAllPlayers,
+    selectAllEnemies,
+    selectAllAoEs,
+    selectAllAnnotations,
+    selectAllObjects,
     startMoveEvent,
     completeMoveEvent,
     cancelMoveEvent,

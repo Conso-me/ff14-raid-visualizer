@@ -4,6 +4,7 @@ import type { MechanicData } from '../../data/types';
 import { VideoExportDialog } from './VideoExportDialog';
 import { ExportDialog } from './ExportDialog';
 import { ShareDialog } from './ShareDialog';
+import { SettingsDialog } from './SettingsDialog';
 import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
 import { clearAutoSave } from '../hooks/useAutoSave';
 // Log import feature is incomplete - hidden for now
@@ -23,10 +24,8 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
   const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  // Log import feature is incomplete - hidden for now
-  // const [isLogImportOpen, setIsLogImportOpen] = useState(false);
-  // const [isLogBrowserOpen, setIsLogBrowserOpen] = useState(false);
 
   const handleExport = () => {
     setIsExportDialogOpen(true);
@@ -46,8 +45,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
     reader.onload = (event) => {
       try {
         const rawData = JSON.parse(event.target?.result as string);
-
-        // Validate the data
         const validation = validateMechanic(rawData);
 
         if (!validation.isValid) {
@@ -56,13 +53,11 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
           return;
         }
 
-        // Show warnings if any
         if (validation.warnings.length > 0) {
           const warningMessages = validation.warnings.map(w => `- ${w.message}`).join('\n');
           console.warn('Import warnings:', warningMessages);
         }
 
-        // Sanitize and set the mechanic
         const sanitized = sanitizeMechanic(rawData);
         setMechanic(sanitized);
       } catch (err) {
@@ -70,8 +65,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
       }
     };
     reader.readAsText(file);
-
-    // Reset input
     e.target.value = '';
   };
 
@@ -81,7 +74,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         return;
       }
     }
-    // Clear auto-save data when creating new mechanic
     clearAutoSave();
     setMechanic({
       id: `mechanic_${Date.now()}`,
@@ -100,11 +92,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
       enemies: [],
       timeline: [],
     });
-  };
-
-  const handleResetWelcome = () => {
-    localStorage.removeItem('ff14-raid-visualizer-welcome-shown');
-    window.location.reload();
   };
 
   const buttonStyle: React.CSSProperties = {
@@ -173,6 +160,21 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         )}
       </div>
 
+      {/* Settings - 新規作成時の初期設定用 */}
+      <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid #3a3a5a', paddingLeft: '12px', marginLeft: '4px' }}>
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          style={{
+            ...buttonStyle,
+            background: '#4a4a6a',
+            borderColor: '#5a5a7a',
+          }}
+          title="フィールド・動画設定"
+        >
+          ⚙️ 設定
+        </button>
+      </div>
+
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
@@ -184,14 +186,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         <button onClick={handleImport} style={buttonStyle}>
           Import JSON
         </button>
-        {/* Log import feature is incomplete - hidden for now
-        <button onClick={() => setIsLogImportOpen(true)} style={buttonStyle}>
-          Log Import
-        </button>
-        <button onClick={() => setIsLogBrowserOpen(true)} style={buttonStyle}>
-          Log Browser
-        </button>
-        */}
         <button onClick={handleExport} style={buttonStyle}>
           Export JSON
         </button>
@@ -279,7 +273,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         動画出力
       </button>
 
-      {/* Shortcut Help - Prominent button with label */}
+      {/* Shortcut Help */}
       {onOpenShortcutHelp && (
         <button
           onClick={onOpenShortcutHelp}
@@ -303,21 +297,24 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         </button>
       )}
 
-      {/* Export Dialog */}
+      {/* Dialogs */}
       <ExportDialog
         isOpen={isExportDialogOpen}
         mechanic={state.mechanic}
         onClose={() => setIsExportDialogOpen(false)}
       />
 
-      {/* Share Dialog */}
       <ShareDialog
         isOpen={isShareDialogOpen}
         mechanic={state.mechanic}
         onClose={() => setIsShareDialogOpen(false)}
       />
 
-      {/* Video Export Dialog */}
+      <SettingsDialog
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
       <VideoExportDialog
         key={state.mechanic.id}
         isOpen={isVideoExportOpen}
@@ -387,17 +384,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
           </div>
         </div>
       )}
-
-      {/* Log import feature is incomplete - hidden for now
-      <LogImportDialog
-        isOpen={isLogImportOpen}
-        onClose={() => setIsLogImportOpen(false)}
-      />
-      <LogBrowserDialog
-        isOpen={isLogBrowserOpen}
-        onClose={() => setIsLogBrowserOpen(false)}
-      />
-      */}
     </header>
   );
 }
