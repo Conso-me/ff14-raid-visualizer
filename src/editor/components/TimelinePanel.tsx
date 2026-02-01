@@ -59,14 +59,15 @@ export function TimelinePanel() {
   // TimelineImportDialogからのインポートを処理
   const handleImport = useCallback((events: Partial<TimelineEvent>[]) => {
     // ローカル表示用エントリーを作成
-    const displayEntries: TimelineEntry[] = events
-      .filter((e): e is TimelineEvent & { frame: number } => 
+    // まずイベントごとにエントリを生成
+    const rawEntries = events
+      .filter((e): e is TimelineEvent & { frame: number } =>
         typeof e.frame === 'number' && e.frame >= 0
       )
-      .map((e, i) => {
+      .map((e) => {
         const time = e.frame / fps;
         let name = '';
-        
+
         switch (e.type) {
           case 'text':
             name = typeof e.content === 'string' ? e.content : 'Text';
@@ -80,15 +81,29 @@ export function TimelinePanel() {
           default:
             name = e.type || 'Event';
         }
-        
-        return {
-          id: `entry-${i}-${Date.now()}`,
-          time,
-          name,
-          type: e.type || 'text',
-        };
+
+        return { time, name, type: e.type || 'text' };
       })
       .sort((a, b) => a.time - b.time);
+
+    // 同じ秒数のイベントをグループ化して改行で結合
+    const groupMap = new Map<number, { names: string[]; time: number; type: string }>();
+    for (const entry of rawEntries) {
+      const seconds = Math.floor(entry.time);
+      if (!groupMap.has(seconds)) {
+        groupMap.set(seconds, { names: [], time: entry.time, type: entry.type });
+      }
+      groupMap.get(seconds)!.names.push(entry.name);
+    }
+
+    const displayEntries: TimelineEntry[] = Array.from(groupMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([seconds, group], i) => ({
+        id: `entry-${seconds}-${Date.now()}`,
+        time: group.time,
+        name: group.names.join('\n'),
+        type: group.type,
+      }));
     
     // 最小時間を計算してオフセットとして設定（最初のイベントを00:00にする）
     let minTime = 0;

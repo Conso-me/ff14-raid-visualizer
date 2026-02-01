@@ -334,8 +334,8 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             inputProps={{ mechanic }}
             durationInFrames={mechanic.durationFrames}
             fps={mechanic.fps}
-            compositionWidth={960}
-            compositionHeight={540}
+            compositionWidth={1920}
+            compositionHeight={1080}
             style={{
               width: 960,
               height: 540,

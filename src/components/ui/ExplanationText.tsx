@@ -12,45 +12,31 @@ export const ExplanationText: React.FC<ExplanationTextProps> = ({
   position,
   opacity = 1,
 }) => {
-  const positionStyles: React.CSSProperties = {
-    position: 'absolute',
-  };
-
-  if (position === 'top') {
-    positionStyles.top = 50;
-    positionStyles.left = '50%';
-    positionStyles.transform = 'translateX(-50%)';
-  } else if (position === 'bottom') {
-    positionStyles.bottom = 120; // タイムラインバーの上
-    positionStyles.left = '50%';
-    positionStyles.transform = 'translateX(-50%)';
-  } else {
-    // center position - aligned to left side (next to timeline overlay)
-    positionStyles.top = '50%';
-    positionStyles.left = 220; // 200px overlay + 20px margin
-    positionStyles.transform = 'translateY(-50%)';
-  }
-
   return (
     <div
       style={{
-        ...positionStyles,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        padding: '16px 32px',
+        position: 'absolute',
+        top: 20,
+        left: 220,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        padding: '14px 28px',
         borderRadius: 8,
+        borderLeft: '4px solid #5a7aff',
         opacity,
         pointerEvents: 'none',
         zIndex: 100,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.6)',
       }}
     >
       <span
         style={{
-          color: 'white',
-          fontSize: 28,
+          color: '#ffffff',
+          fontSize: 32,
           fontWeight: 'bold',
           fontFamily: FONT_FAMILY,
-          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+          textShadow: '0 2px 8px rgba(0,0,0,0.7)',
           whiteSpace: 'nowrap',
+          letterSpacing: '0.5px',
         }}
       >
         {text}

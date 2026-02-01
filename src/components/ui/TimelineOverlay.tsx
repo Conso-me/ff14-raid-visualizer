@@ -26,9 +26,9 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
   const displaySeconds = Math.floor(displayTime % 60);
   const displayTimeStr = `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
 
-  // 同じ時間のイベントをグループ化
+  // 同じ秒数のイベントをグループ化
   const timelineEntries: TimelineEntry[] = useMemo(() => {
-    const eventMap = new Map<number, string[]>();
+    const secondsMap = new Map<number, { names: string[]; frame: number }>();
     let minFrame = Infinity;
 
     timeline.forEach((event) => {
@@ -39,7 +39,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
 
     timeline.forEach((event) => {
       const adjustedFrame = Math.max(0, event.frame - minFrame + bufferFrames);
-      
+
       let name = '';
       switch (event.type) {
         case 'cast':
@@ -61,21 +61,27 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
       }
 
       if (name) {
-        if (!eventMap.has(adjustedFrame)) {
-          eventMap.set(adjustedFrame, []);
+        // 秒数単位でグループ化
+        const seconds = Math.floor(adjustedFrame / fps);
+        if (!secondsMap.has(seconds)) {
+          secondsMap.set(seconds, { names: [], frame: adjustedFrame });
         }
-        eventMap.get(adjustedFrame)!.push(name);
+        const group = secondsMap.get(seconds)!;
+        group.names.push(name);
+        // グループ内の最小フレームを保持
+        if (adjustedFrame < group.frame) {
+          group.frame = adjustedFrame;
+        }
       }
     });
 
-    // Mapをエントリー配列に変換（同じ時間のイベントは改行で結合）
+    // Mapをエントリー配列に変換（同じ秒数のイベントは改行で結合）
     const entries: TimelineEntry[] = [];
-    eventMap.forEach((names, frame) => {
-      const time = frame / fps;
+    secondsMap.forEach(({ names, frame }, seconds) => {
       entries.push({
-        time,
+        time: seconds,
         frame,
-        name: names.join('\n'), // 改行で結合
+        name: names.join('\n'),
       });
     });
 
@@ -86,9 +92,10 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
   const adjustedCurrentFrame = Math.max(0, currentFrame + (BUFFER_SECONDS * fps) - (timelineEntries[0]?.frame || 0));
 
   const currentEntryIndex = timelineEntries.findIndex((entry, index) => {
+    if (adjustedCurrentFrame < entry.frame) return false;
     const nextEntry = timelineEntries[index + 1];
     if (!nextEntry) return true;
-    return adjustedCurrentFrame >= entry.frame && adjustedCurrentFrame < nextEntry.frame;
+    return adjustedCurrentFrame < nextEntry.frame;
   });
 
   return (

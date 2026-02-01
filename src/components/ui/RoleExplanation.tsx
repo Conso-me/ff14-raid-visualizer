@@ -51,31 +51,23 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
   position,
   opacity = 1,
 }) => {
-  const positionStyles: React.CSSProperties = {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-  };
-
-  if (position === 'top') {
-    positionStyles.top = 100;
-  } else {
-    positionStyles.bottom = 120; // タイムラインバーの上
-  }
-
   return (
     <div
       style={{
-        ...positionStyles,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        padding: '12px 24px',
+        position: 'absolute',
+        top: 20,
+        left: 220,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        padding: '14px 24px',
         borderRadius: 8,
+        borderLeft: '4px solid #5a7aff',
         opacity,
         pointerEvents: 'none',
         zIndex: 100,
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 10,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.6)',
       }}
     >
       {roleTexts.map((roleText, index) => (
@@ -84,7 +76,7 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            gap: 14,
           }}
         >
           {/* ロールラベル */}
@@ -92,13 +84,14 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
             style={{
               backgroundColor: getRoleColor(roleText.roles),
               color: 'white',
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: 'bold',
               fontFamily: FONT_FAMILY,
-              padding: '4px 8px',
+              padding: '5px 10px',
               borderRadius: 4,
-              minWidth: 80,
+              minWidth: 90,
               textAlign: 'center',
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
             }}
           >
             {formatRoles(roleText.roles)}
@@ -106,10 +99,12 @@ export const RoleExplanation: React.FC<RoleExplanationProps> = ({
           {/* テキスト */}
           <span
             style={{
-              color: 'white',
-              fontSize: 20,
+              color: '#ffffff',
+              fontSize: 24,
+              fontWeight: 'bold',
               fontFamily: FONT_FAMILY,
-              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+              letterSpacing: '0.3px',
             }}
           >
             {roleText.text}
