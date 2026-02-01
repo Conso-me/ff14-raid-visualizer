@@ -5,6 +5,7 @@ import { VideoExportDialog } from './VideoExportDialog';
 import { ExportDialog } from './ExportDialog';
 import { ShareDialog } from './ShareDialog';
 import { SettingsDialog } from './SettingsDialog';
+import { WebRenderDialog } from './WebRenderDialog';
 import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
 import { clearAutoSave } from '../hooks/useAutoSave';
 // Log import feature is incomplete - hidden for now
@@ -25,6 +26,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isWebRenderOpen, setIsWebRenderOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
   const handleExport = () => {
@@ -261,8 +263,8 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         Preview
       </button>
 
-      {/* Video Export */}
-      <button
+      {/* Video Export（サーバーサイド） - ブラウザ出力に置き換え済み。復元が必要な場合はこのコメントを外す */}
+      {/* <button
         onClick={() => setIsVideoExportOpen(true)}
         style={{
           ...buttonStyle,
@@ -271,6 +273,18 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         }}
       >
         動画出力
+      </button> */}
+
+      {/* Web Render (ブラウザ出力) */}
+      <button
+        onClick={() => setIsWebRenderOpen(true)}
+        style={{
+          ...buttonStyle,
+          background: '#7c3aed',
+          borderColor: '#8b5cf6',
+        }}
+      >
+        ブラウザ出力
       </button>
 
       {/* Shortcut Help */}
@@ -320,6 +334,13 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         isOpen={isVideoExportOpen}
         mechanic={state.mechanic}
         onClose={() => setIsVideoExportOpen(false)}
+      />
+
+      <WebRenderDialog
+        key={`web-render-${state.mechanic.id}`}
+        isOpen={isWebRenderOpen}
+        mechanic={state.mechanic}
+        onClose={() => setIsWebRenderOpen(false)}
       />
 
       {/* Import Error Modal */}
