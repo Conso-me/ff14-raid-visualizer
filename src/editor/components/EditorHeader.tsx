@@ -4,7 +4,6 @@ import type { MechanicData } from '../../data/types';
 import { VideoExportDialog } from './VideoExportDialog';
 import { ExportDialog } from './ExportDialog';
 import { ShareDialog } from './ShareDialog';
-import { SettingsDialog } from './SettingsDialog';
 import { WebRenderDialog } from './WebRenderDialog';
 import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
 import { clearAutoSave } from '../hooks/useAutoSave';
@@ -25,7 +24,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
   const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWebRenderOpen, setIsWebRenderOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -160,21 +158,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
             {state.mechanic.name}
           </span>
         )}
-      </div>
-
-      {/* Settings - 新規作成時の初期設定用 */}
-      <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid #3a3a5a', paddingLeft: '12px', marginLeft: '4px' }}>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          style={{
-            ...buttonStyle,
-            background: '#4a4a6a',
-            borderColor: '#5a5a7a',
-          }}
-          title="フィールド・動画設定"
-        >
-          ⚙️ 設定
-        </button>
       </div>
 
       {/* Spacer */}
@@ -322,11 +305,6 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         isOpen={isShareDialogOpen}
         mechanic={state.mechanic}
         onClose={() => setIsShareDialogOpen(false)}
-      />
-
-      <SettingsDialog
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
       />
 
       <VideoExportDialog

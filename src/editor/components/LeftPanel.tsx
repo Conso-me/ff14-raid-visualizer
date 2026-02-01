@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ToolPanelContent } from './ToolPanelContent';
+import { SettingsPanelContent } from './SettingsPanelContent';
 import { ObjectListPanel } from './ObjectListPanel';
 import { TimelinePanel } from './TimelinePanel';
 
+type TabType = 'tools' | 'settings';
+
 export function LeftPanel() {
+  const [activeTab, setActiveTab] = useState<TabType>('tools');
+
+  const tabStyle = (active: boolean) => ({
+    flex: 1,
+    padding: '8px 12px',
+    background: active ? '#3753c7' : '#252540',
+    border: 'none',
+    color: '#fff',
+    fontSize: '13px',
+    fontWeight: 'bold' as const,
+    cursor: 'pointer',
+    borderBottom: active ? '2px solid #4a7aff' : '2px solid transparent',
+  });
+
   return (
     <div style={{
       display: 'flex',
@@ -11,7 +28,7 @@ export function LeftPanel() {
       height: '100%',
       background: '#1a1a2e',
     }}>
-      {/* Section 1: Tools */}
+      {/* Section 1: Tools / Settings (tabbed) */}
       <div style={{
         flex: '0 0 auto',
         maxHeight: '35%',
@@ -19,16 +36,23 @@ export function LeftPanel() {
         borderBottom: '1px solid #3a3a5a',
       }}>
         <div style={{
-          padding: '8px 12px',
-          background: '#252540',
-          fontSize: '13px',
-          fontWeight: 'bold',
-          color: '#fff',
+          display: 'flex',
           borderBottom: '1px solid #3a3a5a',
         }}>
-          ツール
+          <button
+            style={tabStyle(activeTab === 'tools')}
+            onClick={() => setActiveTab('tools')}
+          >
+            ツール
+          </button>
+          <button
+            style={tabStyle(activeTab === 'settings')}
+            onClick={() => setActiveTab('settings')}
+          >
+            設定
+          </button>
         </div>
-        <ToolPanelContent />
+        {activeTab === 'tools' ? <ToolPanelContent /> : <SettingsPanelContent />}
       </div>
 
       {/* Section 2: Objects */}

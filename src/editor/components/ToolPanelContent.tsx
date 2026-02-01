@@ -3,13 +3,12 @@ import { useEditor } from '../context/EditorContext';
 import type { Role, MarkerType, AoEType } from '../../data/types';
 
 const TOOLS = [
-  { id: 'select', label: 'Select', icon: '↖' },
-  { id: 'move', label: 'Move', icon: '✋' },
-  { id: 'add_move_event', label: '移動追加', icon: '→' },
+  { id: 'select', label: 'Select', icon: '↖', shortcut: '1' },
+  { id: 'move', label: 'Move', icon: '✋', shortcut: '2' },
+  { id: 'add_move_event', label: '移動追加', icon: '→', shortcut: '3' },
 ] as const;
 
 const ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
-const MARKERS: MarkerType[] = ['A', 'B', 'C', 'D', '1', '2', '3', '4'];
 const AOE_TYPES: { type: AoEType; label: string; icon: string }[] = [
   { type: 'circle', label: '円形', icon: '○' },
   { type: 'cone', label: '扇形', icon: '◗' },
@@ -54,17 +53,14 @@ export function ToolPanelContent() {
     letterSpacing: '0.5px',
   };
 
-  const handleAddPlayer = (role: Role) => {
-    const existingRoles = state.mechanic.initialPlayers.map((p) => p.role);
-    if (existingRoles.includes(role)) {
-      alert(`Player ${role} already exists`);
-      return;
-    }
-    addPlayer({
-      id: `player_${role}`,
-      role,
-      position: { x: 0, y: 0 },
-    });
+  const shortcutStyle: React.CSSProperties = {
+    marginLeft: 'auto',
+    fontSize: '11px',
+    color: '#666',
+    background: '#1a1a2e',
+    padding: '2px 6px',
+    borderRadius: '3px',
+    border: '1px solid #3a3a5a',
   };
 
   const handleAddEnemy = () => {
@@ -75,13 +71,6 @@ export function ToolPanelContent() {
       position: { x: 0, y: 0 },
       size: 3,
       color: '#ff0000',
-    });
-  };
-
-  const handleAddMarker = (type: MarkerType) => {
-    addMarker({
-      type,
-      position: { x: 0, y: 0 },
     });
   };
 
@@ -154,6 +143,7 @@ export function ToolPanelContent() {
             >
               <span>{tool.icon}</span>
               <span>{tool.label}</span>
+              <span style={shortcutStyle}>{tool.shortcut}</span>
             </button>
           ))}
         </div>
@@ -172,53 +162,11 @@ export function ToolPanelContent() {
         </label>
       </div>
 
-      {/* Add Players */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Add Players</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-          {ROLES.map((role) => {
-            const exists = state.mechanic.initialPlayers.find((p) => p.role === role);
-            return (
-              <button
-                key={role}
-                onClick={() => handleAddPlayer(role)}
-                disabled={!!exists}
-                style={{
-                  ...buttonStyle(false),
-                  padding: '8px',
-                  justifyContent: 'center',
-                  opacity: exists ? 0.4 : 1,
-                }}
-              >
-                {role}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Add Enemy */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Add Enemy</div>
         <button onClick={handleAddEnemy} style={buttonStyle(false)}>
           + Add Enemy
         </button>
-      </div>
-
-      {/* Add Markers */}
-      <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Add Markers</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-          {MARKERS.map((type) => (
-            <button
-              key={type}
-              onClick={() => handleAddMarker(type)}
-              style={{ ...buttonStyle(false), padding: '8px', justifyContent: 'center' }}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Add AoE */}
@@ -232,7 +180,8 @@ export function ToolPanelContent() {
             background: state.tool === 'add_aoe' ? '#ff6600' : '#2a2a4a',
           }}
         >
-          {state.tool === 'add_aoe' ? '配置モード: ON' : 'AoE配置モード'}
+          <span>{state.tool === 'add_aoe' ? '配置モード: ON' : 'AoE配置モード'}</span>
+          <span style={shortcutStyle}>4</span>
         </button>
 
         {/* AoE type selection (shown when in add_aoe mode) */}
@@ -284,7 +233,8 @@ export function ToolPanelContent() {
             background: state.tool === 'add_debuff' ? '#ff00ff' : '#2a2a4a',
           }}
         >
-          {state.tool === 'add_debuff' ? '付与モード: ON' : 'デバフ付与モード'}
+          <span>{state.tool === 'add_debuff' ? '付与モード: ON' : 'デバフ付与モード'}</span>
+          <span style={shortcutStyle}>5</span>
         </button>
 
         {state.tool === 'add_debuff' && (
@@ -304,7 +254,8 @@ export function ToolPanelContent() {
             background: state.tool === 'add_text' ? '#00aaff' : '#2a2a4a',
           }}
         >
-          {state.tool === 'add_text' ? '配置モード: ON' : 'テキスト配置'}
+          <span>{state.tool === 'add_text' ? '配置モード: ON' : 'テキスト配置'}</span>
+          <span style={shortcutStyle}>6</span>
         </button>
         {state.tool === 'add_text' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
@@ -323,7 +274,8 @@ export function ToolPanelContent() {
             background: state.tool === 'add_object' ? '#ffaa00' : '#2a2a4a',
           }}
         >
-          {state.tool === 'add_object' ? '配置モード: ON' : 'オブジェクト配置'}
+          <span>{state.tool === 'add_object' ? '配置モード: ON' : 'オブジェクト配置'}</span>
+          <span style={shortcutStyle}>7</span>
         </button>
         {state.tool === 'add_object' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
