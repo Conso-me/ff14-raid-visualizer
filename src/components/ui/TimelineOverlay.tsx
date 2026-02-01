@@ -21,7 +21,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
   currentFrame,
   fps,
 }) => {
-  const displayTime = Math.max(0, (currentFrame / fps) - BUFFER_SECONDS);
+  const displayTime = currentFrame / fps;
   const displayMinutes = Math.floor(displayTime / 60);
   const displaySeconds = Math.floor(displayTime % 60);
   const displayTimeStr = `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
