@@ -70,6 +70,8 @@ export const ConeAoE: React.FC<ConeAoEProps> = ({
 
   return (
     <svg
+      width={screenSize}
+      height={screenSize}
       style={{
         position: 'absolute',
         top: 0,

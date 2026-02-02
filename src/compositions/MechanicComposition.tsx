@@ -61,6 +61,8 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             key={marker.type}
             type={marker.type}
             position={marker.position}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
           />
         ))}
 
@@ -82,6 +84,8 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             armWidth={aoe.armWidth}
             armLength={aoe.armLength}
             rotation={aoe.rotation}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
           />
         ))}
 
@@ -91,6 +95,7 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             key={obj.id}
             object={obj}
             fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
           />
         ))}
 
@@ -102,6 +107,8 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             position={enemy.position}
             size={enemy.size}
             color={enemy.color}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
           />
         ))}
 
@@ -115,6 +122,8 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             debuffs={player.debuffs}
             currentFrame={frame}
             fps={mechanic.fps}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
           />
         ))}
       </Field>

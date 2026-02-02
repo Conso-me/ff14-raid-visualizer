@@ -25,6 +25,8 @@ export const CircleAoE: React.FC<CircleAoEProps> = ({
 
   return (
     <svg
+      width={screenSize}
+      height={screenSize}
       style={{
         position: 'absolute',
         top: 0,

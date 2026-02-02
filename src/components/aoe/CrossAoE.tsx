@@ -31,6 +31,8 @@ export const CrossAoE: React.FC<CrossAoEProps> = ({
 
   return (
     <svg
+      width={screenSize}
+      height={screenSize}
       style={{
         position: 'absolute',
         top: 0,

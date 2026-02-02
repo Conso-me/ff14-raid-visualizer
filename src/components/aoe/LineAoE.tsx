@@ -35,6 +35,8 @@ export const LineAoE: React.FC<LineAoEProps> = ({
 
   return (
     <svg
+      width={screenSize}
+      height={screenSize}
       style={{
         position: 'absolute',
         top: 0,
