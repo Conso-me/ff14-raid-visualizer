@@ -8,6 +8,7 @@ import { FieldMarker } from '../components/marker/FieldMarker';
 import { Player } from '../components/player/Player';
 import { Enemy } from '../components/enemy/Enemy';
 import { AoE } from '../components/aoe/AoE';
+import { GimmickObjectRenderer } from '../components/object/GimmickObjectRenderer';
 import {
   ExplanationText,
   RoleExplanation,
@@ -46,9 +47,13 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
       <Field
         type={mechanic.field.type}
         size={mechanic.field.size}
+        width={mechanic.field.width}
+        height={mechanic.field.height}
         screenSize={FIELD_DEFAULTS.screenSize}
         backgroundColor={mechanic.field.backgroundColor}
         gridEnabled={mechanic.field.gridEnabled}
+        backgroundImage={mechanic.field.backgroundImage}
+        backgroundOpacity={mechanic.field.backgroundOpacity}
       >
         {/* フィールドマーカー */}
         {mechanic.markers.map((marker) => (
@@ -77,6 +82,15 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             armWidth={aoe.armWidth}
             armLength={aoe.armLength}
             rotation={aoe.rotation}
+          />
+        ))}
+
+        {/* ギミックオブジェクト */}
+        {state.activeObjects.map((obj) => (
+          <GimmickObjectRenderer
+            key={obj.id}
+            object={obj}
+            fieldSize={mechanic.field.size}
           />
         ))}
 
@@ -147,6 +161,7 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
         timeline={mechanic.timeline}
         currentFrame={frame}
         fps={mechanic.fps}
+        title={mechanic.name}
       />
 
       {/* タイムラインバー */}

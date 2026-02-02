@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useEditor } from '../context/EditorContext';
 import { TimelineImportDialog } from './TimelineImportDialog';
-import type { TimelineEvent } from '../../data/types';
+import type { TimelineEvent, Role, ObjectShowEvent } from '../../data/types';
 
 // フレームを時間文字列に変換
 function formatTime(frames: number, fps: number): string {
@@ -18,108 +18,141 @@ interface TimelineEntry {
   type: string;
 }
 
+// タイムラインパネルに表示するイベントタイプ
+const DISPLAY_EVENT_TYPES = new Set(['text', 'cast']);
+
+// イベントから表示名を取得
+function getEventDisplayName(event: TimelineEvent): string | null {
+  switch (event.type) {
+    case 'text':
+      return typeof event.content === 'string' ? event.content : 'Text';
+    case 'cast':
+      return event.skillName || 'Cast';
+    default:
+      return null;
+  }
+}
+
 export function TimelinePanel() {
-  const { state, setCurrentFrame, addTimelineEvent, updateMechanicMeta } = useEditor();
+  const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy } = useEditor();
   const { mechanic, currentFrame } = state;
   const [showImport, setShowImport] = useState(false);
-  const [timelineEntries, setTimelineEntries] = useState<TimelineEntry[]>([]);
-  const [timeOffset, setTimeOffset] = useState<number>(0); // 最初のイベント時間を0秒にするためのオフセット
   const containerRef = useRef<HTMLDivElement>(null);
   const entryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const fps = mechanic.fps;
 
-  // 表示時間は現在時間からオフセットを引く（最初のギミックを0秒として表示）
-  const currentSeconds = currentFrame / fps;
-  const displayTime = Math.max(0, currentSeconds);
-  const displayTimeStr = formatTime(displayTime * fps, fps);
-  
-  // 表示時間（オフセット適用後）に基づいて現在のエントリーを特定
-  const currentEntryIndex = timelineEntries.findIndex(
-    (entry, index) => {
-      const nextEntry = timelineEntries[index + 1];
-      const entryDisplayTime = entry.time - timeOffset;
-      const nextEntryDisplayTime = nextEntry ? nextEntry.time - timeOffset : Infinity;
-      return displayTime >= entryDisplayTime && displayTime < nextEntryDisplayTime;
-    }
-  );
+  // mechanic.timelineから表示用エントリを派生
+  const timelineEntries = useMemo(() => {
+    const displayEvents = mechanic.timeline
+      .filter((e) => DISPLAY_EVENT_TYPES.has(e.type))
+      .sort((a, b) => a.frame - b.frame);
 
-  // ビデオ長さをタイムラインに合わせて調整
-  const adjustVideoLength = useCallback(() => {
-    if (timelineEntries.length === 0 || !updateMechanicMeta) return;
-    
-    const lastEntry = timelineEntries[timelineEntries.length - 1];
-    // 最後のイベント時間（オフセット適用後）+ 2秒余白
-    const newDurationSeconds = (lastEntry.time - timeOffset) + 2;
-    const newDurationFrames = Math.ceil(newDurationSeconds * fps);
+    // 同じ秒数のイベントをグループ化
+    const groupMap = new Map<number, { names: string[]; frame: number; type: string }>();
+    for (const event of displayEvents) {
+      const name = getEventDisplayName(event);
+      if (!name) continue;
 
-    updateMechanicMeta({ durationFrames: newDurationFrames });
-    alert(`ビデオ長さを ${newDurationSeconds.toFixed(1)}秒 (${newDurationFrames}フレーム) に調整しました`);
-  }, [timelineEntries, fps, updateMechanicMeta, timeOffset]);
-
-  // TimelineImportDialogからのインポートを処理
-  const handleImport = useCallback((events: Partial<TimelineEvent>[]) => {
-    // ローカル表示用エントリーを作成
-    // まずイベントごとにエントリを生成
-    const rawEntries = events
-      .filter((e): e is TimelineEvent & { frame: number } =>
-        typeof e.frame === 'number' && e.frame >= 0
-      )
-      .map((e) => {
-        const time = e.frame / fps;
-        let name = '';
-
-        switch (e.type) {
-          case 'text':
-            name = typeof e.content === 'string' ? e.content : 'Text';
-            break;
-          case 'cast':
-            name = e.skillName || 'Cast';
-            break;
-          case 'aoe_show':
-            name = 'AoE';
-            break;
-          default:
-            name = e.type || 'Event';
-        }
-
-        return { time, name, type: e.type || 'text' };
-      })
-      .sort((a, b) => a.time - b.time);
-
-    // 同じ秒数のイベントをグループ化して改行で結合
-    const groupMap = new Map<number, { names: string[]; time: number; type: string }>();
-    for (const entry of rawEntries) {
-      const seconds = Math.floor(entry.time);
+      const seconds = Math.floor(event.frame / fps);
       if (!groupMap.has(seconds)) {
-        groupMap.set(seconds, { names: [], time: entry.time, type: entry.type });
+        groupMap.set(seconds, { names: [], frame: event.frame, type: event.type });
       }
-      groupMap.get(seconds)!.names.push(entry.name);
+      const group = groupMap.get(seconds)!;
+      group.names.push(name);
+      // グループ内の最小フレームを保持
+      if (event.frame < group.frame) {
+        group.frame = event.frame;
+      }
     }
 
-    const displayEntries: TimelineEntry[] = Array.from(groupMap.entries())
+    return Array.from(groupMap.entries())
       .sort(([a], [b]) => a - b)
-      .map(([seconds, group], i) => ({
-        id: `entry-${seconds}-${Date.now()}`,
-        time: group.time,
+      .map(([seconds, group]) => ({
+        id: `entry-${seconds}`,
+        time: group.frame / fps,
         name: group.names.join('\n'),
         type: group.type,
       }));
-    
-    // 最小時間を計算してオフセットとして設定（最初のイベントを00:00にする）
-    let minTime = 0;
-    if (displayEntries.length > 0) {
-      minTime = displayEntries[0].time;
-      setTimeOffset(minTime);
+  }, [mechanic.timeline, fps]);
+
+  // 表示時間
+  const currentSeconds = currentFrame / fps;
+  const displayTime = Math.max(0, currentSeconds);
+  const displayTimeStr = formatTime(displayTime * fps, fps);
+
+  // 現在のエントリーを特定
+  const currentEntryIndex = timelineEntries.findIndex(
+    (entry, index) => {
+      const nextEntry = timelineEntries[index + 1];
+      return displayTime >= entry.time && (nextEntry ? displayTime < nextEntry.time : true);
     }
-    
-    setTimelineEntries(displayEntries);
-    
-    // 実際のタイムラインにイベントを追加（時間を0秒スタートに調整）
+  );
+
+  // TimelineImportDialogからのインポートを処理
+  const handleImport = useCallback((events: Partial<TimelineEvent>[]) => {
+    // プレイヤーが未配置なら8人プリセット配置
+    if (mechanic.initialPlayers.length === 0) {
+      const positions: { role: Role; x: number; y: number }[] = [
+        { role: 'T1', x: 0, y: -8 },
+        { role: 'T2', x: 0, y: 8 },
+        { role: 'H1', x: -8, y: 0 },
+        { role: 'H2', x: 8, y: 0 },
+        { role: 'D1', x: -6, y: 6 },
+        { role: 'D2', x: 6, y: 6 },
+        { role: 'D3', x: -6, y: -6 },
+        { role: 'D4', x: 6, y: -6 },
+      ];
+      positions.forEach(({ role, x, y }) => {
+        addPlayer({ id: `player_${role}`, role, position: { x, y } });
+      });
+    }
+
+    // ボスが未配置なら中央に自動追加
+    if (mechanic.enemies.length === 0) {
+      addEnemy({ id: 'boss', name: 'Boss', position: { x: 0, y: 0 } });
+    }
+
+    // object_showイベントからオブジェクトを事前生成してタイムラインに追加
+    // （object_showイベント自体にオブジェクト定義が含まれるため、先に追加する）
+    const objectShowEvents = events.filter(
+      (e): e is Partial<ObjectShowEvent> => e.type === 'object_show' && !!(e as Partial<ObjectShowEvent>).object
+    );
+    const nonObjectEvents = events.filter(
+      (e) => e.type !== 'object_show' && e.type !== 'object_hide'
+    );
+    const objectHideEvents = events.filter((e) => e.type === 'object_hide');
+
+    // オブジェクト系イベント → その他のイベントの順にソートして処理
+    const sortedEvents = [...objectShowEvents, ...objectHideEvents, ...nonObjectEvents];
+
+    // 最小フレームを計算（0秒スタートに調整するため）
+    let minFrame = Infinity;
+    for (const event of events) {
+      if (typeof event.frame === 'number' && event.frame >= 0 && event.frame < minFrame) {
+        minFrame = event.frame;
+      }
+    }
+    if (!isFinite(minFrame)) minFrame = 0;
+
+    // ビデオ長さを自動調整（最後のイベント時間 + 2秒余白）
+    let maxFrame = 0;
+    for (const event of events) {
+      if (typeof event.frame === 'number' && event.frame > maxFrame) {
+        maxFrame = event.frame;
+      }
+    }
+    if (maxFrame > minFrame && updateMechanicMeta) {
+      const newDurationSeconds = (maxFrame - minFrame) / fps + 2;
+      const newDurationFrames = Math.ceil(newDurationSeconds * fps);
+      updateMechanicMeta({ durationFrames: newDurationFrames });
+    }
+
+    // 実際のタイムラインにイベントを追加（オブジェクト系を先に、時間を0秒スタートに調整）
     if (addTimelineEvent) {
-      events.forEach(event => {
+      sortedEvents.forEach(event => {
         if (event.type && typeof event.frame === 'number') {
           // frameからオフセットを引いて0秒スタートに調整
-          const adjustedFrame = Math.round(event.frame - (minTime * fps));
+          const adjustedFrame = Math.round(event.frame - minFrame);
           const adjustedEvent = {
             ...event,
             frame: Math.max(0, adjustedFrame)
@@ -128,16 +161,37 @@ export function TimelinePanel() {
         }
       });
     }
-    
+
     setShowImport(false);
-  }, [addTimelineEvent, fps]);
+  }, [addTimelineEvent, fps, mechanic.initialPlayers.length, mechanic.enemies.length, addPlayer, addEnemy, updateMechanicMeta]);
 
   const handleEntryClick = useCallback((time: number) => {
     if (setCurrentFrame) {
-      // オフセットを引いてリベース済みフレームを計算
-      setCurrentFrame(Math.round((time - timeOffset) * fps));
+      setCurrentFrame(Math.round(time * fps));
     }
-  }, [setCurrentFrame, fps, timeOffset]);
+  }, [setCurrentFrame, fps]);
+
+  // タイムライン全クリア
+  const handleClearTimeline = useCallback(() => {
+    if (!confirm('タイムラインをすべてクリアしますか？')) return;
+
+    mechanic.timeline.forEach((event) => {
+      deleteTimelineEvent(event.id);
+    });
+  }, [mechanic.timeline, deleteTimelineEvent]);
+
+  // タイムラインエントリ個別削除
+  const handleDeleteEntry = useCallback((entry: TimelineEntry) => {
+    // 該当秒数のイベントをmechanic.timelineから特定して削除
+    const entrySeconds = Math.floor(entry.time);
+    mechanic.timeline.forEach((event) => {
+      if (!DISPLAY_EVENT_TYPES.has(event.type)) return;
+      const eventSeconds = Math.floor(event.frame / fps);
+      if (eventSeconds === entrySeconds) {
+        deleteTimelineEvent(event.id);
+      }
+    });
+  }, [mechanic.timeline, deleteTimelineEvent, fps]);
 
   return (
     <>
@@ -164,11 +218,11 @@ export function TimelinePanel() {
           }}
         >
           {timelineEntries.length === 0 ? (
-            <div style={{ 
-              fontSize: '13px', 
-              color: '#666', 
-              textAlign: 'center', 
-              padding: '40px 20px' 
+            <div style={{
+              fontSize: '13px',
+              color: '#666',
+              textAlign: 'center',
+              padding: '40px 20px'
             }}>
               タイムラインが空です
               <br />
@@ -180,7 +234,7 @@ export function TimelinePanel() {
           ) : (
             timelineEntries.map((entry, index) => {
               const isCurrent = index === currentEntryIndex;
-              
+
               return (
                 <div
                   key={entry.id}
@@ -211,10 +265,10 @@ export function TimelinePanel() {
                       borderLeft: '10px solid #ff6b6b',
                     }} />
                   )}
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'flex-start', 
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
                     gap: '8px',
                     position: 'relative',
                   }}>
@@ -224,7 +278,7 @@ export function TimelinePanel() {
                       color: isCurrent ? '#fff' : '#888',
                       minWidth: '50px',
                     }}>
-                      {formatTime((entry.time - timeOffset) * fps, fps)}
+                      {formatTime(entry.time * fps, fps)}
                     </span>
                     <span style={{
                       fontSize: isCurrent ? '14px' : '13px',
@@ -235,8 +289,27 @@ export function TimelinePanel() {
                     }}>
                       {entry.name}
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteEntry(entry);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: isCurrent ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        padding: '0 4px',
+                        lineHeight: 1,
+                        flexShrink: 0,
+                      }}
+                      title="このエントリを削除"
+                    >
+                      ×
+                    </button>
                   </div>
-                  
+
                   {isCurrent && (
                     <div style={{
                       fontSize: '11px',
@@ -274,23 +347,25 @@ export function TimelinePanel() {
           >
             タイムラインをインポート
           </button>
-          
+
           {timelineEntries.length > 0 && (
-            <button
-              onClick={adjustVideoLength}
-              style={{
-                width: '100%',
-                padding: '8px',
-                background: '#2c5f7c',
-                border: '1px solid #3c7a9c',
-                borderRadius: '4px',
-                color: '#fff',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
-            >
-              ビデオ長さを調整
-            </button>
+            <>
+              <button
+                onClick={handleClearTimeline}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  background: '#5a2a2a',
+                  border: '1px solid #7a3a3a',
+                  borderRadius: '4px',
+                  color: '#ff8888',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                タイムラインをクリア
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -300,6 +375,7 @@ export function TimelinePanel() {
         onClose={() => setShowImport(false)}
         onImport={handleImport}
         fps={fps}
+        players={mechanic.initialPlayers}
       />
     </>
   );

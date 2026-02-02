@@ -11,7 +11,7 @@ type ExportFormat = 'pretty' | 'minified';
 
 export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
   const [format, setFormat] = useState<ExportFormat>('pretty');
-  const [filename, setFilename] = useState(mechanic.id || 'mechanic');
+  const [filename, setFilename] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [copied, setCopied] = useState(false);
 
   const getJson = useCallback(() => {

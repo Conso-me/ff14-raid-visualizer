@@ -17,7 +17,6 @@ export function TimelineEditor() {
   const { mechanic, currentFrame, isPlaying } = state;
 
   const [pixelsPerFrame, setPixelsPerFrame] = useState(DEFAULT_PIXELS_PER_FRAME);
-  const [scrollOffset, setScrollOffset] = useState(0);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dragStartFrame, setDragStartFrame] = useState<number>(0);
@@ -33,20 +32,17 @@ export function TimelineEditor() {
   useEffect(() => {
     if (isPlaying && trackContentRef.current) {
       const playheadPos = currentFrame * pixelsPerFrame;
+      const currentScroll = trackContentRef.current.scrollLeft;
       const viewportWidth = trackContentRef.current.clientWidth - 100; // Subtract label width
       const margin = viewportWidth * 0.2;
 
-      if (playheadPos - scrollOffset > viewportWidth - margin) {
-        setScrollOffset(playheadPos - viewportWidth + margin);
-      } else if (playheadPos - scrollOffset < margin) {
-        setScrollOffset(Math.max(0, playheadPos - margin));
+      if (playheadPos - currentScroll > viewportWidth - margin) {
+        trackContentRef.current.scrollLeft = playheadPos - viewportWidth + margin;
+      } else if (playheadPos - currentScroll < margin) {
+        trackContentRef.current.scrollLeft = Math.max(0, playheadPos - margin);
       }
     }
-  }, [currentFrame, isPlaying, pixelsPerFrame, scrollOffset]);
-
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    setScrollOffset(e.currentTarget.scrollLeft);
-  }, []);
+  }, [currentFrame, isPlaying, pixelsPerFrame]);
 
   // Arrow key navigation for timeline (left/right: frame navigation)
   useEffect(() => {
@@ -88,11 +84,11 @@ export function TimelineEditor() {
     (e: React.MouseEvent) => {
       if (!trackContentRef.current) return;
       const rect = trackContentRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left + scrollOffset - 100; // Subtract label width
+      const x = e.clientX - rect.left + trackContentRef.current.scrollLeft - 100; // Subtract label width
       const frame = Math.max(0, Math.min(Math.round(x / pixelsPerFrame), mechanic.durationFrames - 1));
       setCurrentFrame(frame);
     },
-    [pixelsPerFrame, scrollOffset, mechanic.durationFrames, setCurrentFrame]
+    [pixelsPerFrame, mechanic.durationFrames, setCurrentFrame]
   );
 
   const handleEventDragStart = useCallback(
@@ -113,7 +109,7 @@ export function TimelineEditor() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!trackContentRef.current) return;
       const rect = trackContentRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left + scrollOffset - 100;
+      const x = e.clientX - rect.left + trackContentRef.current.scrollLeft - 100;
       const newFrame = Math.max(0, Math.min(Math.round(x / pixelsPerFrame), mechanic.durationFrames - 1));
 
       updateTimelineEvent(draggedEventId, { frame: newFrame });
@@ -130,7 +126,7 @@ export function TimelineEditor() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggedEventId, scrollOffset, pixelsPerFrame, mechanic.durationFrames, updateTimelineEvent]);
+  }, [draggedEventId, pixelsPerFrame, mechanic.durationFrames, updateTimelineEvent]);
 
   const handleZoomIn = () => setPixelsPerFrame((p) => Math.min(p * 1.5, 20));
   const handleZoomOut = () => setPixelsPerFrame((p) => Math.max(p / 1.5, 0.5));
@@ -259,16 +255,14 @@ export function TimelineEditor() {
           overflow: 'auto',
           position: 'relative',
         }}
-        onScroll={handleScroll}
         onClick={handleTimelineClick}
       >
         {/* Ruler */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, marginLeft: '100px' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, marginLeft: '100px', minWidth: totalWidth }}>
           <TimelineRuler
             durationFrames={mechanic.durationFrames}
             fps={mechanic.fps}
             pixelsPerFrame={pixelsPerFrame}
-            offset={scrollOffset}
           />
         </div>
 
@@ -279,7 +273,6 @@ export function TimelineEditor() {
             playerIds={playerIds}
             enemyIds={enemyIds}
             pixelsPerFrame={pixelsPerFrame}
-            offset={scrollOffset}
             selectedEventId={selectedEventId}
             onSelectEvent={setSelectedEventId}
             onEventDragStart={handleEventDragStart}
@@ -291,7 +284,7 @@ export function TimelineEditor() {
           style={{
             position: 'absolute',
             top: 0,
-            left: 100 + currentFrame * pixelsPerFrame - scrollOffset,
+            left: 100 + currentFrame * pixelsPerFrame,
             width: '2px',
             height: '100%',
             background: '#ff0000',

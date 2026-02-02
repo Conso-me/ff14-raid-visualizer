@@ -6,6 +6,7 @@ interface TimelineOverlayProps {
   timeline: TimelineEvent[];
   currentFrame: number;
   fps: number;
+  title?: string;
 }
 
 interface TimelineEntry {
@@ -20,6 +21,7 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
   timeline,
   currentFrame,
   fps,
+  title,
 }) => {
   const displayTime = currentFrame / fps;
   const displayMinutes = Math.floor(displayTime / 60);
@@ -48,16 +50,9 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         case 'text':
           name = typeof event.content === 'string' ? event.content : 'Role Text';
           break;
-        case 'aoe_show':
-          name = 'AoE発生';
-          break;
-        case 'debuff_add':
-          name = `デバフ: ${event.debuff.id}`;
-          break;
-        case 'move':
-          return;
         default:
-          name = event.type;
+          // 技術的なイベント（aoe_show/hide, object_show/hide, move, boss_move, debuff等）は表示しない
+          return;
       }
 
       if (name) {
@@ -114,6 +109,31 @@ export const TimelineOverlay: React.FC<TimelineOverlayProps> = ({
         fontFamily: FONT_FAMILY,
       }}
     >
+      {/* タイトル表示 */}
+      {title && (
+        <div
+          style={{
+            padding: '8px',
+            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+            borderBottom: '1px solid rgba(58, 58, 90, 0.6)',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 'bold',
+              color: '#ccc',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {title}
+          </div>
+        </div>
+      )}
+
       {/* Current Time Display */}
       <div
         style={{

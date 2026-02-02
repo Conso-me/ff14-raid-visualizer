@@ -8,7 +8,6 @@ interface TimelineTracksProps {
   playerIds: string[];
   enemyIds: string[];
   pixelsPerFrame: number;
-  offset: number;
   selectedEventId: string | null;
   onSelectEvent: (id: string) => void;
   onEventDragStart: (e: React.MouseEvent, eventId: string) => void;
@@ -19,7 +18,6 @@ export function TimelineTracks({
   playerIds,
   enemyIds,
   pixelsPerFrame,
-  offset,
   selectedEventId,
   onSelectEvent,
   onEventDragStart,
@@ -129,7 +127,6 @@ export function TimelineTracks({
           color={track.color}
           events={track.events}
           pixelsPerFrame={pixelsPerFrame}
-          offset={offset}
           selectedEventId={selectedEventId}
           onSelectEvent={onSelectEvent}
           onEventDragStart={onEventDragStart}

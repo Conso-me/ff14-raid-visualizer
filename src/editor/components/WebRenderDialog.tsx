@@ -34,7 +34,7 @@ const QUALITY_OPTIONS: { value: QualityType; label: string }[] = [
 ];
 
 export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogProps) {
-  const [fileName, setFileName] = useState(mechanic.id || 'mechanic');
+  const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [container, setContainer] = useState<ContainerType>('mp4');
   const [quality, setQuality] = useState<QualityType>('medium');
   const [scale, setScale] = useState<number>(0.5);

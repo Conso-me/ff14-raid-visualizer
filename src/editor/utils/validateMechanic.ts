@@ -153,8 +153,12 @@ export function sanitizeMechanic(data: Record<string, unknown>): MechanicData {
     field: {
       type: (data.field as any)?.type || 'circle',
       size: (data.field as any)?.size || 40,
+      ...((data.field as any)?.width != null && { width: Number((data.field as any).width) }),
+      ...((data.field as any)?.height != null && { height: Number((data.field as any).height) }),
       backgroundColor: (data.field as any)?.backgroundColor || '#1a1a3e',
       gridEnabled: (data.field as any)?.gridEnabled ?? true,
+      ...((data.field as any)?.backgroundImage != null && { backgroundImage: String((data.field as any).backgroundImage) }),
+      ...((data.field as any)?.backgroundOpacity != null && { backgroundOpacity: Number((data.field as any).backgroundOpacity) }),
     },
     markers: Array.isArray(data.markers) ? data.markers as FieldMarker[] : [],
     initialPlayers: Array.isArray(data.initialPlayers) ? data.initialPlayers as Player[] : [],

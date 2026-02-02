@@ -15,7 +15,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
   const playerRef = useRef<PlayerRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showRecordPanel, setShowRecordPanel] = useState(false);
-  const [fileName, setFileName] = useState(mechanic.id || 'preview');
+  const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'preview');
 
   const {
     status,
@@ -52,8 +52,8 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
 
   // Update filename when mechanic changes
   useEffect(() => {
-    setFileName(mechanic.id || 'preview');
-  }, [mechanic.id]);
+    setFileName(mechanic.name || mechanic.id || 'preview');
+  }, [mechanic.name, mechanic.id]);
 
   const handleStartRecording = async () => {
     await startRecording(

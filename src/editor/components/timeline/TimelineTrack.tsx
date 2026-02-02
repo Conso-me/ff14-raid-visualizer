@@ -7,7 +7,6 @@ interface TimelineTrackProps {
   color: string;
   events: TimelineEvent[];
   pixelsPerFrame: number;
-  offset: number;
   selectedEventId: string | null;
   onSelectEvent: (id: string) => void;
   onEventDragStart: (e: React.MouseEvent, eventId: string) => void;
@@ -18,7 +17,6 @@ export function TimelineTrack({
   color,
   events,
   pixelsPerFrame,
-  offset,
   selectedEventId,
   onSelectEvent,
   onEventDragStart,
@@ -71,7 +69,7 @@ export function TimelineTrack({
         <div
           style={{
             position: 'absolute',
-            left: -offset,
+            left: 0,
             top: '4px',
             height: 'calc(100% - 8px)',
           }}

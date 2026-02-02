@@ -4,10 +4,9 @@ interface TimelineRulerProps {
   durationFrames: number;
   fps: number;
   pixelsPerFrame: number;
-  offset: number;
 }
 
-export function TimelineRuler({ durationFrames, fps, pixelsPerFrame, offset }: TimelineRulerProps) {
+export function TimelineRuler({ durationFrames, fps, pixelsPerFrame }: TimelineRulerProps) {
   const duration = durationFrames / fps;
   const marks: { frame: number; label: string; major: boolean }[] = [];
 
@@ -41,7 +40,7 @@ export function TimelineRuler({ durationFrames, fps, pixelsPerFrame, offset }: T
       <div
         style={{
           position: 'absolute',
-          left: -offset,
+          left: 0,
           display: 'flex',
           height: '100%',
         }}

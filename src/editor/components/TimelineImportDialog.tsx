@@ -1,11 +1,12 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import type { TimelineEvent, TimelineEventType } from '../../data/types';
+import type { TimelineEvent, TimelineEventType, AoEType, AoESourceType, AoETrackingMode, Player, GimmickObject } from '../../data/types';
 
 interface TimelineImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (events: Partial<TimelineEvent>[]) => void;
   fps: number;
+  players: Player[];
 }
 
 interface ParsedImportEvent {
@@ -14,6 +15,28 @@ interface ParsedImportEvent {
   type: TimelineEventType;
   rawData: Record<string, string | number>;
   phaseName?: string;
+  // AoE関連フィールド
+  aoeShape?: AoEType;
+  aoeSource?: AoESourceType;
+  aoeCount?: number;
+  aoeDuration?: number;
+  aoeColor?: string;
+  aoeRadius?: number;
+  aoeAngle?: number;
+  aoeDirection?: number;
+  aoeLength?: number;
+  aoeWidth?: number;
+  aoeInnerRadius?: number;
+  aoeOuterRadius?: number;
+  aoeTarget?: string; // 対象プレイヤーID（指定時）
+  // オブジェクト関連フィールド
+  objectShape?: GimmickObject['shape'];
+  objectSize?: number;
+  objectColor?: string;
+  objectIcon?: string;
+  objectX?: number;
+  objectY?: number;
+  objectDuration?: number;
 }
 
 type ImportFormat = 'csv' | 'tsv' | 'json' | 'text' | null;
@@ -33,6 +56,30 @@ const VALID_EVENT_TYPES: TimelineEventType[] = [
   'object_show',
   'object_hide',
 ];
+
+const VALID_AOE_SHAPES: AoEType[] = ['circle', 'cone', 'line', 'donut', 'cross'];
+const VALID_AOE_SOURCES: AoESourceType[] = ['fixed', 'boss', 'player', 'object'];
+
+// プレイヤー自動割り振りの優先順位
+const PLAYER_ASSIGN_ORDER = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
+
+// 形状別デフォルトパラメータ（AoEDialogと同じロジック）
+function getAoEDefaultParams(shape: AoEType): Record<string, number> {
+  switch (shape) {
+    case 'circle':
+      return { radius: 5 };
+    case 'cone':
+      return { angle: 90, direction: 0, length: 15 };
+    case 'line':
+      return { width: 4, length: 20, direction: 0 };
+    case 'donut':
+      return { innerRadius: 5, outerRadius: 12 };
+    case 'cross':
+      return { width: 4, length: 20 };
+    default:
+      return {};
+  }
+}
 
 // Parse MM:SS format to seconds
 function parseTimeToSeconds(timeStr: string): number | null {
@@ -159,6 +206,30 @@ function parseDelimited(
     );
   }
 
+  // AoE関連カラムのインデックス検出
+  const shapeIndex = headers.findIndex((h) => h === 'shape');
+  const sourceIndex = headers.findIndex((h) => h === 'source');
+  const countIndex = headers.findIndex((h) => h === 'count');
+  const durationIndex = headers.findIndex((h) => h === 'duration');
+  const colorIndex = headers.findIndex((h) => h === 'color');
+  const radiusIndex = headers.findIndex((h) => h === 'radius');
+  const angleIndex = headers.findIndex((h) => h === 'angle');
+  const directionIndex = headers.findIndex((h) => h === 'direction');
+  const lengthIndex = headers.findIndex((h) => h === 'length');
+  const widthIndex = headers.findIndex((h) => h === 'width');
+  const innerRadiusIndex = headers.findIndex((h) => h === 'inner_radius');
+  const outerRadiusIndex = headers.findIndex((h) => h === 'outer_radius');
+  const targetIndex = headers.findIndex((h) => h === 'target');
+
+  // 安全に数値を抽出するヘルパー
+  const parseOptionalNumber = (values: string[], index: number): number | undefined => {
+    if (index === -1) return undefined;
+    const str = values[index]?.trim();
+    if (!str) return undefined;
+    const num = parseFloat(str);
+    return isNaN(num) ? undefined : num;
+  };
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -176,10 +247,19 @@ function parseDelimited(
       continue;
     }
 
-    const type: TimelineEventType =
+    let type: TimelineEventType =
       typeStr && VALID_EVENT_TYPES.includes(typeStr as TimelineEventType)
         ? (typeStr as TimelineEventType)
         : 'text';
+
+    // AoEフィールド検出: shapeカラムに有効な値があればaoe_showとして扱う（object系は除外）
+    const shapeStr = shapeIndex !== -1 ? values[shapeIndex]?.trim() : undefined;
+    const isObjectEvent = type === 'object_show' || type === 'object_hide';
+    const isAoE = !isObjectEvent && typeof shapeStr === 'string' && VALID_AOE_SHAPES.includes(shapeStr as AoEType);
+
+    if (isAoE) {
+      type = 'aoe_show';
+    }
 
     const rawData: Record<string, string | number> = {};
     headers.forEach((header, idx) => {
@@ -189,12 +269,63 @@ function parseDelimited(
     });
     rawData.time = seconds;
 
-    events.push({
+    const parsed: ParsedImportEvent = {
       time: seconds,
       name,
       type,
       rawData,
-    });
+    };
+
+    // AoEパラメータの抽出
+    if (isAoE) {
+      parsed.aoeShape = shapeStr as AoEType;
+
+      const sourceStr = sourceIndex !== -1 ? values[sourceIndex]?.trim() : undefined;
+      if (typeof sourceStr === 'string' && VALID_AOE_SOURCES.includes(sourceStr as AoESourceType)) {
+        parsed.aoeSource = sourceStr as AoESourceType;
+      }
+
+      parsed.aoeCount = parseOptionalNumber(values, countIndex);
+      parsed.aoeDuration = parseOptionalNumber(values, durationIndex);
+      parsed.aoeRadius = parseOptionalNumber(values, radiusIndex);
+      parsed.aoeAngle = parseOptionalNumber(values, angleIndex);
+      parsed.aoeDirection = parseOptionalNumber(values, directionIndex);
+      parsed.aoeLength = parseOptionalNumber(values, lengthIndex);
+      parsed.aoeWidth = parseOptionalNumber(values, widthIndex);
+      parsed.aoeInnerRadius = parseOptionalNumber(values, innerRadiusIndex);
+      parsed.aoeOuterRadius = parseOptionalNumber(values, outerRadiusIndex);
+
+      const colorStr = colorIndex !== -1 ? values[colorIndex]?.trim() : undefined;
+      if (colorStr) parsed.aoeColor = colorStr;
+
+      const targetStr = targetIndex !== -1 ? values[targetIndex]?.trim() : undefined;
+      if (targetStr) parsed.aoeTarget = targetStr;
+    }
+
+    // オブジェクトパラメータの抽出
+    if (type === 'object_show') {
+      const validShapes: GimmickObject['shape'][] = ['circle', 'square', 'triangle', 'diamond'];
+      if (typeof shapeStr === 'string' && validShapes.includes(shapeStr as GimmickObject['shape'])) {
+        parsed.objectShape = shapeStr as GimmickObject['shape'];
+      }
+      const sizeIndex = headers.findIndex((h) => h === 'size');
+      parsed.objectSize = parseOptionalNumber(values, sizeIndex);
+      parsed.objectDuration = parseOptionalNumber(values, durationIndex);
+
+      const colorStr = colorIndex !== -1 ? values[colorIndex]?.trim() : undefined;
+      if (colorStr) parsed.objectColor = colorStr;
+
+      const iconIndex = headers.findIndex((h) => h === 'icon');
+      const iconStr = iconIndex !== -1 ? values[iconIndex]?.trim() : undefined;
+      if (iconStr) parsed.objectIcon = iconStr;
+
+      const xIndex = headers.findIndex((h) => h === 'x');
+      const yIndex = headers.findIndex((h) => h === 'y');
+      parsed.objectX = parseOptionalNumber(values, xIndex);
+      parsed.objectY = parseOptionalNumber(values, yIndex);
+    }
+
+    events.push(parsed);
   }
 
   return events;
@@ -247,85 +378,270 @@ function parseJSON(content: string): ParsedImportEvent[] {
     }
 
     const typeStr = typeof typeValue === 'string' ? typeValue : undefined;
-    const type: TimelineEventType =
+    let type: TimelineEventType =
       typeStr && VALID_EVENT_TYPES.includes(typeStr as TimelineEventType)
         ? (typeStr as TimelineEventType)
         : 'text';
 
-    events.push({
+    // AoEフィールド検出: shapeがあれば自動的にaoe_showとして扱う（ただしobject系は除外）
+    const shapeValue = obj.shape as string | undefined;
+    const isObjectEvent = type === 'object_show' || type === 'object_hide';
+    const isAoE = !isObjectEvent && typeof shapeValue === 'string' && VALID_AOE_SHAPES.includes(shapeValue as AoEType);
+
+    // shapeフィールドがあれば自動的にaoe_showに設定（object系を除く）
+    if (isAoE) {
+      type = 'aoe_show';
+    }
+
+    const parsed: ParsedImportEvent = {
       time: seconds,
       name: String(nameValue),
       type,
       rawData: obj as Record<string, string | number>,
-    });
+    };
+
+    // AoEパラメータの抽出
+    if (isAoE) {
+      parsed.aoeShape = shapeValue as AoEType;
+
+      const sourceValue = obj.source as string | undefined;
+      if (typeof sourceValue === 'string' && VALID_AOE_SOURCES.includes(sourceValue as AoESourceType)) {
+        parsed.aoeSource = sourceValue as AoESourceType;
+      }
+
+      if (typeof obj.count === 'number' && obj.count > 0) parsed.aoeCount = obj.count;
+      if (typeof obj.duration === 'number' && obj.duration > 0) parsed.aoeDuration = obj.duration;
+      if (typeof obj.color === 'string') parsed.aoeColor = obj.color;
+      if (typeof obj.radius === 'number') parsed.aoeRadius = obj.radius;
+      if (typeof obj.angle === 'number') parsed.aoeAngle = obj.angle;
+      if (typeof obj.direction === 'number') parsed.aoeDirection = obj.direction;
+      if (typeof obj.length === 'number') parsed.aoeLength = obj.length;
+      if (typeof obj.width === 'number') parsed.aoeWidth = obj.width;
+      if (typeof obj.inner_radius === 'number') parsed.aoeInnerRadius = obj.inner_radius;
+      if (typeof obj.outer_radius === 'number') parsed.aoeOuterRadius = obj.outer_radius;
+      if (typeof obj.target === 'string' && obj.target) parsed.aoeTarget = obj.target;
+    }
+
+    // オブジェクトパラメータの抽出
+    if (type === 'object_show') {
+      const validShapes: GimmickObject['shape'][] = ['circle', 'square', 'triangle', 'diamond'];
+      const objShape = obj.shape as string | undefined;
+      if (typeof objShape === 'string' && validShapes.includes(objShape as GimmickObject['shape'])) {
+        parsed.objectShape = objShape as GimmickObject['shape'];
+      }
+      if (typeof obj.size === 'number') parsed.objectSize = obj.size;
+      if (typeof obj.color === 'string') parsed.objectColor = obj.color;
+      if (typeof obj.icon === 'string') parsed.objectIcon = obj.icon;
+      if (typeof obj.x === 'number') parsed.objectX = obj.x;
+      if (typeof obj.y === 'number') parsed.objectY = obj.y;
+      if (typeof obj.duration === 'number' && obj.duration > 0) parsed.objectDuration = obj.duration;
+    }
+
+    events.push(parsed);
   }
 
   return events;
 }
 
+// ソースタイプに応じた追従モードを決定
+function getTrackingMode(sourceType?: AoESourceType): AoETrackingMode {
+  if (sourceType === 'player' || sourceType === 'boss') return 'track_source';
+  return 'static';
+}
+
+// 一意ID生成ヘルパー
+function generateId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// プレイヤーロール名からプレイヤーIDを解決
+// playerIds: 実際のプレイヤーID一覧（例: ["player_T1", "player_T2", ...]）
+// playerIdMap: ロール名 → ID のマッピング
+function resolvePlayerId(
+  target: string,
+  playerIdMap: Map<string, string>
+): string | undefined {
+  // そのままIDとしてマッチするか
+  for (const [, id] of playerIdMap) {
+    if (id === target) return id;
+  }
+  // ロール名（大文字小文字無視）でマッチするか
+  const upper = target.toUpperCase();
+  return playerIdMap.get(upper);
+}
+
 // Convert parsed events to TimelineEvent partials
 function convertToTimelineEvents(
   events: ParsedImportEvent[],
-  fps: number
+  fps: number,
+  playerIdMap: Map<string, string>
 ): Partial<TimelineEvent>[] {
-  return events.map((event) => {
+  return events.flatMap((event) => {
     const frame = Math.round(event.time * fps);
-
-    const base = {
-      id: `imported_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: event.type,
-      frame,
-    };
 
     switch (event.type) {
       case 'text':
-        return {
-          ...base,
+        return [{
+          id: generateId('imported'),
+          type: 'text' as const,
+          frame,
           textType: 'main',
           content: event.name,
           position: 'center',
           duration: Math.round(3 * fps),
-        } as Partial<TimelineEvent>;
+        } as Partial<TimelineEvent>];
 
       case 'cast':
-        return {
-          ...base,
+        return [{
+          id: generateId('imported'),
+          type: 'cast' as const,
+          frame,
           casterId: 'boss',
           skillName: event.name,
           duration: Math.round(3 * fps),
-        } as Partial<TimelineEvent>;
+        } as Partial<TimelineEvent>];
 
-      case 'aoe_show':
-        return {
-          ...base,
-          aoe: {
-            id: `aoe_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            type: 'circle',
-            position: { x: 0, y: 0 },
-            radius: 5,
-          },
-        } as Partial<TimelineEvent>;
+      case 'aoe_show': {
+        // AoEパラメータの構築
+        const shape: AoEType = event.aoeShape || 'circle';
+        const defaults = getAoEDefaultParams(shape);
+        const count = event.aoeCount || 1;
+        const durationSec = event.aoeDuration ?? 2;
+        const durationFrames = Math.round(durationSec * fps);
+        const sourceType: AoESourceType = event.aoeSource || 'fixed';
+        const trackingMode = getTrackingMode(event.aoeSource);
+        const color = event.aoeColor || '#ff6600';
+
+        const results: Partial<TimelineEvent>[] = [];
+
+        for (let i = 0; i < count; i++) {
+          const aoeId = generateId('aoe');
+
+          // プレイヤー対象の決定
+          let sourceId: string | undefined;
+          if (sourceType === 'player') {
+            if (event.aoeTarget) {
+              // 明示指定されている場合はそれを使う
+              sourceId = resolvePlayerId(event.aoeTarget, playerIdMap);
+            } else {
+              // 未指定の場合はT1,T2,H1,H2,D1,D2,D3,D4の順に自動割り振り
+              const roleKey = PLAYER_ASSIGN_ORDER[i % PLAYER_ASSIGN_ORDER.length];
+              sourceId = playerIdMap.get(roleKey);
+            }
+          }
+
+          // 形状別パラメータ（インポート値 > デフォルト値）
+          const aoeParams: Record<string, unknown> = {};
+          if (shape === 'circle') {
+            aoeParams.radius = event.aoeRadius ?? defaults.radius;
+          } else if (shape === 'cone') {
+            aoeParams.angle = event.aoeAngle ?? defaults.angle;
+            aoeParams.direction = event.aoeDirection ?? defaults.direction;
+            aoeParams.length = event.aoeLength ?? defaults.length;
+          } else if (shape === 'line') {
+            aoeParams.width = event.aoeWidth ?? defaults.width;
+            aoeParams.length = event.aoeLength ?? defaults.length;
+            aoeParams.direction = event.aoeDirection ?? defaults.direction;
+          } else if (shape === 'donut') {
+            aoeParams.innerRadius = event.aoeInnerRadius ?? defaults.innerRadius;
+            aoeParams.outerRadius = event.aoeOuterRadius ?? defaults.outerRadius;
+          } else if (shape === 'cross') {
+            aoeParams.width = event.aoeWidth ?? defaults.width;
+            aoeParams.length = event.aoeLength ?? defaults.length;
+          }
+
+          // aoe_show イベント
+          results.push({
+            id: generateId('imported'),
+            type: 'aoe_show' as const,
+            frame,
+            fadeInDuration: 10,
+            aoe: {
+              id: aoeId,
+              type: shape,
+              position: { x: 0, y: 0 },
+              color,
+              opacity: 0.5,
+              sourceType,
+              sourceId,
+              trackingMode,
+              ...aoeParams,
+            },
+          } as Partial<TimelineEvent>);
+
+          // aoe_hide イベント（duration分後）
+          results.push({
+            id: generateId('imported'),
+            type: 'aoe_hide' as const,
+            frame: frame + durationFrames,
+            aoeId,
+            fadeOutDuration: 15,
+          } as Partial<TimelineEvent>);
+        }
+
+        return results;
+      }
 
       case 'debuff_add':
-        return {
-          ...base,
+        return [{
+          id: generateId('imported'),
+          type: 'debuff_add' as const,
+          frame,
           targetId: 'all',
           debuff: {
-            id: `debuff_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: generateId('debuff'),
             name: event.name,
             duration: 10,
             startFrame: frame,
           },
-        } as Partial<TimelineEvent>;
+        } as Partial<TimelineEvent>];
+
+      case 'object_show': {
+        const objectId = generateId('obj');
+        const durationSec = event.objectDuration ?? 5;
+        const durationFrames = Math.round(durationSec * fps);
+
+        const results: Partial<TimelineEvent>[] = [];
+
+        results.push({
+          id: generateId('imported'),
+          type: 'object_show' as const,
+          frame,
+          fadeInDuration: 10,
+          object: {
+            id: objectId,
+            name: event.name,
+            position: { x: event.objectX ?? 0, y: event.objectY ?? 0 },
+            shape: event.objectShape ?? 'circle',
+            size: event.objectSize ?? 2,
+            color: event.objectColor ?? '#ffcc00',
+            icon: event.objectIcon,
+            opacity: 1,
+          },
+        } as Partial<TimelineEvent>);
+
+        // object_hide イベント（duration分後）
+        results.push({
+          id: generateId('imported'),
+          type: 'object_hide' as const,
+          frame: frame + durationFrames,
+          objectId,
+          fadeOutDuration: 15,
+        } as Partial<TimelineEvent>);
+
+        return results;
+      }
 
       default:
-        return {
-          ...base,
+        return [{
+          id: generateId('imported'),
+          type: event.type,
+          frame,
           textType: 'main',
           content: event.name,
           position: 'center',
           duration: Math.round(3 * fps),
-        } as Partial<TimelineEvent>;
+        } as Partial<TimelineEvent>];
     }
   });
 }
@@ -339,19 +655,20 @@ const textPlaceholder = `ヴェナスリーチ (移動開始)
 02:00 細胞付着・中期
 02:03 AA`;
 
-const structuredPlaceholder = `CSV Example:
-time,name,type
-00:10,AoE,circle
-00:20,Debuff,debuff_add
+const structuredPlaceholder = `CSV (AoE付き):
+time,name,shape,radius,source,count,duration
+01:30,ギガフレア,circle,3,player,8,2
+02:00,ブレス,cone,,boss,,,120,25
 
-JSON Example:
-[{"time":"00:10","name":"AoE","type":"aoe_show"}]`;
+JSON (AoE付き):
+[{"time":"01:30","name":"ギガフレア","shape":"circle","radius":3,"source":"player","count":8,"duration":2}]`;
 
 export function TimelineImportDialog({
   isOpen,
   onClose,
   onImport,
   fps,
+  players,
 }: TimelineImportDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [inputText, setInputText] = useState('');
@@ -360,6 +677,15 @@ export function TimelineImportDialog({
   const [detectedFormat, setDetectedFormat] = useState<ImportFormat>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode>('text');
+
+  // ロール名 → プレイヤーID のマッピング構築
+  const playerIdMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const player of players) {
+      map.set(player.role, player.id);
+    }
+    return map;
+  }, [players]);
 
   const resetState = useCallback(() => {
     setInputText('');
@@ -453,10 +779,10 @@ export function TimelineImportDialog({
   const handleImport = useCallback(() => {
     if (parsedEvents.length === 0) return;
 
-    const timelineEvents = convertToTimelineEvents(parsedEvents, fps);
+    const timelineEvents = convertToTimelineEvents(parsedEvents, fps, playerIdMap);
     onImport(timelineEvents);
     handleClose();
-  }, [parsedEvents, fps, onImport, handleClose]);
+  }, [parsedEvents, fps, playerIdMap, onImport, handleClose]);
 
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -480,6 +806,15 @@ export function TimelineImportDialog({
       object_hide: 'Object Hide',
     };
     return labels[type] || type;
+  }, []);
+
+  // AoE情報のサマリーテキスト生成
+  const formatAoEInfo = useCallback((event: ParsedImportEvent): string | null => {
+    if (!event.aoeShape) return null;
+    const parts: string[] = [event.aoeShape];
+    if (event.aoeSource && event.aoeSource !== 'fixed') parts.push(event.aoeSource);
+    if (event.aoeCount && event.aoeCount > 1) parts.push(`x${event.aoeCount}`);
+    return parts.join(' / ');
   }, []);
 
   const formatDisplay = useMemo(() => {
@@ -513,6 +848,17 @@ export function TimelineImportDialog({
     }
 
     return groups;
+  }, [parsedEvents]);
+
+  // 実際に生成されるイベント数（AoEのshow+hideペア × count を考慮）
+  const totalGeneratedEvents = useMemo(() => {
+    return parsedEvents.reduce((total, event) => {
+      if (event.type === 'aoe_show') {
+        const count = event.aoeCount || 1;
+        return total + count * 2; // show + hide ペア
+      }
+      return total + 1;
+    }, 0);
   }, [parsedEvents]);
 
   if (!isOpen) return null;
@@ -643,14 +989,16 @@ export function TimelineImportDialog({
               color: '#aaa',
             }}
           >
-            <strong style={{ color: '#fff' }}>Supported Formats:</strong>
+            <strong style={{ color: '#fff' }}>対応フォーマット:</strong>
             <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
               <li>
-                <strong>CSV/TSV:</strong> Columns: time (MM:SS or seconds), name/event, type
-                (optional)
+                <strong>CSV/TSV:</strong> time, name は必須。shape カラムがあればAoEとして自動認識
               </li>
               <li>
-                <strong>JSON:</strong> Array of {'{'} time, name, type {'}'} objects
+                <strong>JSON:</strong> {'{'} time, name {'}'} の配列。shape フィールドでAoE自動認識
+              </li>
+              <li>
+                <strong>AoEフィールド:</strong> shape, radius, angle, length, width, source, count, duration, color
               </li>
             </ul>
           </div>
@@ -685,7 +1033,8 @@ export function TimelineImportDialog({
               fontSize: '13px',
             }}
           >
-            Detected format: <strong>{formatDisplay}</strong> ({parsedEvents.length} events)
+            検出フォーマット: <strong>{formatDisplay}</strong> ({parsedEvents.length}件
+            {totalGeneratedEvents !== parsedEvents.length && ` → ${totalGeneratedEvents}イベント生成`})
           </div>
         )}
 
@@ -766,7 +1115,7 @@ export function TimelineImportDialog({
             {/* Preview Table */}
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#aaa' }}>
-                Preview ({parsedEvents.length} events)
+                プレビュー ({parsedEvents.length}件{totalGeneratedEvents !== parsedEvents.length ? ` → ${totalGeneratedEvents}イベント生成` : ''})
               </h3>
               <div
                 style={{
@@ -818,7 +1167,23 @@ export function TimelineImportDialog({
                               >
                                 {formatTime(event.time)}
                               </td>
-                              <td style={{ padding: '8px 12px' }}>{event.name}</td>
+                              <td style={{ padding: '8px 12px' }}>
+                                {event.name}
+                                {event.aoeShape && (
+                                  <span
+                                    style={{
+                                      marginLeft: '8px',
+                                      padding: '1px 6px',
+                                      background: '#3a5a3a',
+                                      borderRadius: '3px',
+                                      fontSize: '10px',
+                                      color: '#88ff88',
+                                    }}
+                                  >
+                                    {formatAoEInfo(event)}
+                                  </span>
+                                )}
+                              </td>
                               <td style={{ padding: '8px 12px', width: '80px' }}>
                                 <span
                                   style={{
@@ -892,7 +1257,23 @@ export function TimelineImportDialog({
                           <td style={{ padding: '8px 12px', color: '#88aaff' }}>
                             {formatTime(event.time)}
                           </td>
-                          <td style={{ padding: '8px 12px' }}>{event.name}</td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {event.name}
+                            {event.aoeShape && (
+                              <span
+                                style={{
+                                  marginLeft: '8px',
+                                  padding: '1px 6px',
+                                  background: '#3a5a3a',
+                                  borderRadius: '3px',
+                                  fontSize: '10px',
+                                  color: '#88ff88',
+                                }}
+                              >
+                                {formatAoEInfo(event)}
+                              </span>
+                            )}
+                          </td>
                           <td style={{ padding: '8px 12px' }}>
                             <span
                               style={{
@@ -973,7 +1354,7 @@ export function TimelineImportDialog({
                   fontSize: '14px',
                 }}
               >
-                Import {parsedEvents.length} Events
+                Import {totalGeneratedEvents} Events
               </button>
             </div>
           </>

@@ -19,7 +19,7 @@ const QUALITY_SETTINGS: Record<Quality, { width: number; height: number; label: 
 };
 
 export function VideoExportDialog({ isOpen, mechanic, onClose }: VideoExportDialogProps) {
-  const [fileName, setFileName] = useState(mechanic.id || 'mechanic');
+  const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [quality, setQuality] = useState<Quality>('medium');
   const [status, setStatus] = useState<RenderStatus>('idle');
   const [progress, setProgress] = useState(0);

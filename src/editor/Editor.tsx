@@ -69,7 +69,7 @@ function EditorContent() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${state.mechanic.id || 'mechanic'}.json`;
+    a.download = `${state.mechanic.name || state.mechanic.id || 'mechanic'}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [state.mechanic]);
