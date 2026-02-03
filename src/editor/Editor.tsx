@@ -14,6 +14,8 @@ import { SaveLoadDialog } from './components/SaveLoadDialog';
 import type { MechanicData } from '../data/types';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { hasSharedData, decodeMechanicFromUrl, clearSharedDataFromUrl } from './utils/shareUrl';
+import { SampleDialog } from './components/SampleDialog';
+import { clearAutoSave } from './hooks/useAutoSave';
 
 function EditorContent() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -21,6 +23,7 @@ function EditorContent() {
   const [urlLoadError, setUrlLoadError] = useState<string | null>(null);
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showSaveLoadDialog, setShowSaveLoadDialog] = useState(false);
+  const [showSampleDialog, setShowSampleDialog] = useState(false);
   const { state, setMechanic } = useEditor();
   const exportRef = useRef<(() => void) | null>(null);
 
@@ -55,6 +58,18 @@ function EditorContent() {
   const handleWelcomeDontShowAgain = useCallback(() => {
     localStorage.setItem('ff14-raid-visualizer-welcome-shown', 'true');
   }, []);
+
+  // Handle open sample dialog
+  const handleOpenSampleDialog = useCallback(() => {
+    setShowSampleDialog(true);
+  }, []);
+
+  // Handle load from sample dialog
+  const handleLoadFromSample = useCallback((mechanic: MechanicData) => {
+    clearAutoSave();
+    setMechanic(mechanic);
+    setShowSampleDialog(false);
+  }, [setMechanic]);
 
   // Handle load from save slot
   const handleLoadMechanic = useCallback((mechanic: MechanicData) => {
@@ -172,10 +187,18 @@ function EditorContent() {
       <ShortcutHelpDialog isOpen={isShortcutHelpOpen} onClose={() => setIsShortcutHelpOpen(false)} />
 
       {/* Welcome Dialog */}
-      <WelcomeDialog 
-        isOpen={showWelcomeDialog} 
+      <WelcomeDialog
+        isOpen={showWelcomeDialog}
         onClose={handleWelcomeClose}
         onDontShowAgain={handleWelcomeDontShowAgain}
+        onOpenSampleDialog={handleOpenSampleDialog}
+      />
+
+      {/* Sample Dialog */}
+      <SampleDialog
+        isOpen={showSampleDialog}
+        onClose={() => setShowSampleDialog(false)}
+        onLoad={handleLoadFromSample}
       />
 
       {/* Save/Load Dialog */}

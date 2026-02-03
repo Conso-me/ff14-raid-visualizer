@@ -7,6 +7,7 @@ import { ShareDialog } from './ShareDialog';
 import { WebRenderDialog } from './WebRenderDialog';
 import { validateMechanic, sanitizeMechanic, type ValidationResult } from '../utils/validateMechanic';
 import { clearAutoSave } from '../hooks/useAutoSave';
+import { SampleDialog } from './SampleDialog';
 // Log import feature is incomplete - hidden for now
 // import { LogImportDialog } from './LogImportDialog';
 // import { LogBrowserDialog } from './LogBrowserDialog';
@@ -26,6 +27,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isWebRenderOpen, setIsWebRenderOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [isSampleDialogOpen, setIsSampleDialogOpen] = useState(false);
 
   const handleExport = () => {
     setIsExportDialogOpen(true);
@@ -92,6 +94,11 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
       enemies: [],
       timeline: [],
     });
+  };
+
+  const handleLoadFromSample = (mechanic: MechanicData) => {
+    clearAutoSave();
+    setMechanic(mechanic);
   };
 
   const buttonStyle: React.CSSProperties = {
@@ -167,6 +174,9 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
       <div style={{ display: 'flex', gap: '8px' }}>
         <button onClick={handleNewMechanic} style={buttonStyle}>
           New
+        </button>
+        <button onClick={() => setIsSampleDialogOpen(true)} style={buttonStyle}>
+          Sample
         </button>
         <button onClick={handleImport} style={buttonStyle}>
           Import JSON
@@ -319,6 +329,12 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         isOpen={isWebRenderOpen}
         mechanic={state.mechanic}
         onClose={() => setIsWebRenderOpen(false)}
+      />
+
+      <SampleDialog
+        isOpen={isSampleDialogOpen}
+        onClose={() => setIsSampleDialogOpen(false)}
+        onLoad={handleLoadFromSample}
       />
 
       {/* Import Error Modal */}

@@ -4,9 +4,10 @@ interface WelcomeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onDontShowAgain: () => void;
+  onOpenSampleDialog?: () => void;
 }
 
-export function WelcomeDialog({ isOpen, onClose, onDontShowAgain }: WelcomeDialogProps) {
+export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDialog }: WelcomeDialogProps) {
   const [currentPage, setCurrentPage] = useState(0);
 
   if (!isOpen) return null;
@@ -124,9 +125,31 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain }: WelcomeDialo
             準備はできましたか？サンプルデータで試してみたり、<br/>
             新規にギミックを作成したりできます。
           </p>
-          <div style={{ 
-            background: '#2a2a4a', 
-            padding: '16px', 
+          {onOpenSampleDialog && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenSampleDialog();
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: '#2c6e49',
+                border: '1px solid #3c8e59',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '14px',
+                cursor: 'pointer',
+                marginBottom: '16px',
+                fontWeight: 'bold',
+              }}
+            >
+              サンプルギミックを試す
+            </button>
+          )}
+          <div style={{
+            background: '#2a2a4a',
+            padding: '16px',
             borderRadius: '8px',
             marginBottom: '16px'
           }}>
@@ -138,7 +161,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain }: WelcomeDialo
               <li>データは自動保存されます（ブラウザを閉じても復元）</li>
             </ul>
           </div>
-          <label style={{ 
+          <label style={{
             display: 'flex', 
             alignItems: 'center', 
             gap: '8px',
