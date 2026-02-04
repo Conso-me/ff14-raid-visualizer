@@ -442,6 +442,8 @@ const en: DeepStringify<typeof ja> = {
     clearSelection: 'Clear selection',
     move: 'Move',
     moveTitle: 'Add move event',
+    showItem: 'Show',
+    hideItem: 'Hide',
   },
   timeline: {
     empty: 'Timeline is empty',

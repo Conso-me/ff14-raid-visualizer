@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { MechanicComposition } from '../../compositions/MechanicComposition';
 import { useEditor } from '../context/EditorContext';
 import { usePreviewRecorder } from '../hooks/usePreviewRecorder';
 import { useLanguage } from '../context/LanguageContext';
+import { filterHiddenObjects } from '../utils/filterHiddenObjects';
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -13,6 +14,10 @@ interface PreviewModalProps {
 export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
   const { state } = useEditor();
   const { mechanic } = state;
+  const filteredMechanic = useMemo(
+    () => filterHiddenObjects(mechanic, state.hiddenObjectIds),
+    [mechanic, state.hiddenObjectIds]
+  );
   const playerRef = useRef<PlayerRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showRecordPanel, setShowRecordPanel] = useState(false);
@@ -334,7 +339,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
           <Player
             ref={playerRef}
             component={MechanicComposition}
-            inputProps={{ mechanic }}
+            inputProps={{ mechanic: filteredMechanic }}
             durationInFrames={mechanic.durationFrames}
             fps={mechanic.fps}
             compositionWidth={1920}

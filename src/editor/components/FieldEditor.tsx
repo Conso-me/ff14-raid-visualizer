@@ -54,6 +54,7 @@ export function FieldEditor() {
     cancelObjectPlacement,
     updateObject,
     cancelMoveFromList,
+    isObjectHidden,
   } = useEditor();
 
   const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, pendingDebuff, moveFromListMode } = state;
@@ -893,7 +894,7 @@ export function FieldEditor() {
             backgroundOpacity={mechanic.field.backgroundOpacity}
           >
             {/* AoEs (render first, below other elements) - with fade animation */}
-            {activeAoEs.map((aoe) => (
+            {activeAoEs.filter((aoe) => !isObjectHidden(aoe.id, 'aoe')).map((aoe) => (
               <AoE
                 key={aoe.id}
                 {...aoe}
@@ -904,7 +905,7 @@ export function FieldEditor() {
             ))}
 
             {/* Markers */}
-            {mechanic.markers.map((marker) => (
+            {mechanic.markers.filter((marker) => !isObjectHidden(marker.type, 'marker')).map((marker) => (
               <FieldMarker
                 key={marker.type}
                 type={marker.type}
@@ -915,7 +916,7 @@ export function FieldEditor() {
             ))}
 
             {/* Enemies */}
-            {mechanic.enemies.map((enemy) => (
+            {mechanic.enemies.filter((enemy) => !isObjectHidden(enemy.id, 'enemy')).map((enemy) => (
               <Enemy
                 key={enemy.id}
                 {...enemy}
@@ -925,7 +926,7 @@ export function FieldEditor() {
             ))}
 
             {/* Players - using calculated positions */}
-            {playersAtCurrentFrame.map((player) => (
+            {playersAtCurrentFrame.filter((player) => !isObjectHidden(player.id, 'player')).map((player) => (
 <PlayerComponent
                 key={player.id}
                 {...player}
@@ -938,7 +939,7 @@ export function FieldEditor() {
             ))}
 
             {/* Text Annotations */}
-            {activeAnnotations.map((annotation) => {
+            {activeAnnotations.filter((annotation) => !isObjectHidden(annotation.id, 'text')).map((annotation) => {
               const screenPos = gameToScreen(annotation.position, mechanic.field.size, SCREEN_SIZE);
               const textAnchor = annotation.align === 'left' ? 'start' : annotation.align === 'right' ? 'end' : 'middle';
               const isSelected = selectedObjectId === annotation.id && selectedObjectType === 'text';
@@ -998,7 +999,7 @@ export function FieldEditor() {
             })}
 
             {/* Gimmick Objects */}
-            {activeObjects.map((obj) => {
+            {activeObjects.filter((obj) => !isObjectHidden(obj.id, 'object')).map((obj) => {
               const screenPos = gameToScreen(obj.position, mechanic.field.size, SCREEN_SIZE);
               // Ensure minimum visible size (at least 20 pixels)
               const pixelSize = Math.max(20, (obj.size / mechanic.field.size) * SCREEN_SIZE);

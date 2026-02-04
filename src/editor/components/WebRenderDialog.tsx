@@ -1,14 +1,16 @@
 // ブラウザ内動画レンダリングダイアログ
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { MechanicData } from '../../data/types';
 import { useWebRenderer } from '../hooks/useWebRenderer';
 import type { WebRenderSettings } from '../utils/webRenderer';
 import { useLanguage } from '../context/LanguageContext';
+import { filterHiddenObjects } from '../utils/filterHiddenObjects';
 
 interface WebRenderDialogProps {
   isOpen: boolean;
   mechanic: MechanicData;
+  hiddenObjectIds?: string[];
   onClose: () => void;
 }
 
@@ -21,7 +23,11 @@ interface ScaleOption {
   resolution: string;
 }
 
-export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogProps) {
+export function WebRenderDialog({ isOpen, mechanic, hiddenObjectIds = [], onClose }: WebRenderDialogProps) {
+  const filteredMechanic = useMemo(
+    () => filterHiddenObjects(mechanic, hiddenObjectIds),
+    [mechanic, hiddenObjectIds]
+  );
   const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [container, setContainer] = useState<ContainerType>('mp4');
   const [quality, setQuality] = useState<QualityType>('medium');
@@ -89,7 +95,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
   const currentScale = SCALE_OPTIONS.find((s) => s.value === scale) ?? SCALE_OPTIONS[0];
 
   const handleStartRender = () => {
-    startRender(mechanic, { container, quality, scale });
+    startRender(filteredMechanic, { container, quality, scale });
   };
 
   const handleDownload = () => {

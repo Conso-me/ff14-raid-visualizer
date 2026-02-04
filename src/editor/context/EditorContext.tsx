@@ -75,6 +75,9 @@ interface EditorContextValue {
   cancelMoveFromList: () => void;
   // Arrow key movement
   movePlayerPosition: (playerId: string, dx: number, dy: number, frame: number) => void;
+  // Visibility toggle
+  toggleVisibility: (id: string, objectType: string) => void;
+  isObjectHidden: (id: string, objectType: string) => boolean;
   // Computed values
   canUndo: boolean;
   canRedo: boolean;
@@ -420,6 +423,14 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'MOVE_PLAYER_POSITION', payload: { playerId, dx, dy, frame } });
   }, []);
 
+  const toggleVisibility = useCallback((id: string, objectType: string) => {
+    dispatch({ type: 'TOGGLE_VISIBILITY', payload: { id, objectType } });
+  }, []);
+
+  const isObjectHidden = useCallback((id: string, objectType: string): boolean => {
+    return state.hiddenObjectIds.includes(`${objectType}:${id}`);
+  }, [state.hiddenObjectIds]);
+
   // Delete the currently selected object
   const deleteSelectedObject = useCallback(() => {
     const { selectedObjectId, selectedObjectType } = state;
@@ -606,6 +617,8 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     startMoveFromList,
     cancelMoveFromList,
     movePlayerPosition,
+    toggleVisibility,
+    isObjectHidden,
     canUndo: state.historyIndex > 0,
     canRedo: state.historyIndex < state.history.length - 1,
     getAoEsAtFrame,

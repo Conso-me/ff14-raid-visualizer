@@ -104,6 +104,8 @@ export interface EditorState {
   pendingObject: PendingObject | null;
   // Mode for adding move from object list
   moveFromListMode: MoveFromListMode;
+  // Hidden object IDs for editor preview (composite key: `${objectType}:${id}`)
+  hiddenObjectIds: string[];
 }
 
 export type EditorAction =
@@ -163,7 +165,9 @@ export type EditorAction =
   | { type: 'START_MOVE_FROM_LIST'; payload: { playerId: string } }
   | { type: 'CANCEL_MOVE_FROM_LIST' }
   // Direct position movement (arrow keys)
-  | { type: 'MOVE_PLAYER_POSITION'; payload: { playerId: string; dx: number; dy: number; frame: number } };
+  | { type: 'MOVE_PLAYER_POSITION'; payload: { playerId: string; dx: number; dy: number; frame: number } }
+  // Visibility toggle (editor UI only)
+  | { type: 'TOGGLE_VISIBILITY'; payload: { id: string; objectType: string } };
 
 function pushHistory(state: EditorState): EditorState {
   const newHistory = state.history.slice(0, state.historyIndex + 1);
@@ -1026,6 +1030,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }
     }
 
+    case 'TOGGLE_VISIBILITY': {
+      const compositeKey = `${action.payload.objectType}:${action.payload.id}`;
+      const hiddenObjectIds = state.hiddenObjectIds.includes(compositeKey)
+        ? state.hiddenObjectIds.filter(k => k !== compositeKey)
+        : [...state.hiddenObjectIds, compositeKey];
+      return {
+        ...state,
+        hiddenObjectIds,
+      };
+    }
+
     default:
       return state;
   }
@@ -1054,5 +1069,6 @@ export function createInitialState(mechanic: MechanicData): EditorState {
       active: false,
       playerId: null,
     },
+    hiddenObjectIds: [],
   };
 }

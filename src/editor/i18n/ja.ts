@@ -439,6 +439,8 @@ const ja = {
     clearSelection: '選択を解除',
     move: '移動',
     moveTitle: '移動イベントを追加',
+    showItem: '表示する',
+    hideItem: '非表示にする',
   },
   timeline: {
     empty: 'タイムラインが空です',

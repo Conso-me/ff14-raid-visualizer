@@ -363,6 +363,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         key={state.mechanic.id}
         isOpen={isVideoExportOpen}
         mechanic={state.mechanic}
+        hiddenObjectIds={state.hiddenObjectIds}
         onClose={() => setIsVideoExportOpen(false)}
       />
 
@@ -370,6 +371,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         key={`web-render-${state.mechanic.id}`}
         isOpen={isWebRenderOpen}
         mechanic={state.mechanic}
+        hiddenObjectIds={state.hiddenObjectIds}
         onClose={() => setIsWebRenderOpen(false)}
       />
 

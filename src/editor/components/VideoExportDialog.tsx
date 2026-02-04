@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { MechanicData } from '../../data/types';
+import { filterHiddenObjects } from '../utils/filterHiddenObjects';
 
 interface VideoExportDialogProps {
   isOpen: boolean;
   mechanic: MechanicData;
+  hiddenObjectIds?: string[];
   onClose: () => void;
 }
 
@@ -18,7 +20,11 @@ const QUALITY_SETTINGS: Record<Quality, { width: number; height: number; label: 
   high: { width: 1920, height: 1080, label: '高 (1920x1080)' },
 };
 
-export function VideoExportDialog({ isOpen, mechanic, onClose }: VideoExportDialogProps) {
+export function VideoExportDialog({ isOpen, mechanic, hiddenObjectIds = [], onClose }: VideoExportDialogProps) {
+  const filteredMechanic = useMemo(
+    () => filterHiddenObjects(mechanic, hiddenObjectIds),
+    [mechanic, hiddenObjectIds]
+  );
   const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [quality, setQuality] = useState<Quality>('medium');
   const [status, setStatus] = useState<RenderStatus>('idle');
@@ -69,7 +75,7 @@ export function VideoExportDialog({ isOpen, mechanic, onClose }: VideoExportDial
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mechanic,
+          mechanic: filteredMechanic,
           options: { quality },
         }),
       });
