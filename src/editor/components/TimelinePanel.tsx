@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import { TimelineImportDialog } from './TimelineImportDialog';
 import type { TimelineEvent, Role, ObjectShowEvent } from '../../data/types';
 
@@ -34,6 +35,7 @@ function getEventDisplayName(event: TimelineEvent): string | null {
 }
 
 export function TimelinePanel() {
+  const { t } = useLanguage();
   const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy } = useEditor();
   const { mechanic, currentFrame } = state;
   const [showImport, setShowImport] = useState(false);
@@ -173,7 +175,7 @@ export function TimelinePanel() {
 
   // タイムライン全クリア
   const handleClearTimeline = useCallback(() => {
-    if (!confirm('タイムラインをすべてクリアしますか？')) return;
+    if (!confirm(t('timeline.confirmClear'))) return;
 
     mechanic.timeline.forEach((event) => {
       deleteTimelineEvent(event.id);
@@ -224,12 +226,10 @@ export function TimelinePanel() {
               textAlign: 'center',
               padding: '40px 20px'
             }}>
-              タイムラインが空です
+              {t('timeline.empty')}
               <br />
               <br />
-              「タイムラインをインポート」ボタンから
-              <br />
-              インポートしてください
+              {t('timeline.emptyHint')}
             </div>
           ) : (
             timelineEntries.map((entry, index) => {
@@ -304,7 +304,7 @@ export function TimelinePanel() {
                         lineHeight: 1,
                         flexShrink: 0,
                       }}
-                      title="このエントリを削除"
+                      title={t('timeline.deleteEntry')}
                     >
                       ×
                     </button>
@@ -317,7 +317,7 @@ export function TimelinePanel() {
                       marginTop: '4px',
                       fontWeight: 'bold',
                     }}>
-                      ▶ 今ここ！
+                      {t('timeline.currentMarker')}
                     </div>
                   )}
                 </div>
@@ -345,7 +345,7 @@ export function TimelinePanel() {
               marginBottom: '8px',
             }}
           >
-            タイムラインをインポート
+            {t('timeline.importTimeline')}
           </button>
 
           {timelineEntries.length > 0 && (
@@ -363,7 +363,7 @@ export function TimelinePanel() {
                   cursor: 'pointer',
                 }}
               >
-                タイムラインをクリア
+                {t('timeline.clearTimeline')}
               </button>
             </>
           )}

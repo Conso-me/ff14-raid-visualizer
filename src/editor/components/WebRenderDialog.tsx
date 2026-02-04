@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import type { MechanicData } from '../../data/types';
 import { useWebRenderer } from '../hooks/useWebRenderer';
 import type { WebRenderSettings } from '../utils/webRenderer';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WebRenderDialogProps {
   isOpen: boolean;
@@ -19,19 +20,6 @@ interface ScaleOption {
   label: string;
   resolution: string;
 }
-
-const SCALE_OPTIONS: ScaleOption[] = [
-  { value: 0.5, label: '低', resolution: '960x540' },
-  { value: 0.75, label: '中', resolution: '1440x810' },
-  { value: 1.0, label: '高', resolution: '1920x1080' },
-];
-
-const QUALITY_OPTIONS: { value: QualityType; label: string }[] = [
-  { value: 'low', label: '低' },
-  { value: 'medium', label: '中' },
-  { value: 'high', label: '高' },
-  { value: 'very-high', label: '最高' },
-];
 
 export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogProps) {
   const [fileName, setFileName] = useState(mechanic.name || mechanic.id || 'mechanic');
@@ -51,6 +39,21 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
     reset,
     checkCompatibility,
   } = useWebRenderer();
+
+  const { t } = useLanguage();
+
+  const SCALE_OPTIONS: ScaleOption[] = [
+    { value: 0.5, label: t('webRender.scaleLow'), resolution: '960x540' },
+    { value: 0.75, label: t('webRender.scaleMedium'), resolution: '1440x810' },
+    { value: 1.0, label: t('webRender.scaleHigh'), resolution: '1920x1080' },
+  ];
+
+  const QUALITY_OPTIONS: { value: QualityType; label: string }[] = [
+    { value: 'low' as QualityType, label: t('webRender.qualityLow') },
+    { value: 'medium' as QualityType, label: t('webRender.qualityMedium') },
+    { value: 'high' as QualityType, label: t('webRender.qualityHigh') },
+    { value: 'very-high' as QualityType, label: t('webRender.qualityVeryHigh') },
+  ];
 
   // ダイアログを開いた時に互換性チェック
   useEffect(() => {
@@ -154,7 +157,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
       >
         {/* ヘッダー */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>ブラウザ出力</h2>
+          <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>{t('webRender.title')}</h2>
           {status !== 'rendering' && status !== 'checking' && (
             <button
               onClick={handleClose}
@@ -187,14 +190,12 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 lineHeight: '1.5',
               }}
             >
-              ⚠ 実験的機能: この機能は @remotion/web-renderer を使用しており、
-              ブラウザの WebCodecs API に依存しています。
-              一部のブラウザでは動作しない場合があります。
+              {t('webRender.experimentalWarning')}
             </div>
 
             {/* ファイル名入力 */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>ファイル名</label>
+              <label style={labelStyle}>{t('webRender.filename')}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="text"
@@ -206,13 +207,13 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 <span style={{ color: '#888' }}>.{container}</span>
               </div>
               <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                英数字、ハイフン、アンダースコアのみ使用可能
+                {t('webRender.filenameNote')}
               </p>
             </div>
 
             {/* コンテナ選択 */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>コンテナ形式</label>
+              <label style={labelStyle}>{t('webRender.containerFormat')}</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {(['mp4', 'webm'] as ContainerType[]).map((c) => (
                   <button
@@ -228,7 +229,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
 
             {/* 品質選択 */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>品質</label>
+              <label style={labelStyle}>{t('webRender.quality')}</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {QUALITY_OPTIONS.map((q) => (
                   <button
@@ -244,7 +245,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
 
             {/* 解像度スケール */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>解像度</label>
+              <label style={labelStyle}>{t('webRender.resolution')}</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {SCALE_OPTIONS.map((s) => (
                   <button
@@ -270,7 +271,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 marginBottom: '16px',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#ccc', marginBottom: '8px' }}>動画情報</div>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#ccc', marginBottom: '8px' }}>{t('webRender.videoInfo')}</div>
               <div
                 style={{
                   fontSize: '12px',
@@ -280,12 +281,12 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                   gap: '4px',
                 }}
               >
-                <div>解像度: {currentScale.resolution}</div>
-                <div>FPS: {mechanic.fps}</div>
-                <div>長さ: {durationSeconds.toFixed(1)}秒</div>
-                <div>フレーム数: {mechanic.durationFrames}</div>
-                <div>形式: {container.toUpperCase()}</div>
-                <div>音声: なし</div>
+                <div>{t('webRender.resolutionLabel', { resolution: currentScale.resolution })}</div>
+                <div>{t('webRender.fpsLabel', { fps: mechanic.fps })}</div>
+                <div>{t('webRender.lengthLabel', { seconds: durationSeconds.toFixed(1) })}</div>
+                <div>{t('webRender.framesLabel', { frames: mechanic.durationFrames })}</div>
+                <div>{t('webRender.formatLabel', { format: container.toUpperCase() })}</div>
+                <div>{t('webRender.audio')}</div>
               </div>
             </div>
 
@@ -303,7 +304,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                   lineHeight: '1.5',
                 }}
               >
-                <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>互換性エラー</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{t('webRender.compatibilityError')}</div>
                 {compatibility.issues.map((issue, i) => (
                   <div key={i}>- {issue.message}</div>
                 ))}
@@ -322,7 +323,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                   color: '#86efac',
                 }}
               >
-                互換性OK — コーデック: {compatibility.resolvedVideoCodec || 'auto'}
+                {t('webRender.compatibilityOk', { codec: compatibility.resolvedVideoCodec || 'auto' })}
               </div>
             )}
 
@@ -352,7 +353,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                     : 0.5,
               }}
             >
-              レンダリング開始
+              {t('webRender.startRender')}
             </button>
           </>
         )}
@@ -372,7 +373,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
               }}
             />
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <p style={{ fontSize: '14px', color: '#aaa' }}>互換性チェック中...</p>
+            <p style={{ fontSize: '14px', color: '#aaa' }}>{t('webRender.checking')}</p>
           </div>
         )}
 
@@ -392,7 +393,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
             />
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', margin: '0 0 8px' }}>
-              レンダリング中...
+              {t('webRender.rendering')}
             </p>
             <p style={{ fontSize: '24px', color: '#7c3aed', margin: '0 0 16px' }}>
               {progress?.percentComplete ?? 0}%
@@ -430,8 +431,8 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                   marginTop: '12px',
                 }}
               >
-                <span>描画: {progress.renderedFrames}/{progress.totalFrames}</span>
-                <span>エンコード: {progress.encodedFrames}/{progress.totalFrames}</span>
+                <span>{t('webRender.rendered', { rendered: progress.renderedFrames, total: progress.totalFrames })}</span>
+                <span>{t('webRender.encoded', { encoded: progress.encodedFrames, total: progress.totalFrames })}</span>
               </div>
             )}
 
@@ -449,11 +450,11 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 cursor: 'pointer',
               }}
             >
-              キャンセル
+              {t('common.cancel')}
             </button>
 
             <p style={{ fontSize: '12px', color: '#d97706', marginTop: '16px' }}>
-              ⚠ レンダリング中はこのタブを閉じないでください
+              {t('webRender.doNotCloseTab')}
             </p>
           </div>
         )}
@@ -463,10 +464,10 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>OK</div>
             <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', margin: '0 0 8px' }}>
-              レンダリング完了！
+              {t('webRender.completed')}
             </p>
             <p style={{ fontSize: '12px', color: '#888', margin: '0 0 20px' }}>
-              ファイルサイズ: {(videoBlob.size / 1024 / 1024).toFixed(2)} MB
+              {t('webRender.fileSize', { size: (videoBlob.size / 1024 / 1024).toFixed(2) })}
             </p>
 
             <button
@@ -484,7 +485,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 marginBottom: '12px',
               }}
             >
-              ダウンロード ({fileName}.{container})
+              {t('webRender.downloadFile', { filename: fileName, ext: container })}
             </button>
 
             <button
@@ -500,7 +501,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 cursor: 'pointer',
               }}
             >
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         )}
@@ -510,7 +511,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>ERROR</div>
             <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', margin: '0 0 8px' }}>
-              レンダリング失敗
+              {t('webRender.failed')}
             </p>
             {error && (
               <p
@@ -543,7 +544,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 marginBottom: '12px',
               }}
             >
-              やり直す
+              {t('common.retry')}
             </button>
 
             <button
@@ -559,7 +560,7 @@ export function WebRenderDialog({ isOpen, mechanic, onClose }: WebRenderDialogPr
                 cursor: 'pointer',
               }}
             >
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         )}

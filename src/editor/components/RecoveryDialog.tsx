@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface RecoveryDialogProps {
   onRecover: () => void;
@@ -6,6 +7,8 @@ interface RecoveryDialogProps {
 }
 
 export function RecoveryDialog({ onRecover, onDiscard }: RecoveryDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <div
       style={{
@@ -42,7 +45,7 @@ export function RecoveryDialog({ onRecover, onDiscard }: RecoveryDialogProps) {
           }}
         >
           <span style={{ fontSize: '24px' }}>📁</span>
-          未保存のデータがあります
+          {t('recovery.title')}
         </h2>
 
         <p
@@ -53,7 +56,7 @@ export function RecoveryDialog({ onRecover, onDiscard }: RecoveryDialogProps) {
             lineHeight: '1.6',
           }}
         >
-          前回の編集内容が自動保存されています。復元しますか？
+          {t('recovery.description')}
         </p>
 
         <div
@@ -81,7 +84,7 @@ export function RecoveryDialog({ onRecover, onDiscard }: RecoveryDialogProps) {
               e.currentTarget.style.background = '#2a2a4a';
             }}
           >
-            破棄して新規作成
+            {t('recovery.discard')}
           </button>
           <button
             onClick={onRecover}
@@ -102,7 +105,7 @@ export function RecoveryDialog({ onRecover, onDiscard }: RecoveryDialogProps) {
               e.currentTarget.style.background = '#3753c7';
             }}
           >
-            復元する
+            {t('recovery.recover')}
           </button>
         </div>
       </div>

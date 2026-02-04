@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { SHORTCUTS } from '../hooks/useKeyboardShortcuts';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ShortcutHelpDialogProps {
   isOpen: boolean;
@@ -7,6 +8,8 @@ interface ShortcutHelpDialogProps {
 }
 
 export function ShortcutHelpDialog({ isOpen, onClose }: ShortcutHelpDialogProps) {
+  const { t } = useLanguage();
+
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;
@@ -60,7 +63,7 @@ export function ShortcutHelpDialog({ isOpen, onClose }: ShortcutHelpDialogProps)
           }}
         >
           <h2 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>
-            キーボードショートカット
+            {t('shortcuts.title')}
           </h2>
           <button
             onClick={onClose}
@@ -103,7 +106,7 @@ export function ShortcutHelpDialog({ isOpen, onClose }: ShortcutHelpDialogProps)
                 }}
               >
                 <span style={{ color: '#888', fontSize: '13px' }}>
-                  {item.description}
+                  {t(item.descriptionKey as any)}
                 </span>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {item.keys.map((key, keyIndex) => (
@@ -123,7 +126,7 @@ export function ShortcutHelpDialog({ isOpen, onClose }: ShortcutHelpDialogProps)
                           textAlign: 'center',
                         }}
                       >
-                        {key}
+                        {key === 'arrows' ? t('shortcuts.arrowKeys') : key}
                       </kbd>
                     </React.Fragment>
                   ))}
@@ -153,7 +156,7 @@ export function ShortcutHelpDialog({ isOpen, onClose }: ShortcutHelpDialogProps)
               cursor: 'pointer',
             }}
           >
-            閉じる
+            {t('common.close')}
           </button>
         </div>
       </div>

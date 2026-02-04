@@ -1,20 +1,21 @@
 import React from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { Role, MarkerType, AoEType } from '../../data/types';
 
 const TOOLS = [
-  { id: 'select', label: 'Select', icon: '↖', shortcut: '1' },
-  { id: 'move', label: 'Move', icon: '✋', shortcut: '2' },
-  { id: 'add_move_event', label: '移動追加', icon: '→', shortcut: '3' },
+  { id: 'select', icon: '\u2196', shortcut: '1' },
+  { id: 'move', icon: '\u270B', shortcut: '2' },
+  { id: 'add_move_event', icon: '\u2192', shortcut: '3' },
 ] as const;
 
 const ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
-const AOE_TYPES: { type: AoEType; label: string; icon: string }[] = [
-  { type: 'circle', label: '円形', icon: '○' },
-  { type: 'cone', label: '扇形', icon: '◗' },
-  { type: 'line', label: '直線', icon: '│' },
-  { type: 'donut', label: 'ドーナツ', icon: '◎' },
-  { type: 'cross', label: '十字', icon: '✚' },
+const AOE_TYPES: { type: AoEType; icon: string }[] = [
+  { type: 'circle', icon: '\u25CB' },
+  { type: 'cone', icon: '\u25D7' },
+  { type: 'line', icon: '\u2502' },
+  { type: 'donut', icon: '\u25CE' },
+  { type: 'cross', icon: '\u271A' },
 ];
 
 export function ToolPanelContent() {
@@ -27,6 +28,21 @@ export function ToolPanelContent() {
     addMarker,
     setAoEType,
   } = useEditor();
+  const { t } = useLanguage();
+
+  const toolLabels: Record<string, string> = {
+    select: t('tools.select'),
+    move: t('tools.move'),
+    add_move_event: t('tools.addMoveEvent'),
+  };
+
+  const aoeLabels: Record<AoEType, string> = {
+    circle: t('tools.aoeCircle'),
+    cone: t('tools.aoeCone'),
+    line: t('tools.aoeLine'),
+    donut: t('tools.aoeDonut'),
+    cross: t('tools.aoeCross'),
+  };
 
   const buttonStyle = (active: boolean) => ({
     padding: '10px 14px',
@@ -133,7 +149,7 @@ export function ToolPanelContent() {
     >
       {/* Tools */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Tools</div>
+        <div style={sectionTitleStyle}>{t('tools.sectionTitle')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {TOOLS.map((tool) => (
             <button
@@ -142,7 +158,7 @@ export function ToolPanelContent() {
               style={buttonStyle(state.tool === tool.id)}
             >
               <span>{tool.icon}</span>
-              <span>{tool.label}</span>
+              <span>{toolLabels[tool.id]}</span>
               <span style={shortcutStyle}>{tool.shortcut}</span>
             </button>
           ))}
@@ -151,21 +167,21 @@ export function ToolPanelContent() {
 
       {/* Grid Snap */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Grid</div>
+        <div style={sectionTitleStyle}>{t('tools.grid')}</div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={state.gridSnap}
             onChange={(e) => setGridSnap(e.target.checked)}
           />
-          Snap to grid (0.5 units)
+          {t('tools.snapToGrid')}
         </label>
       </div>
 
       {/* Add Enemy */}
       <div style={sectionStyle}>
         <button onClick={handleAddEnemy} style={buttonStyle(false)}>
-          + Add Enemy
+          {t('tools.addEnemy')}
         </button>
       </div>
 
@@ -180,7 +196,7 @@ export function ToolPanelContent() {
             background: state.tool === 'add_aoe' ? '#ff6600' : '#2a2a4a',
           }}
         >
-          <span>{state.tool === 'add_aoe' ? '配置モード: ON' : 'AoE配置モード'}</span>
+          <span>{state.tool === 'add_aoe' ? t('tools.aoePlacementModeOn') : t('tools.aoePlacementMode')}</span>
           <span style={shortcutStyle}>4</span>
         </button>
 
@@ -188,10 +204,10 @@ export function ToolPanelContent() {
         {state.tool === 'add_aoe' && (
           <div style={{ marginTop: '10px' }}>
             <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
-              タイプを選択:
+              {t('tools.selectType')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-              {AOE_TYPES.map(({ type, label, icon }) => (
+              {AOE_TYPES.map(({ type, icon }) => (
                 <button
                   key={type}
                   onClick={() => handleSelectAoEType(type)}
@@ -210,12 +226,12 @@ export function ToolPanelContent() {
                   }}
                 >
                   <span>{icon}</span>
-                  <span>{label}</span>
+                  <span>{aoeLabels[type]}</span>
                 </button>
               ))}
             </div>
             <div style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
-              フィールドをクリックして配置
+              {t('tools.clickFieldToPlace')}
             </div>
           </div>
         )}
@@ -233,13 +249,13 @@ export function ToolPanelContent() {
             background: state.tool === 'add_debuff' ? '#ff00ff' : '#2a2a4a',
           }}
         >
-          <span>{state.tool === 'add_debuff' ? '付与モード: ON' : 'デバフ付与モード'}</span>
+          <span>{state.tool === 'add_debuff' ? t('tools.debuffModeOn') : t('tools.debuffMode')}</span>
           <span style={shortcutStyle}>5</span>
         </button>
 
         {state.tool === 'add_debuff' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center' }}>
-            プレイヤーをクリックして選択
+            {t('tools.clickPlayerToSelect')}
           </div>
         )}
       </div>
@@ -254,12 +270,12 @@ export function ToolPanelContent() {
             background: state.tool === 'add_text' ? '#00aaff' : '#2a2a4a',
           }}
         >
-          <span>{state.tool === 'add_text' ? '配置モード: ON' : 'テキスト配置'}</span>
+          <span>{state.tool === 'add_text' ? t('tools.textModeOn') : t('tools.textMode')}</span>
           <span style={shortcutStyle}>6</span>
         </button>
         {state.tool === 'add_text' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
-            フィールドをクリックして配置
+            {t('tools.clickFieldToPlace')}
           </div>
         )}
       </div>
@@ -274,25 +290,25 @@ export function ToolPanelContent() {
             background: state.tool === 'add_object' ? '#ffaa00' : '#2a2a4a',
           }}
         >
-          <span>{state.tool === 'add_object' ? '配置モード: ON' : 'オブジェクト配置'}</span>
+          <span>{state.tool === 'add_object' ? t('tools.objectModeOn') : t('tools.objectMode')}</span>
           <span style={shortcutStyle}>7</span>
         </button>
         {state.tool === 'add_object' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
-            フィールドをクリックして配置
+            {t('tools.clickFieldToPlace')}
           </div>
         )}
       </div>
 
       {/* Presets */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Presets</div>
+        <div style={sectionTitleStyle}>{t('tools.presets')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <button onClick={handlePreset8Players} style={buttonStyle(false)}>
-            8-Player Setup
+            {t('tools.preset8Player')}
           </button>
           <button onClick={handlePresetMarkers} style={buttonStyle(false)}>
-            Standard Markers
+            {t('tools.presetMarkers')}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import { PlayerProperties } from './properties/PlayerProperties';
 import { EnemyProperties } from './properties/EnemyProperties';
 import { MarkerProperties } from './properties/MarkerProperties';
@@ -10,6 +11,7 @@ import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getObjectEventPairs } from '../utils/getActiveObjects';
 
 export function PropertyPanel() {
+  const { t } = useLanguage();
   const {
     state,
     updatePlayer,
@@ -35,7 +37,7 @@ export function PropertyPanel() {
     if (!selectedObjectId || !selectedObjectType) {
       return (
         <div style={{ color: '#888', fontSize: '13px', textAlign: 'center', marginTop: '40px' }}>
-          Select an object to edit its properties
+          {t('property.selectObject')}
         </div>
       );
     }
@@ -158,7 +160,7 @@ export function PropertyPanel() {
         overflowY: 'auto',
       }}
     >
-      <h2 style={{ margin: '0 0 16px', fontSize: '16px', color: '#fff' }}>Properties</h2>
+      <h2 style={{ margin: '0 0 16px', fontSize: '16px', color: '#fff' }}>{t('property.title')}</h2>
       {renderProperties()}
     </div>
   );

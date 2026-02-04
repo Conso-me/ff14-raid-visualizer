@@ -1,5 +1,6 @@
 import React from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { Role, MarkerType } from '../../data/types';
 
 const ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
@@ -7,6 +8,7 @@ const MARKERS: MarkerType[] = ['A', 'B', 'C', 'D', '1', '2', '3', '4'];
 
 export function SettingsPanelContent() {
   const { state, updateField, updateMechanicMeta, addPlayer, addMarker } = useEditor();
+  const { t } = useLanguage();
   const { mechanic } = state;
 
   const inputStyle = {
@@ -47,7 +49,7 @@ export function SettingsPanelContent() {
   const handleAddPlayer = (role: Role) => {
     const existingRoles = mechanic.initialPlayers.map((p) => p.role);
     if (existingRoles.includes(role)) {
-      alert(`Player ${role} already exists`);
+      alert(t('settings.playerExists', { role }));
       return;
     }
     addPlayer({
@@ -68,25 +70,25 @@ export function SettingsPanelContent() {
     <div style={{ background: '#1a1a2e', padding: '16px' }}>
       {/* Field Settings */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>フィールド設定</div>
+        <div style={sectionTitleStyle}>{t('settings.fieldSettings')}</div>
 
         <label style={{ display: 'block', fontSize: '13px', marginBottom: '12px' }}>
-          <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>タイプ</span>
+          <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>{t('settings.fieldType')}</span>
           <select
             value={mechanic.field.type}
             onChange={(e) => updateField({ type: e.target.value as 'circle' | 'square' | 'rectangle' })}
             style={inputStyle}
           >
-            <option value="circle">Circle</option>
-            <option value="square">Square</option>
-            <option value="rectangle">Rectangle</option>
+            <option value="circle">{t('settings.circle')}</option>
+            <option value="square">{t('settings.square')}</option>
+            <option value="rectangle">{t('settings.rectangle')}</option>
           </select>
         </label>
 
         {mechanic.field.type === 'rectangle' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             <label style={{ display: 'block', fontSize: '13px' }}>
-              <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>幅</span>
+              <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>{t('settings.width')}</span>
               <input
                 type="number"
                 value={mechanic.field.width || mechanic.field.size}
@@ -98,7 +100,7 @@ export function SettingsPanelContent() {
               />
             </label>
             <label style={{ display: 'block', fontSize: '13px' }}>
-              <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>高さ</span>
+              <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>{t('settings.height')}</span>
               <input
                 type="number"
                 value={mechanic.field.height || mechanic.field.size}
@@ -118,12 +120,12 @@ export function SettingsPanelContent() {
             checked={mechanic.field.gridEnabled}
             onChange={(e) => updateField({ gridEnabled: e.target.checked })}
           />
-          グリッドを表示
+          {t('settings.showGrid')}
         </label>
 
         {/* Background image */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '12px' }}>
-          <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>背景画像</div>
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{t('settings.backgroundImage')}</div>
           <input
             type="file"
             accept="image/*"
@@ -147,7 +149,7 @@ export function SettingsPanelContent() {
           {mechanic.field.backgroundImage && (
             <>
               <label style={{ display: 'block', fontSize: '12px', color: '#888', marginBottom: '8px' }}>
-                透明度: {Math.round((mechanic.field.backgroundOpacity ?? 0.5) * 100)}%
+                {`${t('settings.opacity')}: ${Math.round((mechanic.field.backgroundOpacity ?? 0.5) * 100)}%`}
                 <input
                   type="range"
                   value={mechanic.field.backgroundOpacity ?? 0.5}
@@ -170,7 +172,7 @@ export function SettingsPanelContent() {
                   cursor: 'pointer',
                 }}
               >
-                背景画像を削除
+                {t('settings.deleteBackgroundImage')}
               </button>
             </>
           )}
@@ -179,10 +181,10 @@ export function SettingsPanelContent() {
 
       {/* Video Settings */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>動画設定</div>
+        <div style={sectionTitleStyle}>{t('settings.videoSettings')}</div>
 
         <label style={{ display: 'block', fontSize: '13px', marginBottom: '12px' }}>
-          <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>長さ (秒)</span>
+          <span style={{ color: '#888', display: 'block', marginBottom: '4px' }}>{t('settings.durationSeconds')}</span>
           <input
             type="number"
             min={1}
@@ -196,7 +198,7 @@ export function SettingsPanelContent() {
             style={inputStyle}
           />
           <span style={{ fontSize: '11px', color: '#666', display: 'block', marginTop: '2px' }}>
-            {mechanic.durationFrames}フレーム @ {mechanic.fps}fps
+            {t('settings.framesAtFps', { frames: mechanic.durationFrames, fps: mechanic.fps })}
           </span>
         </label>
 
@@ -223,7 +225,7 @@ export function SettingsPanelContent() {
 
       {/* Add Players */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Add Players</div>
+        <div style={sectionTitleStyle}>{t('settings.addPlayers')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
           {ROLES.map((role) => {
             const exists = mechanic.initialPlayers.find((p) => p.role === role);
@@ -248,7 +250,7 @@ export function SettingsPanelContent() {
 
       {/* Add Markers */}
       <div style={sectionStyle}>
-        <div style={sectionTitleStyle}>Add Markers</div>
+        <div style={sectionTitleStyle}>{t('settings.addMarkers')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
           {MARKERS.map((type) => (
             <button

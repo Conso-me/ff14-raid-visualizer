@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
 import { getActiveAnnotations, getAnnotationEventPairs } from '../utils/getActiveAnnotations';
@@ -36,13 +37,13 @@ const MARKER_COLORS: Record<MarkerType, string> = {
   '4': '#ff00ff',
 };
 
-// AoE type names
-const AOE_TYPE_NAMES: Record<AoEType, string> = {
-  circle: '円形',
-  cone: '扇形',
-  line: '直線',
-  donut: 'ドーナツ',
-  cross: '十字',
+// AoE type name keys for i18n
+const AOE_TYPE_KEYS: Record<AoEType, string> = {
+  circle: 'tools.aoeCircle',
+  cone: 'tools.aoeCone',
+  line: 'tools.aoeLine',
+  donut: 'tools.aoeDonut',
+  cross: 'tools.aoeCross',
 };
 
 // AoE type icons
@@ -71,8 +72,8 @@ function getMarkerColor(type: MarkerType): string {
   return MARKER_COLORS[type] || '#888';
 }
 
-function getAoETypeName(type: AoEType): string {
-  return AOE_TYPE_NAMES[type] || type;
+function getAoETypeKey(type: AoEType): string {
+  return AOE_TYPE_KEYS[type] || type;
 }
 
 function getAoETypeIcon(type: AoEType): string {
@@ -226,7 +227,7 @@ function ObjectItem({
             background: isActive ? '#22c55e' : '#4b5563',
             flexShrink: 0,
           }}
-          title={isActive ? 'アクティブ' : '非アクティブ'}
+          title={isActive ? 'Active' : 'Inactive'}
         />
       )}
     </button>
@@ -236,6 +237,7 @@ function ObjectItem({
 // Action toolbar component
 function ActionToolbar() {
   const { state, deleteSelectedObject, copySelectedObject } = useEditor();
+  const { t } = useLanguage();
   const { selectedObjectId, selectedObjectType } = state;
 
   const hasSelection = selectedObjectId !== null && selectedObjectType !== null;
@@ -267,10 +269,10 @@ function ActionToolbar() {
         onClick={copySelectedObject}
         disabled={!canCopy}
         style={buttonStyle(!canCopy)}
-        title={canCopy ? 'コピー (Ctrl+D)' : 'プレイヤーとマーカーはコピーできません'}
+        title={canCopy ? t('property.copyTitle') : t('property.copyDisabledTitle')}
       >
         <span>+</span>
-        <span>コピー</span>
+        <span>{t('common.copy')}</span>
       </button>
       <button
         onClick={deleteSelectedObject}
@@ -279,10 +281,10 @@ function ActionToolbar() {
           ...buttonStyle(!hasSelection),
           background: hasSelection ? '#6b2020' : '#1a1a2e',
         }}
-        title="削除 (Delete)"
+        title={t('property.deleteTitle')}
       >
         <span>-</span>
-        <span>削除</span>
+        <span>{t('common.delete')}</span>
       </button>
     </div>
   );
@@ -298,6 +300,7 @@ interface PlayerItemProps {
 }
 
 function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: PlayerItemProps) {
+  const { t } = useLanguage();
   return (
     <div
       onClick={onSelect}
@@ -374,9 +377,9 @@ function PlayerItem({ player, position, isSelected, onSelect, onAddMove }: Playe
         onMouseLeave={(e) => {
           e.currentTarget.style.background = '#2c9c3c';
         }}
-        title="移動イベントを追加"
+        title={t('objectList.moveTitle')}
       >
-        移動
+        {t('objectList.move')}
       </button>
     </div>
   );
@@ -397,9 +400,12 @@ function SelectionToolbar({
   hasSelection,
   onSelectAll,
   onClearSelection,
-  selectAllTitle = '全選択',
-  clearTitle = '選択解除',
+  selectAllTitle,
+  clearTitle,
 }: SelectionToolbarProps) {
+  const { t } = useLanguage();
+  const resolvedSelectAllTitle = selectAllTitle || t('common.selectAll');
+  const resolvedClearTitle = clearTitle || t('common.deselect');
   return (
     <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
       <button
@@ -414,9 +420,9 @@ function SelectionToolbar({
           fontSize: '10px',
           cursor: 'pointer',
         }}
-        title={selectAllTitle}
+        title={resolvedSelectAllTitle}
       >
-        全選択
+        {t('common.selectAll')}
       </button>
       <button
         onClick={onClearSelection}
@@ -431,9 +437,9 @@ function SelectionToolbar({
           fontSize: '10px',
           cursor: !hasSelection ? 'not-allowed' : 'pointer',
         }}
-        title={clearTitle}
+        title={resolvedClearTitle}
       >
-        選択解除
+        {t('common.deselect')}
       </button>
     </div>
   );
@@ -441,6 +447,7 @@ function SelectionToolbar({
 
 // Main ObjectListPanel component
 export function ObjectListPanel() {
+  const { t } = useLanguage();
   const {
     state,
     selectObject,
@@ -584,10 +591,10 @@ export function ObjectListPanel() {
       <ActionToolbar />
 
       {/* Players group */}
-      <CollapsibleGroup title="プレイヤー" count={mechanic.initialPlayers.length}>
+      <CollapsibleGroup title={t('objectList.players')} count={mechanic.initialPlayers.length}>
         {mechanic.initialPlayers.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            プレイヤーがいません
+            {t('objectList.noPlayers')}
           </div>
         ) : (
           <>
@@ -596,8 +603,8 @@ export function ObjectListPanel() {
               hasSelection={selectedObjectType === 'player' && selectedObjectIds.length > 0}
               onSelectAll={selectAllPlayers}
               onClearSelection={clearMultiSelect}
-              selectAllTitle="全プレイヤーを選択"
-              clearTitle="選択を解除"
+              selectAllTitle={t('objectList.selectAllPlayers')}
+              clearTitle={t('objectList.clearSelection')}
             />
             <DraggableList
               items={mechanic.initialPlayers}
@@ -622,10 +629,10 @@ export function ObjectListPanel() {
       </CollapsibleGroup>
 
       {/* Markers group - no multi-selection needed as markers are unique */}
-      <CollapsibleGroup title="フィールドマーカー" count={mechanic.markers.length}>
+      <CollapsibleGroup title={t('objectList.markers')} count={mechanic.markers.length}>
         {mechanic.markers.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            マーカーがありません
+            {t('objectList.noMarkers')}
           </div>
         ) : (
           mechanic.markers.map((marker) => (
@@ -633,7 +640,7 @@ export function ObjectListPanel() {
               key={marker.type}
               id={marker.type}
               objectType="marker"
-              name={`マーカー ${marker.type}`}
+              name={t('objectList.markerLabel', { type: marker.type })}
               subtitle={formatPosition(marker.position)}
               color={getMarkerColor(marker.type)}
               isSelected={selectedObjectId === marker.type && selectedObjectType === 'marker'}
@@ -644,10 +651,10 @@ export function ObjectListPanel() {
       </CollapsibleGroup>
 
       {/* Enemies group with multi-selection */}
-      <CollapsibleGroup title="エネミー" count={mechanic.enemies.length}>
+      <CollapsibleGroup title={t('objectList.enemies')} count={mechanic.enemies.length}>
         {mechanic.enemies.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            エネミーがいません
+            {t('objectList.noEnemies')}
           </div>
         ) : (
           <>
@@ -656,8 +663,8 @@ export function ObjectListPanel() {
               hasSelection={selectedEnemyIds.length > 0}
               onSelectAll={selectAllEnemies}
               onClearSelection={clearMultiSelect}
-              selectAllTitle="全エネミーを選択"
-              clearTitle="選択を解除"
+              selectAllTitle={t('objectList.selectAllEnemies')}
+              clearTitle={t('objectList.clearSelection')}
             />
             {mechanic.enemies.map((enemy) => (
               <ObjectItem
@@ -676,10 +683,10 @@ export function ObjectListPanel() {
       </CollapsibleGroup>
 
       {/* AoEs group with multi-selection */}
-      <CollapsibleGroup title="AoE" count={aoeEventPairs.length}>
+      <CollapsibleGroup title={t('objectList.aoe')} count={aoeEventPairs.length}>
         {aoeEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            AoEがありません
+            {t('objectList.noAoEs')}
           </div>
         ) : (
           <>
@@ -688,8 +695,8 @@ export function ObjectListPanel() {
               hasSelection={selectedAoEIds.length > 0}
               onSelectAll={selectAllAoEs}
               onClearSelection={clearMultiSelect}
-              selectAllTitle="全AoEを選択"
-              clearTitle="選択を解除"
+              selectAllTitle={t('objectList.selectAllAoEs')}
+              clearTitle={t('objectList.clearSelection')}
             />
             {aoeEventPairs.map(({ aoe, showFrame, hideFrame }) => {
               const isActive = activeAoEIds.has(aoe.id);
@@ -702,7 +709,7 @@ export function ObjectListPanel() {
                   key={aoe.id}
                   id={aoe.id}
                   objectType="aoe"
-                  name={`${getAoETypeIcon(aoe.type)} ${getAoETypeName(aoe.type)}`}
+                  name={`${getAoETypeIcon(aoe.type)} ${t(getAoETypeKey(aoe.type) as any)}`}
                   subtitle={`${formatPosition(aoe.position)} [${frameInfo}]`}
                   color={aoe.color || '#ff6600'}
                   isSelected={isAoESelected(aoe.id)}
@@ -716,10 +723,10 @@ export function ObjectListPanel() {
       </CollapsibleGroup>
 
       {/* Text annotations group with multi-selection */}
-      <CollapsibleGroup title="テキスト" count={annotationEventPairs.length}>
+      <CollapsibleGroup title={t('objectList.text')} count={annotationEventPairs.length}>
         {annotationEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            テキスト注釈がありません
+            {t('objectList.noTexts')}
           </div>
         ) : (
           <>
@@ -728,8 +735,8 @@ export function ObjectListPanel() {
               hasSelection={selectedAnnotationIds.length > 0}
               onSelectAll={selectAllAnnotations}
               onClearSelection={clearMultiSelect}
-              selectAllTitle="全テキストを選択"
-              clearTitle="選択を解除"
+              selectAllTitle={t('objectList.selectAllTexts')}
+              clearTitle={t('objectList.clearSelection')}
             />
             {annotationEventPairs.map(({ annotation, showFrame, hideFrame }) => {
               const isActive = activeAnnotationIds.has(annotation.id);
@@ -759,10 +766,10 @@ export function ObjectListPanel() {
       </CollapsibleGroup>
 
       {/* Objects group with multi-selection */}
-      <CollapsibleGroup title="オブジェクト" count={objectEventPairs.length}>
+      <CollapsibleGroup title={t('objectList.objects')} count={objectEventPairs.length}>
         {objectEventPairs.length === 0 ? (
           <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
-            オブジェクトがありません
+            {t('objectList.noObjects')}
           </div>
         ) : (
           <>
@@ -771,8 +778,8 @@ export function ObjectListPanel() {
               hasSelection={selectedObjectIdsOfType.length > 0}
               onSelectAll={selectAllObjects}
               onClearSelection={clearMultiSelect}
-              selectAllTitle="全オブジェクトを選択"
-              clearTitle="選択を解除"
+              selectAllTitle={t('objectList.selectAllObjects')}
+              clearTitle={t('objectList.clearSelection')}
             />
             {objectEventPairs.map(({ object, showFrame, hideFrame }) => {
               const isActive = activeObjectIds.has(object.id);

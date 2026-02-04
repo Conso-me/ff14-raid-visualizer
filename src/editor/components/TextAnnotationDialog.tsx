@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Position, TextAnnotation } from '../../data/types';
 import type { TextSettings } from '../context/editorReducer';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TextAnnotationDialogProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function TextAnnotationDialog({
   onConfirm,
   onCancel,
 }: TextAnnotationDialogProps) {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [fontSize, setFontSize] = useState(16);
   const [color, setColor] = useState('#ffffff');
@@ -42,7 +44,7 @@ export function TextAnnotationDialog({
 
   const handleConfirm = () => {
     if (!text.trim()) {
-      alert('テキストを入力してください');
+      alert(t('textDialog.textRequired'));
       return;
     }
 
@@ -112,7 +114,7 @@ export function TextAnnotationDialog({
         }}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          テキスト注釈追加
+          {t('textDialog.title')}
         </h2>
 
         {/* Position (read-only) */}
@@ -124,7 +126,7 @@ export function TextAnnotationDialog({
             marginBottom: '16px',
           }}
         >
-          <label style={{ ...labelStyle, marginBottom: 0 }}>配置位置</label>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>{t('common.position')}</label>
           <p style={{ margin: '4px 0 0', color: '#fff', fontSize: '13px' }}>
             X: {position.x.toFixed(1)}, Y: {position.y.toFixed(1)}
           </p>
@@ -132,13 +134,13 @@ export function TextAnnotationDialog({
 
         {/* Text content */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>テキスト内容</div>
+          <div style={sectionTitleStyle}>{t('textDialog.textContent')}</div>
           <label style={labelStyle}>
-            テキスト
+            {t('textDialog.textLabel')}
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="表示するテキストを入力..."
+              placeholder={t('textDialog.textPlaceholder')}
               rows={3}
               style={{
                 ...inputStyle,
@@ -151,11 +153,11 @@ export function TextAnnotationDialog({
 
         {/* Appearance settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>見た目</div>
+          <div style={sectionTitleStyle}>{t('textDialog.appearance')}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <label style={labelStyle}>
-              フォントサイズ
+              {t('textDialog.fontSize')}
               <select
                 value={fontSize}
                 onChange={(e) => setFontSize(parseInt(e.target.value))}
@@ -170,7 +172,7 @@ export function TextAnnotationDialog({
             </label>
 
             <label style={labelStyle}>
-              テキスト色
+              {t('textDialog.textColor')}
               <input
                 type="color"
                 value={color}
@@ -187,12 +189,12 @@ export function TextAnnotationDialog({
                 checked={hasBackground}
                 onChange={(e) => setHasBackground(e.target.checked)}
               />
-              背景色を使用
+              {t('textDialog.useBackground')}
             </label>
 
             {hasBackground && (
               <label style={labelStyle}>
-                背景色
+                {t('textDialog.backgroundColor')}
                 <input
                   type="color"
                   value={backgroundColor}
@@ -204,7 +206,7 @@ export function TextAnnotationDialog({
           </div>
 
           <label style={{ ...labelStyle, marginTop: '8px' }}>
-            配置
+            {t('textDialog.alignment')}
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
               {(['left', 'center', 'right'] as const).map((a) => (
                 <button
@@ -221,7 +223,7 @@ export function TextAnnotationDialog({
                     fontSize: '12px',
                   }}
                 >
-                  {a === 'left' ? '左' : a === 'center' ? '中央' : '右'}
+                  {a === 'left' ? t('textDialog.alignLeft') : a === 'center' ? t('textDialog.alignCenter') : t('textDialog.alignRight')}
                 </button>
               ))}
             </div>
@@ -230,10 +232,10 @@ export function TextAnnotationDialog({
 
         {/* Timing settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>タイミング</div>
+          <div style={sectionTitleStyle}>{t('textDialog.timing')}</div>
 
           <label style={labelStyle}>
-            表示開始フレーム
+            {t('textDialog.startFrame')}
             <input
               type="number"
               value={startFrame}
@@ -244,11 +246,11 @@ export function TextAnnotationDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(startFrame / fps).toFixed(2)}秒時点で表示開始
+            {t('textDialog.startFrameDesc', { seconds: (startFrame / fps).toFixed(2) })}
           </p>
 
           <label style={labelStyle}>
-            表示終了フレーム
+            {t('textDialog.endFrame')}
             <input
               type="number"
               value={endFrame}
@@ -259,13 +261,13 @@ export function TextAnnotationDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(endFrame / fps).toFixed(2)}秒時点で非表示 (表示時間: {((endFrame - startFrame) / fps).toFixed(2)}秒)
+            {t('textDialog.endFrameDesc', { endSeconds: (endFrame / fps).toFixed(2), durationSeconds: ((endFrame - startFrame) / fps).toFixed(2) })}
           </p>
         </div>
 
         {/* Preview */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>プレビュー</div>
+          <div style={sectionTitleStyle}>{t('textDialog.preview')}</div>
           <div
             style={{
               padding: '16px',
@@ -285,7 +287,7 @@ export function TextAnnotationDialog({
                 whiteSpace: 'pre-wrap',
               }}
             >
-              {text || 'サンプルテキスト'}
+              {text || t('textDialog.sampleText')}
             </span>
           </div>
         </div>
@@ -304,7 +306,7 @@ export function TextAnnotationDialog({
               fontSize: '13px',
             }}
           >
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -319,7 +321,7 @@ export function TextAnnotationDialog({
               fontWeight: 'bold',
             }}
           >
-            追加
+            {t('common.add')}
           </button>
         </div>
       </div>

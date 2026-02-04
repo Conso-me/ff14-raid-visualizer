@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Position, GimmickObject } from '../../data/types';
 import type { ObjectSettings } from '../context/editorReducer';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ObjectDialogProps {
   isOpen: boolean;
@@ -11,29 +12,6 @@ interface ObjectDialogProps {
   onCancel: () => void;
 }
 
-const PRESETS: Array<{
-  name: string;
-  icon: string;
-  shape: GimmickObject['shape'];
-  color: string;
-  size: number;
-}> = [
-  { name: '塔', icon: '🗼', shape: 'circle', color: '#ffcc00', size: 2 },
-  { name: '爆弾', icon: '💣', shape: 'circle', color: '#ff4444', size: 1.5 },
-  { name: '雷', icon: '⚡', shape: 'diamond', color: '#ffff00', size: 1.5 },
-  { name: '炎', icon: '🔥', shape: 'circle', color: '#ff6600', size: 2 },
-  { name: '氷', icon: '❄️', shape: 'diamond', color: '#00ccff', size: 1.5 },
-  { name: '線起点', icon: '🔗', shape: 'circle', color: '#aa00ff', size: 1 },
-  { name: 'マーカー', icon: '📍', shape: 'triangle', color: '#00ff00', size: 1.5 },
-];
-
-const SHAPES: Array<{ value: GimmickObject['shape']; label: string; icon: string }> = [
-  { value: 'circle', label: '円', icon: '●' },
-  { value: 'square', label: '四角', icon: '■' },
-  { value: 'triangle', label: '三角', icon: '▲' },
-  { value: 'diamond', label: 'ひし形', icon: '◆' },
-];
-
 export function ObjectDialog({
   isOpen,
   position,
@@ -42,6 +20,31 @@ export function ObjectDialog({
   onConfirm,
   onCancel,
 }: ObjectDialogProps) {
+  const { t } = useLanguage();
+
+  const PRESETS: Array<{
+    name: string;
+    icon: string;
+    shape: GimmickObject['shape'];
+    color: string;
+    size: number;
+  }> = [
+    { name: t('objectDialog.presetTower'), icon: '🗼', shape: 'circle', color: '#ffcc00', size: 2 },
+    { name: t('objectDialog.presetBomb'), icon: '💣', shape: 'circle', color: '#ff4444', size: 1.5 },
+    { name: t('objectDialog.presetLightning'), icon: '⚡', shape: 'diamond', color: '#ffff00', size: 1.5 },
+    { name: t('objectDialog.presetFire'), icon: '🔥', shape: 'circle', color: '#ff6600', size: 2 },
+    { name: t('objectDialog.presetIce'), icon: '❄️', shape: 'diamond', color: '#00ccff', size: 1.5 },
+    { name: t('objectDialog.presetTether'), icon: '🔗', shape: 'circle', color: '#aa00ff', size: 1 },
+    { name: t('objectDialog.presetMarker'), icon: '📍', shape: 'triangle', color: '#00ff00', size: 1.5 },
+  ];
+
+  const SHAPES: Array<{ value: GimmickObject['shape']; label: string; icon: string }> = [
+    { value: 'circle', label: t('objectDialog.shapeCircle'), icon: '●' },
+    { value: 'square', label: t('objectDialog.shapeSquare'), icon: '■' },
+    { value: 'triangle', label: t('objectDialog.shapeTriangle'), icon: '▲' },
+    { value: 'diamond', label: t('objectDialog.shapeDiamond'), icon: '◆' },
+  ];
+
   const [name, setName] = useState('オブジェクト');
   const [shape, setShape] = useState<GimmickObject['shape']>('circle');
   const [size, setSize] = useState(2);
@@ -171,7 +174,7 @@ export function ObjectDialog({
         }}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          オブジェクト追加
+          {t('objectDialog.title')}
         </h2>
 
         {/* Position (read-only) */}
@@ -183,7 +186,7 @@ export function ObjectDialog({
             marginBottom: '16px',
           }}
         >
-          <label style={{ ...labelStyle, marginBottom: 0 }}>配置位置</label>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>{t('common.position')}</label>
           <p style={{ margin: '4px 0 0', color: '#fff', fontSize: '13px' }}>
             X: {position.x.toFixed(1)}, Y: {position.y.toFixed(1)}
           </p>
@@ -191,7 +194,7 @@ export function ObjectDialog({
 
         {/* Presets */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>プリセット</div>
+          <div style={sectionTitleStyle}>{t('objectDialog.presets')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {PRESETS.map((preset) => (
               <button
@@ -219,21 +222,21 @@ export function ObjectDialog({
 
         {/* Basic settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>基本設定</div>
+          <div style={sectionTitleStyle}>{t('objectDialog.basicSettings')}</div>
 
           <label style={labelStyle}>
-            名前
+            {t('common.name')}
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="オブジェクト名..."
+              placeholder={t('objectDialog.namePlaceholder')}
               style={inputStyle}
             />
           </label>
 
           <label style={labelStyle}>
-            形状
+            {t('objectDialog.shape')}
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
               {SHAPES.map((s) => (
                 <button
@@ -263,7 +266,7 @@ export function ObjectDialog({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
             <label style={labelStyle}>
-              サイズ
+              {t('common.size')}
               <input
                 type="number"
                 value={size}
@@ -276,7 +279,7 @@ export function ObjectDialog({
             </label>
 
             <label style={labelStyle}>
-              色
+              {t('common.color')}
               <input
                 type="color"
                 value={color}
@@ -286,7 +289,7 @@ export function ObjectDialog({
             </label>
 
             <label style={labelStyle}>
-              アイコン (絵文字)
+              {t('objectDialog.iconEmoji')}
               <input
                 type="text"
                 value={icon}
@@ -301,10 +304,10 @@ export function ObjectDialog({
 
         {/* Timing settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>タイミング</div>
+          <div style={sectionTitleStyle}>{t('objectDialog.timing')}</div>
 
           <label style={labelStyle}>
-            表示開始フレーム
+            {t('objectDialog.startFrame')}
             <input
               type="number"
               value={startFrame}
@@ -315,11 +318,11 @@ export function ObjectDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(startFrame / fps).toFixed(2)}秒時点で表示開始
+            {t('objectDialog.startFrameDesc', { seconds: (startFrame / fps).toFixed(2) })}
           </p>
 
           <label style={labelStyle}>
-            フェードイン（フレーム）
+            {t('objectDialog.fadeIn')}
             <input
               type="number"
               value={fadeInDuration}
@@ -330,7 +333,7 @@ export function ObjectDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(fadeInDuration / fps).toFixed(2)}秒
+            {t('objectDialog.fadeInDesc', { seconds: (fadeInDuration / fps).toFixed(2) })}
           </p>
 
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -339,13 +342,13 @@ export function ObjectDialog({
               checked={hasEndFrame}
               onChange={(e) => setHasEndFrame(e.target.checked)}
             />
-            終了フレームを設定する
+            {t('objectDialog.setEndFrame')}
           </label>
 
           {hasEndFrame && (
             <>
               <label style={labelStyle}>
-                表示終了フレーム
+                {t('objectDialog.endFrame')}
                 <input
                   type="number"
                   value={endFrame}
@@ -356,11 +359,11 @@ export function ObjectDialog({
                 />
               </label>
               <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-                {(endFrame / fps).toFixed(2)}秒時点で非表示 (表示時間: {((endFrame - startFrame) / fps).toFixed(2)}秒)
+                {t('objectDialog.endFrameDesc', { endSeconds: (endFrame / fps).toFixed(2), durationSeconds: ((endFrame - startFrame) / fps).toFixed(2) })}
               </p>
 
               <label style={labelStyle}>
-                フェードアウト（フレーム）
+                {t('objectDialog.fadeOut')}
                 <input
                   type="number"
                   value={fadeOutDuration}
@@ -371,7 +374,7 @@ export function ObjectDialog({
                 />
               </label>
               <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-                {(fadeOutDuration / fps).toFixed(2)}秒
+                {t('objectDialog.fadeOutDesc', { seconds: (fadeOutDuration / fps).toFixed(2) })}
               </p>
             </>
           )}
@@ -379,7 +382,7 @@ export function ObjectDialog({
 
         {/* Preview */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>プレビュー</div>
+          <div style={sectionTitleStyle}>{t('objectDialog.preview')}</div>
           <div
             style={{
               padding: '16px',
@@ -408,7 +411,7 @@ export function ObjectDialog({
             </div>
             <div style={{ marginLeft: '16px', color: '#888', fontSize: '12px' }}>
               <div>{name}</div>
-              <div>サイズ: {size}</div>
+              <div>{t('objectDialog.sizeLabel', { size })}</div>
             </div>
           </div>
         </div>
@@ -427,7 +430,7 @@ export function ObjectDialog({
               fontSize: '13px',
             }}
           >
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -442,7 +445,7 @@ export function ObjectDialog({
               fontWeight: 'bold',
             }}
           >
-            追加
+            {t('common.add')}
           </button>
         </div>
       </div>

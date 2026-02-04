@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Position, MoveEvent } from '../../data/types';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface MoveEventSettings {
   startFrame: number;
@@ -28,6 +29,7 @@ export function MoveEventDialog({
   onConfirm,
   onCancel,
 }: MoveEventDialogProps) {
+  const { t } = useLanguage();
   const [startFrame, setStartFrame] = useState(currentFrame);
   const [duration, setDuration] = useState(fps); // Default 1 second
   const [easing, setEasing] = useState<MoveEvent['easing']>('easeInOut');
@@ -87,7 +89,7 @@ export function MoveEventDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          移動イベント追加
+          {t('moveDialog.title')}
         </h2>
 
         {/* Info */}
@@ -103,26 +105,26 @@ export function MoveEventDialog({
         >
           {playerIds.length === 1 ? (
             <>
-              <div>プレイヤー: <strong style={{ color: '#fff' }}>{playerIds[0]}</strong></div>
+              <div>{t('moveDialog.playerLabel')}<strong style={{ color: '#fff' }}>{playerIds[0]}</strong></div>
               <div style={{ marginTop: '4px' }}>
                 {(() => {
                   const fromPos = fromPositions.get(playerIds[0]);
                   return fromPos
-                    ? `移動: (${fromPos.x.toFixed(1)}, ${fromPos.y.toFixed(1)}) → (${toPosition.x.toFixed(1)}, ${toPosition.y.toFixed(1)})`
-                    : `移動先: (${toPosition.x.toFixed(1)}, ${toPosition.y.toFixed(1)})`;
+                    ? t('moveDialog.moveFromTo', { fromX: fromPos.x.toFixed(1), fromY: fromPos.y.toFixed(1), toX: toPosition.x.toFixed(1), toY: toPosition.y.toFixed(1) })
+                    : t('moveDialog.moveTo', { toX: toPosition.x.toFixed(1), toY: toPosition.y.toFixed(1) });
                 })()}
               </div>
             </>
           ) : (
             <>
               <div>
-                <strong style={{ color: '#ffcc00' }}>{playerIds.length}人</strong>を同じ場所に移動
+                {t('moveDialog.multiPlayerMove', { count: playerIds.length })}
               </div>
               <div style={{ marginTop: '4px', fontSize: '12px' }}>
-                対象: {playerIds.join(', ')}
+                {t('moveDialog.targets', { players: playerIds.join(', ') })}
               </div>
               <div style={{ marginTop: '4px' }}>
-                移動先: ({toPosition.x.toFixed(1)}, {toPosition.y.toFixed(1)})
+                {t('moveDialog.moveToPosition', { x: toPosition.x.toFixed(1), y: toPosition.y.toFixed(1) })}
               </div>
             </>
           )}
@@ -130,7 +132,7 @@ export function MoveEventDialog({
 
         {/* Start Frame */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={labelStyle}>開始フレーム</label>
+          <label style={labelStyle}>{t('moveDialog.startFrame')}</label>
           <input
             type="number"
             value={startFrame}
@@ -139,13 +141,13 @@ export function MoveEventDialog({
             min={0}
           />
           <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-            {(startFrame / fps).toFixed(2)}秒時点で移動開始
+            {t('moveDialog.startFrameDesc', { seconds: (startFrame / fps).toFixed(2) })}
           </div>
         </div>
 
         {/* Duration */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={labelStyle}>所要時間（フレーム）</label>
+          <label style={labelStyle}>{t('moveDialog.durationFrames')}</label>
           <input
             type="number"
             value={duration}
@@ -154,28 +156,28 @@ export function MoveEventDialog({
             min={1}
           />
           <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-            {(duration / fps).toFixed(2)}秒間かけて移動
+            {t('moveDialog.durationDesc', { seconds: (duration / fps).toFixed(2) })}
           </div>
         </div>
 
         {/* Easing */}
         <div style={{ marginBottom: '24px' }}>
-          <label style={labelStyle}>イージング</label>
+          <label style={labelStyle}>{t('moveDialog.easing')}</label>
           <select
             value={easing}
             onChange={(e) => setEasing(e.target.value as MoveEvent['easing'])}
             style={inputStyle}
           >
-            <option value="linear">Linear（一定速度）</option>
-            <option value="easeIn">Ease In（加速）</option>
-            <option value="easeOut">Ease Out（減速）</option>
-            <option value="easeInOut">Ease In-Out（加速→減速）</option>
+            <option value="linear">{t('moveDialog.linear')}</option>
+            <option value="easeIn">{t('moveDialog.easeIn')}</option>
+            <option value="easeOut">{t('moveDialog.easeOut')}</option>
+            <option value="easeInOut">{t('moveDialog.easeInOut')}</option>
           </select>
           <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-            {easing === 'easeInOut' && '★ 自然な動きに推奨'}
-            {easing === 'linear' && '機械的な一定速度の移動'}
-            {easing === 'easeIn' && 'ゆっくり始まり加速'}
-            {easing === 'easeOut' && '速く始まり減速して停止'}
+            {easing === 'easeInOut' && t('moveDialog.easingDescEaseInOut')}
+            {easing === 'linear' && t('moveDialog.easingDescLinear')}
+            {easing === 'easeIn' && t('moveDialog.easingDescEaseIn')}
+            {easing === 'easeOut' && t('moveDialog.easingDescEaseOut')}
           </div>
         </div>
 
@@ -193,7 +195,7 @@ export function MoveEventDialog({
               cursor: 'pointer',
             }}
           >
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -207,7 +209,7 @@ export function MoveEventDialog({
               cursor: 'pointer',
             }}
           >
-            追加
+            {t('common.add')}
           </button>
         </div>
       </div>

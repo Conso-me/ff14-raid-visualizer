@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { MechanicData } from '../../data/types';
 import { encodeMechanicToUrl } from '../utils/shareUrl';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   // Generate URL
@@ -83,7 +85,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
           }}
         >
           <h2 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>
-            URL共有
+            {t('share.title')}
           </h2>
           <button
             onClick={onClose}
@@ -102,7 +104,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
 
         {/* Info */}
         <p style={{ color: '#888', fontSize: '13px', marginBottom: '16px' }}>
-          このURLをコピーして共有すると、現在のギミック設定を他の人に渡すことができます。
+          {t('share.description')}
         </p>
 
         {/* Warning for long URLs */}
@@ -118,9 +120,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
               color: '#f0c040',
             }}
           >
-            URLが長すぎます ({(length / 1000).toFixed(1)}KB)。
-            一部のブラウザやサービスで正常に共有できない可能性があります。
-            複雑なギミックはJSONファイルでの共有をお勧めします。
+            {t('share.urlTooLong', { size: (length / 1000).toFixed(1) })}
           </div>
         )}
 
@@ -134,7 +134,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
               marginBottom: '6px',
             }}
           >
-            <label style={{ fontSize: '12px', color: '#888' }}>共有URL</label>
+            <label style={{ fontSize: '12px', color: '#888' }}>{t('share.shareUrl')}</label>
             <span style={{ fontSize: '11px', color: '#666' }}>
               {(length / 1000).toFixed(1)} KB
             </span>
@@ -171,7 +171,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
               cursor: 'pointer',
             }}
           >
-            新しいタブで開く
+            {t('share.openNewTab')}
           </button>
           <button
             onClick={handleCopy}
@@ -186,7 +186,7 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
               minWidth: '150px',
             }}
           >
-            {copied ? 'コピーしました!' : 'URLをコピー'}
+            {copied ? t('share.copied') : t('share.copyUrl')}
           </button>
         </div>
 
@@ -200,11 +200,11 @@ export function ShareDialog({ isOpen, mechanic, onClose }: ShareDialogProps) {
             color: '#666',
           }}
         >
-          <strong style={{ color: '#888' }}>Tips:</strong>
+          <strong style={{ color: '#888' }}>{t('share.tips')}</strong>
           <ul style={{ margin: '8px 0 0', paddingLeft: '20px', lineHeight: '1.6' }}>
-            <li>URLにはギミックの全データが含まれています</li>
-            <li>URLを開くと自動的にギミックが読み込まれます</li>
-            <li>複雑なギミックはJSONエクスポートを使用してください</li>
+            <li>{t('share.tip1')}</li>
+            <li>{t('share.tip2')}</li>
+            <li>{t('share.tip3')}</li>
           </ul>
         </div>
       </div>

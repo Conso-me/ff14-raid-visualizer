@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { MechanicData } from '../../data/types';
 import { VideoExportDialog } from './VideoExportDialog';
 import { ExportDialog } from './ExportDialog';
@@ -20,6 +21,7 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad }: EditorHeaderProps) {
   const { state, setMechanic, undo, redo, canUndo, canRedo, updateMechanicMeta } = useEditor();
+  const { t, locale, setLocale } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isVideoExportOpen, setIsVideoExportOpen] = useState(false);
@@ -51,7 +53,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
 
         if (!validation.isValid) {
           const errorMessages = validation.errors.map(e => `- ${e.field}: ${e.message}`).join('\n');
-          setImportError(`インポートエラー:\n${errorMessages}`);
+          setImportError(`${t('header.importErrorPrefix')}${errorMessages}`);
           return;
         }
 
@@ -63,7 +65,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
         const sanitized = sanitizeMechanic(rawData);
         setMechanic(sanitized);
       } catch (err) {
-        setImportError('JSONファイルの解析に失敗しました。ファイル形式を確認してください。');
+        setImportError(t('header.importParseError'));
       }
     };
     reader.readAsText(file);
@@ -72,7 +74,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
 
   const handleNewMechanic = () => {
     if (state.mechanic.timeline.length > 0 || state.mechanic.initialPlayers.length > 0) {
-      if (!confirm('Create new mechanic? Unsaved changes will be lost.')) {
+      if (!confirm(t('header.confirmNew'))) {
         return;
       }
     }
@@ -130,7 +132,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
     >
       {/* Title / Name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>FF14 Raid Editor</span>
+        <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>{t('header.title')}</span>
         <span style={{ color: '#666' }}>|</span>
         {isEditingName ? (
           <input
@@ -160,7 +162,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
               padding: '2px 6px',
               borderRadius: '4px',
             }}
-            title="Click to edit name"
+            title={t('header.clickToEditName')}
           >
             {state.mechanic.name}
           </span>
@@ -173,16 +175,16 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
       {/* File operations */}
       <div style={{ display: 'flex', gap: '8px' }}>
         <button onClick={handleNewMechanic} style={buttonStyle}>
-          New
+          {t('header.new')}
         </button>
         <button onClick={() => setIsSampleDialogOpen(true)} style={buttonStyle}>
-          Sample
+          {t('header.sample')}
         </button>
         <button onClick={handleImport} style={buttonStyle}>
-          Import JSON
+          {t('header.importJson')}
         </button>
         <button onClick={handleExport} style={buttonStyle}>
-          Export JSON
+          {t('header.exportJson')}
         </button>
         <button
           onClick={() => setIsShareDialogOpen(true)}
@@ -192,7 +194,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
             borderColor: '#3c8e59',
           }}
         >
-          Share URL
+          {t('header.shareUrl')}
         </button>
         <input
           ref={fileInputRef}
@@ -209,17 +211,17 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
           onClick={undo}
           disabled={!canUndo}
           style={canUndo ? buttonStyle : disabledButtonStyle}
-          title="Undo (Ctrl+Z)"
+          title={t('header.undoTitle')}
         >
-          Undo
+          {t('header.undo')}
         </button>
         <button
           onClick={redo}
           disabled={!canRedo}
           style={canRedo ? buttonStyle : disabledButtonStyle}
-          title="Redo (Ctrl+Shift+Z)"
+          title={t('header.redoTitle')}
         >
-          Redo
+          {t('header.redo')}
         </button>
       </div>
 
@@ -236,10 +238,10 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
               alignItems: 'center',
               gap: '6px',
             }}
-            title="データの保存・読み込み"
+            title={t('header.saveLoadTitle')}
           >
             💾
-            <span>保存・読込</span>
+            <span>{t('header.saveLoad')}</span>
           </button>
         </div>
       )}
@@ -253,7 +255,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
           borderColor: '#4a63d7',
         }}
       >
-        Preview
+        {t('header.preview')}
       </button>
 
       {/* Video Export（サーバーサイド） - ブラウザ出力に置き換え済み。復元が必要な場合はこのコメントを外す */}
@@ -277,8 +279,48 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
           borderColor: '#8b5cf6',
         }}
       >
-        ブラウザ出力
+        {t('header.webRender')}
       </button>
+
+      {/* Language Toggle */}
+      <div style={{ display: 'flex', borderLeft: '1px solid #3a3a5a', paddingLeft: '12px' }}>
+        <div style={{
+          display: 'flex',
+          border: '1px solid #3a3a5a',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}>
+          <button
+            onClick={() => setLocale('ja')}
+            style={{
+              padding: '6px 10px',
+              background: locale === 'ja' ? '#3753c7' : '#2a2a4a',
+              border: 'none',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: locale === 'ja' ? 'bold' : 'normal',
+              cursor: 'pointer',
+            }}
+          >
+            JA
+          </button>
+          <button
+            onClick={() => setLocale('en')}
+            style={{
+              padding: '6px 10px',
+              background: locale === 'en' ? '#3753c7' : '#2a2a4a',
+              border: 'none',
+              borderLeft: '1px solid #3a3a5a',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: locale === 'en' ? 'bold' : 'normal',
+              cursor: 'pointer',
+            }}
+          >
+            EN
+          </button>
+        </div>
+      </div>
 
       {/* Shortcut Help */}
       {onOpenShortcutHelp && (
@@ -297,10 +339,10 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
             gap: '6px',
             fontWeight: 'bold',
           }}
-          title="キーボードショートカット (?)"
+          title={t('header.helpTitle')}
         >
           <span style={{ fontSize: '14px' }}>?</span>
-          <span>ヘルプ</span>
+          <span>{t('header.help')}</span>
         </button>
       )}
 
@@ -367,7 +409,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: '0 0 16px', color: '#ff6b6b', fontSize: '16px' }}>
-              インポートエラー
+              {t('header.importError')}
             </h3>
             <pre
               style={{
@@ -394,7 +436,7 @@ export function EditorHeader({ onOpenPreview, onOpenShortcutHelp, onOpenSaveLoad
                 cursor: 'pointer',
               }}
             >
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { MechanicData } from '../../data/types';
 import { sampleMechanics } from '../../data/sampleMechanics';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SampleDialogProps {
   isOpen: boolean;
@@ -9,10 +10,12 @@ interface SampleDialogProps {
 }
 
 export function SampleDialog({ isOpen, onClose, onLoad }: SampleDialogProps) {
+  const { t } = useLanguage();
+
   if (!isOpen) return null;
 
   const handleSelect = (name: string, data: MechanicData) => {
-    if (!confirm(`サンプルギミック「${name}」を読み込みますか？現在のデータは失われます。`)) {
+    if (!confirm(t('sampleDialog.confirmLoad', { name }))) {
       return;
     }
     onLoad(data);
@@ -54,7 +57,7 @@ export function SampleDialog({ isOpen, onClose, onLoad }: SampleDialogProps) {
           fontSize: '18px',
           color: '#fff',
         }}>
-          サンプルギミック
+          {t('sampleDialog.title')}
         </h2>
 
         {/* Sample list */}
@@ -119,7 +122,7 @@ export function SampleDialog({ isOpen, onClose, onLoad }: SampleDialogProps) {
               cursor: 'pointer',
             }}
           >
-            閉じる
+            {t('common.close')}
           </button>
         </div>
       </div>

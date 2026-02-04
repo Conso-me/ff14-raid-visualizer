@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Position, AoEType, AoESourceType, AoETrackingMode, Enemy, Player } from '../../data/types';
 import type { AoESettings } from '../context/editorReducer';
 import { useEditor } from '../context/EditorContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface AoEDialogProps {
   isOpen: boolean;
@@ -30,17 +31,6 @@ function getDefaultParams(type: AoEType): Record<string, number> {
   }
 }
 
-function getTypeName(type: AoEType): string {
-  const names: Record<AoEType, string> = {
-    circle: '円形',
-    cone: '扇形',
-    line: '直線',
-    donut: 'ドーナツ',
-    cross: '十字',
-  };
-  return names[type];
-}
-
 export function AoEDialog({
   isOpen,
   position,
@@ -51,6 +41,7 @@ export function AoEDialog({
   onCancel,
 }: AoEDialogProps) {
   const { state } = useEditor();
+  const { t } = useLanguage();
   const [params, setParams] = useState<Record<string, number>>(getDefaultParams(type));
   const [color, setColor] = useState('#ff6600');
   const [opacity, setOpacity] = useState(0.5);
@@ -72,6 +63,14 @@ export function AoEDialog({
 
   if (!isOpen) return null;
 
+  const typeNames: Record<AoEType, string> = {
+    circle: t('aoeDialog.circle'),
+    cone: t('aoeDialog.cone'),
+    line: t('aoeDialog.line'),
+    donut: t('aoeDialog.donut'),
+    cross: t('aoeDialog.cross'),
+  };
+
   const handleConfirm = () => {
     onConfirm({
       type,
@@ -89,11 +88,11 @@ export function AoEDialog({
       trackingMode,
       targetPlayerId: targetPlayerId || undefined,
       placementDelay,
-      offsetFromSource: (sourceType !== 'fixed' && (offsetX !== 0 || offsetY !== 0)) 
-        ? { x: offsetX, y: offsetY } 
+      offsetFromSource: (sourceType !== 'fixed' && (offsetX !== 0 || offsetY !== 0))
+        ? { x: offsetX, y: offsetY }
         : undefined,
-      autoDirection: (type === 'line' || type === 'cone') && sourceType !== 'fixed' && targetPlayerId && autoDirection 
-        ? true 
+      autoDirection: (type === 'line' || type === 'cone') && sourceType !== 'fixed' && targetPlayerId && autoDirection
+        ? true
         : undefined,
     });
   };
@@ -152,7 +151,7 @@ export function AoEDialog({
         }}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          AoE追加 - {getTypeName(type)}
+          {t('aoeDialog.title', { type: typeNames[type] })}
         </h2>
 
         {/* Position (read-only) */}
@@ -164,7 +163,7 @@ export function AoEDialog({
             marginBottom: '16px',
           }}
         >
-          <label style={{ ...labelStyle, marginBottom: 0 }}>配置位置</label>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>{t('common.position')}</label>
           <p style={{ margin: '4px 0 0', color: '#fff', fontSize: '13px' }}>
             X: {position.x.toFixed(1)}, Y: {position.y.toFixed(1)}
           </p>
@@ -172,10 +171,10 @@ export function AoEDialog({
 
         {/* 起点設定 */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>起点設定（オプション）</div>
-          
+          <div style={sectionTitleStyle}>{t('aoeDialog.sourceSettings')}</div>
+
           <label style={labelStyle}>
-            起点タイプ
+            {t('aoeDialog.sourceType')}
             <select
               value={sourceType}
               onChange={(e) => {
@@ -185,23 +184,23 @@ export function AoEDialog({
               }}
               style={selectStyle}
             >
-              <option value="fixed">紐づけなし（固定位置）</option>
-              <option value="boss">ボス</option>
-              <option value="object">オブジェクト</option>
-              <option value="player">プレイヤー</option>
-              <option value="debuff">デバフ持ちプレイヤー</option>
+              <option value="fixed">{t('aoeDialog.fixed')}</option>
+              <option value="boss">{t('aoeDialog.boss')}</option>
+              <option value="object">{t('aoeDialog.object')}</option>
+              <option value="player">{t('aoeDialog.player')}</option>
+              <option value="debuff">{t('aoeDialog.debuffPlayer')}</option>
             </select>
           </label>
 
           {sourceType === 'boss' && (
             <label style={labelStyle}>
-              ボス選択
+              {t('aoeDialog.bossSelect')}
               <select
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
                 style={selectStyle}
               >
-                <option value="">選択してください</option>
+                <option value="">{t('common.selectPlease')}</option>
                 {state.mechanic.enemies.map((enemy: Enemy) => (
                   <option key={enemy.id} value={enemy.id}>
                     {enemy.name || enemy.id}
@@ -213,13 +212,13 @@ export function AoEDialog({
 
           {sourceType === 'player' && (
             <label style={labelStyle}>
-              プレイヤー選択
+              {t('aoeDialog.playerSelect')}
               <select
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
                 style={selectStyle}
               >
-                <option value="">選択してください</option>
+                <option value="">{t('common.selectPlease')}</option>
                 {state.mechanic.initialPlayers.map((player: Player) => (
                   <option key={player.id} value={player.id}>
                     {player.name || player.role} ({player.role})
@@ -231,12 +230,12 @@ export function AoEDialog({
 
           {sourceType === 'debuff' && (
             <label style={labelStyle}>
-              デバフID
+              {t('aoeDialog.debuffId')}
               <input
                 type="text"
                 value={sourceDebuffId}
                 onChange={(e) => setSourceDebuffId(e.target.value)}
-                placeholder="デバフのIDを入力"
+                placeholder={t('aoeDialog.debuffIdPlaceholder')}
                 style={inputStyle}
               />
             </label>
@@ -244,12 +243,12 @@ export function AoEDialog({
 
           {sourceType === 'object' && (
             <label style={labelStyle}>
-              オブジェクトID
+              {t('aoeDialog.objectId')}
               <input
                 type="text"
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
-                placeholder="オブジェクトのIDを入力"
+                placeholder={t('aoeDialog.objectIdPlaceholder')}
                 style={inputStyle}
               />
             </label>
@@ -259,7 +258,7 @@ export function AoEDialog({
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                 <label style={labelStyle}>
-                  Xオフセット
+                  {t('aoeDialog.offsetX')}
                   <input
                     type="number"
                     value={offsetX}
@@ -269,7 +268,7 @@ export function AoEDialog({
                   />
                 </label>
                 <label style={labelStyle}>
-                  Yオフセット
+                  {t('aoeDialog.offsetY')}
                   <input
                     type="number"
                     value={offsetY}
@@ -285,10 +284,10 @@ export function AoEDialog({
 
         {/* 追従モード設定 */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>追従モード</div>
-          
+          <div style={sectionTitleStyle}>{t('aoeDialog.trackingMode')}</div>
+
           <label style={labelStyle}>
-            モード
+            {t('aoeDialog.mode')}
             <select
               value={trackingMode}
               onChange={(e) => {
@@ -300,26 +299,26 @@ export function AoEDialog({
               style={selectStyle}
             >
               <option value="static">
-                設置型（固定位置で発生、避けられる）
+                {t('aoeDialog.static')}
               </option>
               <option value="track_source">
-                ソース追従（ソースの位置に追従）
+                {t('aoeDialog.trackSource')}
               </option>
               <option value="track_target">
-                ターゲット追従（プレイヤーを追従、避けられない）
+                {t('aoeDialog.trackTarget')}
               </option>
             </select>
           </label>
 
           {trackingMode === 'track_target' && (
             <label style={labelStyle}>
-              追従対象プレイヤー
+              {t('aoeDialog.trackTargetPlayer')}
               <select
                 value={targetPlayerId}
                 onChange={(e) => setTargetPlayerId(e.target.value)}
                 style={selectStyle}
               >
-                <option value="">選択してください</option>
+                <option value="">{t('common.selectPlease')}</option>
                 {state.mechanic.initialPlayers.map((player: Player) => (
                   <option key={player.id} value={player.id}>
                     {player.name || player.role} ({player.role})
@@ -337,13 +336,13 @@ export function AoEDialog({
                 onChange={(e) => setAutoDirection(e.target.checked)}
                 style={{ cursor: 'pointer' }}
               />
-              <span>方向を自動計算（起点→ターゲット）</span>
+              <span>{t('aoeDialog.autoDirection')}</span>
             </label>
           )}
 
           {trackingMode === 'static' && (
             <label style={labelStyle}>
-              設置遅延（フレーム）
+              {t('aoeDialog.placementDelay')}
               <input
                 type="number"
                 value={placementDelay}
@@ -353,7 +352,7 @@ export function AoEDialog({
                 style={inputStyle}
               />
               <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                マーカー表示から設置までの遅延（0=即時）
+                {t('aoeDialog.placementDelayDesc')}
               </p>
             </label>
           )}
@@ -361,11 +360,11 @@ export function AoEDialog({
 
         {/* Size settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>サイズ設定</div>
+          <div style={sectionTitleStyle}>{t('aoeDialog.sizeSettings')}</div>
 
           {type === 'circle' && (
             <label style={labelStyle}>
-              半径
+              {t('aoeDialog.radius')}
               <input
                 type="number"
                 value={params.radius || 5}
@@ -381,7 +380,7 @@ export function AoEDialog({
           {type === 'cone' && (
             <>
               <label style={labelStyle}>
-                角度（度）
+                {t('aoeDialog.angle')}
                 <input
                   type="number"
                   value={params.angle || 90}
@@ -393,7 +392,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                方向（度）※0=北
+                {t('aoeDialog.direction')}
                 <input
                   type="number"
                   value={params.direction ?? 0}
@@ -405,7 +404,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                長さ
+                {t('aoeDialog.length')}
                 <input
                   type="number"
                   value={params.length || 15}
@@ -422,7 +421,7 @@ export function AoEDialog({
           {type === 'line' && (
             <>
               <label style={labelStyle}>
-                幅
+                {t('aoeDialog.lineWidth')}
                 <input
                   type="number"
                   value={params.width || 4}
@@ -434,7 +433,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                長さ
+                {t('aoeDialog.length')}
                 <input
                   type="number"
                   value={params.length || 20}
@@ -446,7 +445,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                方向（度）※0=北
+                {t('aoeDialog.direction')}
                 <input
                   type="number"
                   value={params.direction ?? 0}
@@ -463,7 +462,7 @@ export function AoEDialog({
           {type === 'donut' && (
             <>
               <label style={labelStyle}>
-                内側半径（安全地帯）
+                {t('aoeDialog.innerRadius')}
                 <input
                   type="number"
                   value={params.innerRadius || 5}
@@ -475,7 +474,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                外側半径
+                {t('aoeDialog.outerRadius')}
                 <input
                   type="number"
                   value={params.outerRadius || 12}
@@ -492,7 +491,7 @@ export function AoEDialog({
           {type === 'cross' && (
             <>
               <label style={labelStyle}>
-                幅
+                {t('aoeDialog.lineWidth')}
                 <input
                   type="number"
                   value={params.width || 4}
@@ -504,7 +503,7 @@ export function AoEDialog({
                 />
               </label>
               <label style={labelStyle}>
-                長さ
+                {t('aoeDialog.length')}
                 <input
                   type="number"
                   value={params.length || 20}
@@ -521,10 +520,10 @@ export function AoEDialog({
 
         {/* Appearance settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>見た目</div>
+          <div style={sectionTitleStyle}>{t('aoeDialog.appearance')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <label style={labelStyle}>
-              色
+              {t('common.color')}
               <input
                 type="color"
                 value={color}
@@ -533,7 +532,7 @@ export function AoEDialog({
               />
             </label>
             <label style={labelStyle}>
-              不透明度
+              {t('aoeDialog.aoeOpacity')}
               <input
                 type="number"
                 value={opacity}
@@ -549,10 +548,10 @@ export function AoEDialog({
 
         {/* Timing settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>タイミング</div>
+          <div style={sectionTitleStyle}>{t('aoeDialog.timing')}</div>
 
           <label style={labelStyle}>
-            表示開始フレーム
+            {t('aoeDialog.startFrame')}
             <input
               type="number"
               value={startFrame}
@@ -563,11 +562,11 @@ export function AoEDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(startFrame / fps).toFixed(2)}秒時点で表示開始
+            {t('aoeDialog.startFrameDesc', { seconds: (startFrame / fps).toFixed(2) })}
           </p>
 
           <label style={labelStyle}>
-            表示時間（フレーム）
+            {t('aoeDialog.duration')}
             <input
               type="number"
               value={duration}
@@ -578,13 +577,13 @@ export function AoEDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '8px' }}>
-            {(duration / fps).toFixed(2)}秒間表示
+            {t('aoeDialog.durationDesc', { seconds: (duration / fps).toFixed(2) })}
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={labelStyle}>
-                フェードイン（フレーム）
+                {t('aoeDialog.fadeIn')}
                 <input
                   type="number"
                   value={fadeInDuration}
@@ -595,12 +594,12 @@ export function AoEDialog({
                 />
               </label>
               <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px' }}>
-                {(fadeInDuration / fps).toFixed(2)}秒
+                {t('aoeDialog.secondsLabel', { seconds: (fadeInDuration / fps).toFixed(2) })}
               </p>
             </div>
             <div>
               <label style={labelStyle}>
-                フェードアウト（フレーム）
+                {t('aoeDialog.fadeOut')}
                 <input
                   type="number"
                   value={fadeOutDuration}
@@ -611,7 +610,7 @@ export function AoEDialog({
                 />
               </label>
               <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px' }}>
-                {(fadeOutDuration / fps).toFixed(2)}秒
+                {t('aoeDialog.secondsLabel', { seconds: (fadeOutDuration / fps).toFixed(2) })}
               </p>
             </div>
           </div>
@@ -631,7 +630,7 @@ export function AoEDialog({
               fontSize: '13px',
             }}
           >
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -646,7 +645,7 @@ export function AoEDialog({
               fontWeight: 'bold',
             }}
           >
-            追加
+            {t('common.add')}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { EditorProvider, useEditor } from './context/EditorContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { EditorHeader } from './components/EditorHeader';
 import { ToolPanel } from './components/ToolPanel';
 import { ObjectListPanel } from './components/ObjectListPanel';
@@ -25,6 +26,7 @@ function EditorContent() {
   const [showSaveLoadDialog, setShowSaveLoadDialog] = useState(false);
   const [showSampleDialog, setShowSampleDialog] = useState(false);
   const { state, setMechanic } = useEditor();
+  const { t } = useLanguage();
   const exportRef = useRef<(() => void) | null>(null);
 
   // Load mechanic from URL on mount
@@ -162,7 +164,7 @@ function EditorContent() {
               borderBottom: '1px solid #3a3a5a',
               flexShrink: 0,
             }}>
-              オブジェクト
+              {t('editor.objects')}
             </div>
             <div style={{ flex: 1, overflow: 'auto' }}>
               <ObjectListPanel />
@@ -238,7 +240,7 @@ function EditorContent() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: '0 0 16px', color: '#ff6b6b', fontSize: '16px' }}>
-              URL読み込みエラー
+              {t('header.urlLoadError')}
             </h3>
             <p style={{ color: '#ff9999', fontSize: '13px', margin: '0 0 16px' }}>
               {urlLoadError}
@@ -255,7 +257,7 @@ function EditorContent() {
                 cursor: 'pointer',
               }}
             >
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -267,8 +269,10 @@ function EditorContent() {
 
 export function Editor() {
   return (
-    <EditorProvider>
-      <EditorContent />
-    </EditorProvider>
+    <LanguageProvider>
+      <EditorProvider>
+        <EditorContent />
+      </EditorProvider>
+    </LanguageProvider>
   );
 }

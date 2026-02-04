@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { DebuffSettings } from '../context/editorReducer';
 import { DebuffIcon } from '../../components/debuff/DebuffIcon';
+import { useLanguage } from '../context/LanguageContext';
 
 interface DebuffDialogProps {
   isOpen: boolean;
@@ -12,17 +13,6 @@ interface DebuffDialogProps {
   onCancel: () => void;
 }
 
-const DEBUFF_PRESETS = [
-  { id: 'spread', name: '散開', color: '#ff00ff' },
-  { id: 'stack', name: '頭割り', color: '#ffff00' },
-  { id: 'tower', name: '塔', color: '#00aaff' },
-  { id: 'tether', name: '線', color: '#00ff00' },
-  { id: 'fire', name: '炎', color: '#ff4400' },
-  { id: 'ice', name: '氷', color: '#44ccff' },
-  { id: 'lightning', name: '雷', color: '#cc44ff' },
-  { id: 'poison', name: '毒', color: '#44ff44' },
-];
-
 export function DebuffDialog({
   isOpen,
   targetPlayerId,
@@ -32,6 +22,19 @@ export function DebuffDialog({
   onConfirm,
   onCancel,
 }: DebuffDialogProps) {
+  const { t } = useLanguage();
+
+  const DEBUFF_PRESETS = [
+    { id: 'spread', name: t('debuffDialog.spread'), color: '#ff00ff' },
+    { id: 'stack', name: t('debuffDialog.stack'), color: '#ffff00' },
+    { id: 'tower', name: t('debuffDialog.tower'), color: '#00aaff' },
+    { id: 'tether', name: t('debuffDialog.tether'), color: '#00ff00' },
+    { id: 'fire', name: t('debuffDialog.fire'), color: '#ff4400' },
+    { id: 'ice', name: t('debuffDialog.ice'), color: '#44ccff' },
+    { id: 'lightning', name: t('debuffDialog.lightning'), color: '#cc44ff' },
+    { id: 'poison', name: t('debuffDialog.poison'), color: '#44ff44' },
+  ];
+
   const [selectedPreset, setSelectedPreset] = useState<string | null>('spread');
   const [customName, setCustomName] = useState('');
   const [customColor, setCustomColor] = useState('#ff6600');
@@ -127,7 +130,7 @@ export function DebuffDialog({
         }}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          デバフ付与
+          {t('debuffDialog.title')}
         </h2>
 
         {/* Target info */}
@@ -139,7 +142,7 @@ export function DebuffDialog({
             marginBottom: '16px',
           }}
         >
-          <label style={{ ...labelStyle, marginBottom: 0 }}>付与対象</label>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>{t('debuffDialog.target')}</label>
           <p style={{ margin: '4px 0 0', color: '#fff', fontSize: '13px' }}>
             {targetPlayerRole || targetPlayerId}
           </p>
@@ -149,13 +152,13 @@ export function DebuffDialog({
               checked={applyToAll}
               onChange={(e) => setApplyToAll(e.target.checked)}
             />
-            <span style={{ fontSize: '12px', color: '#aaa' }}>全員に付与</span>
+            <span style={{ fontSize: '12px', color: '#aaa' }}>{t('debuffDialog.applyToAll')}</span>
           </label>
         </div>
 
         {/* Preset selection */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>プリセット</div>
+          <div style={sectionTitleStyle}>{t('debuffDialog.presets')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
             {DEBUFF_PRESETS.map((preset) => (
               <button
@@ -199,23 +202,23 @@ export function DebuffDialog({
                 checked={selectedPreset === null}
                 onChange={() => setSelectedPreset(null)}
               />
-              <span>カスタム</span>
+              <span>{t('debuffDialog.custom')}</span>
             </label>
           </div>
           {selectedPreset === null && (
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
               <label style={labelStyle}>
-                名前
+                {t('common.name')}
                 <input
                   type="text"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="デバフ名"
+                  placeholder={t('debuffDialog.debuffName')}
                   style={inputStyle}
                 />
               </label>
               <label style={labelStyle}>
-                色
+                {t('common.color')}
                 <input
                   type="color"
                   value={customColor}
@@ -229,10 +232,10 @@ export function DebuffDialog({
 
         {/* Timing settings */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>タイミング</div>
+          <div style={sectionTitleStyle}>{t('debuffDialog.timing')}</div>
 
           <label style={labelStyle}>
-            付与フレーム
+            {t('debuffDialog.applyFrame')}
             <input
               type="number"
               value={startFrame}
@@ -243,11 +246,11 @@ export function DebuffDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px', marginBottom: '12px' }}>
-            {(startFrame / fps).toFixed(2)}秒時点で付与
+            {t('debuffDialog.applyFrameDesc', { seconds: (startFrame / fps).toFixed(2) })}
           </p>
 
           <label style={labelStyle}>
-            持続時間（秒）
+            {t('debuffDialog.durationSeconds')}
             <input
               type="number"
               value={durationSeconds}
@@ -259,13 +262,13 @@ export function DebuffDialog({
             />
           </label>
           <p style={{ fontSize: '11px', color: '#666', marginTop: '-4px' }}>
-            {Math.round(durationSeconds * fps)}フレーム後に解除
+            {t('debuffDialog.durationDesc', { frames: Math.round(durationSeconds * fps) })}
           </p>
         </div>
 
         {/* Preview */}
         <div style={{ borderTop: '1px solid #3a3a5a', paddingTop: '16px', marginBottom: '16px' }}>
-          <div style={sectionTitleStyle}>プレビュー</div>
+          <div style={sectionTitleStyle}>{t('debuffDialog.preview')}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#2a2a4a', borderRadius: '4px' }}>
             <DebuffIcon
               debuff={{
@@ -293,7 +296,7 @@ export function DebuffDialog({
               fontSize: '13px',
             }}
           >
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -308,7 +311,7 @@ export function DebuffDialog({
               fontWeight: 'bold',
             }}
           >
-            付与
+            {t('debuffDialog.apply')}
           </button>
         </div>
       </div>

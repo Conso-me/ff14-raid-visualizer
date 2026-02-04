@@ -3,6 +3,7 @@ import { Player, PlayerRef } from '@remotion/player';
 import { MechanicComposition } from '../../compositions/MechanicComposition';
 import { useEditor } from '../context/EditorContext';
 import { usePreviewRecorder } from '../hooks/usePreviewRecorder';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
     downloadVideo,
     resetRecorder,
   } = usePreviewRecorder();
+
+  const { t } = useLanguage();
 
   // ESCキーでモーダルを閉じる
   useEffect(() => {
@@ -107,7 +110,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
           }}
         >
           <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
-            Preview: {mechanic.name}
+            {t('previewModal.title', { name: mechanic.name })}
           </h2>
           <div style={{ display: 'flex', gap: '8px' }}>
             {!showRecordPanel && status === 'idle' && (
@@ -123,7 +126,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                   fontSize: '12px',
                 }}
               >
-                録画
+                {t('previewModal.record')}
               </button>
             )}
             {!isRecording && (
@@ -138,7 +141,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                   cursor: 'pointer',
                 }}
               >
-                Close
+                {t('previewModal.close')}
               </button>
             )}
           </div>
@@ -157,7 +160,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             {status === 'idle' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: '#888' }}>ファイル名:</label>
+                  <label style={{ fontSize: '12px', color: '#888' }}>{t('previewModal.filenameLabel')}</label>
                   <input
                     type="text"
                     value={fileName}
@@ -188,7 +191,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                     fontWeight: 'bold',
                   }}
                 >
-                  録画開始
+                  {t('previewModal.startRecording')}
                 </button>
                 <button
                   onClick={() => setShowRecordPanel(false)}
@@ -202,7 +205,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                     fontSize: '12px',
                   }}
                 >
-                  キャンセル
+                  {t('common.cancel')}
                 </button>
               </div>
             )}
@@ -222,9 +225,9 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                   />
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                   <span style={{ fontSize: '13px', color: '#fff' }}>
-                    {status === 'preparing' && '準備中...'}
-                    {status === 'recording' && `録画中... ${progress}%`}
-                    {status === 'processing' && '処理中...'}
+                    {status === 'preparing' && t('previewModal.preparing')}
+                    {status === 'recording' && t('previewModal.recording', { progress })}
+                    {status === 'processing' && t('previewModal.processing')}
                   </span>
                   <button
                     onClick={cancelRecording}
@@ -239,7 +242,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                       marginLeft: 'auto',
                     }}
                   >
-                    中止
+                    {t('previewModal.stop')}
                   </button>
                 </div>
                 {/* Progress bar */}
@@ -266,7 +269,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
 
             {status === 'completed' && videoUrl && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '13px', color: '#22c55e' }}>録画完了!</span>
+                <span style={{ fontSize: '13px', color: '#22c55e' }}>{t('previewModal.recordingComplete')}</span>
                 <button
                   onClick={handleDownload}
                   style={{
@@ -280,7 +283,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                     fontWeight: 'bold',
                   }}
                 >
-                  ダウンロード ({fileName}.webm)
+                  {t('previewModal.downloadFile', { filename: fileName })}
                 </button>
                 <button
                   onClick={() => {
@@ -297,7 +300,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                     fontSize: '12px',
                   }}
                 >
-                  閉じる
+                  {t('common.close')}
                 </button>
               </div>
             )}
@@ -305,7 +308,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             {status === 'failed' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '13px', color: '#ef4444' }}>
-                  録画失敗: {error || 'Unknown error'}
+                  {t('previewModal.recordingFailed', { error: error || 'Unknown error' })}
                 </span>
                 <button
                   onClick={resetRecorder}
@@ -319,7 +322,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
                     fontSize: '12px',
                   }}
                 >
-                  やり直す
+                  {t('common.retry')}
                 </button>
               </div>
             )}
@@ -353,8 +356,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
             color: '#888',
           }}
         >
-          Duration: {(mechanic.durationFrames / mechanic.fps).toFixed(1)}s | FPS: {mechanic.fps} |
-          Players: {mechanic.initialPlayers.length} | Events: {mechanic.timeline.length}
+          {t('previewModal.durationInfo', { duration: (mechanic.durationFrames / mechanic.fps).toFixed(1), fps: mechanic.fps, players: mechanic.initialPlayers.length, events: mechanic.timeline.length })}
         </div>
 
         {/* Recording note */}
@@ -366,8 +368,7 @@ export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
               color: '#666',
             }}
           >
-            録画中はプレイヤーが自動的にフレームごとにキャプチャされます。
-            ブラウザによっては対応していない場合があります。
+            {t('previewModal.recordingNote')}
           </div>
         )}
       </div>

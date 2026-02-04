@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import type { MechanicData } from '../../data/types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ExportDialogProps {
 type ExportFormat = 'pretty' | 'minified';
 
 export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
+  const { t } = useLanguage();
   const [format, setFormat] = useState<ExportFormat>('pretty');
   const [filename, setFilename] = useState(mechanic.name || mechanic.id || 'mechanic');
   const [copied, setCopied] = useState(false);
@@ -85,7 +87,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
           }}
         >
           <h2 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>
-            JSONエクスポート
+            {t('export.title')}
           </h2>
           <button
             onClick={onClose}
@@ -112,7 +114,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
               marginBottom: '6px',
             }}
           >
-            ファイル名
+            {t('export.filename')}
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <input
@@ -143,7 +145,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
               marginBottom: '6px',
             }}
           >
-            フォーマット
+            {t('export.format')}
           </label>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
@@ -159,7 +161,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
                 cursor: 'pointer',
               }}
             >
-              整形 (Pretty)
+              {t('export.pretty')}
             </button>
             <button
               onClick={() => setFormat('minified')}
@@ -174,7 +176,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
                 cursor: 'pointer',
               }}
             >
-              圧縮 (Minified)
+              {t('export.minified')}
             </button>
           </div>
         </div>
@@ -190,7 +192,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
             }}
           >
             <label style={{ fontSize: '12px', color: '#888' }}>
-              プレビュー
+              {t('export.preview')}
             </label>
             <span style={{ fontSize: '11px', color: '#666' }}>
               {sizeKB} KB
@@ -211,7 +213,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
               wordBreak: 'break-all',
             }}
           >
-            {json.slice(0, 2000)}{json.length > 2000 ? '\n...(省略)' : ''}
+            {json.slice(0, 2000)}{json.length > 2000 ? `\n${t('export.truncated')}` : ''}
           </pre>
         </div>
 
@@ -229,7 +231,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
               cursor: 'pointer',
             }}
           >
-            {copied ? 'コピーしました!' : 'クリップボードにコピー'}
+            {copied ? t('export.copied') : t('export.copyClipboard')}
           </button>
           <button
             onClick={handleDownload}
@@ -243,7 +245,7 @@ export function ExportDialog({ isOpen, mechanic, onClose }: ExportDialogProps) {
               cursor: 'pointer',
             }}
           >
-            ダウンロード
+            {t('export.download')}
           </button>
         </div>
       </div>

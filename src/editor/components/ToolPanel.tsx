@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ToolPanelContent } from './ToolPanelContent';
 import { SettingsPanelContent } from './SettingsPanelContent';
+import { useLanguage } from '../context/LanguageContext';
 
 type TabType = 'tools' | 'settings';
 
 export function ToolPanel() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('tools');
 
   const tabStyle = (active: boolean) => ({
@@ -36,13 +38,13 @@ export function ToolPanel() {
           style={tabStyle(activeTab === 'tools')}
           onClick={() => setActiveTab('tools')}
         >
-          ツール
+          {t('tools.tabTools')}
         </button>
         <button
           style={tabStyle(activeTab === 'settings')}
           onClick={() => setActiveTab('settings')}
         >
-          設定
+          {t('tools.tabSettings')}
         </button>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>

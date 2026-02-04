@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MechanicData } from '../../data/types';
-import { 
-  getSaveSlots, 
-  saveToSlot, 
-  loadFromSlot, 
-  deleteSlot, 
+import { useLanguage } from '../context/LanguageContext';
+import {
+  getSaveSlots,
+  saveToSlot,
+  loadFromSlot,
+  deleteSlot,
   renameSlot,
-  SaveSlot 
+  SaveSlot
 } from '../utils/saveSlots';
 
 interface SaveLoadDialogProps {
@@ -17,13 +18,14 @@ interface SaveLoadDialogProps {
   onLoad: (mechanic: MechanicData) => void;
 }
 
-export function SaveLoadDialog({ 
-  isOpen, 
-  onClose, 
-  currentMechanic, 
+export function SaveLoadDialog({
+  isOpen,
+  onClose,
+  currentMechanic,
   currentFrame,
-  onLoad 
+  onLoad
 }: SaveLoadDialogProps) {
+  const { t } = useLanguage();
   const [slots, setSlots] = useState<SaveSlot[]>([]);
   const [activeTab, setActiveTab] = useState<'save' | 'load'>('save');
   const [saveName, setSaveName] = useState('');
@@ -35,13 +37,13 @@ export function SaveLoadDialog({
     if (isOpen) {
       setSlots(getSaveSlots());
       // Reset save name to current mechanic name
-      setSaveName(currentMechanic.name || '無題');
+      setSaveName(currentMechanic.name || t('saveLoad.untitled'));
     }
-  }, [isOpen, currentMechanic.name]);
+  }, [isOpen, currentMechanic.name, t]);
 
   const handleSave = useCallback(() => {
     if (!saveName.trim()) return;
-    
+
     const newSlot = saveToSlot(currentMechanic, saveName.trim());
     if (newSlot) {
       setSlots(getSaveSlots());
@@ -53,14 +55,14 @@ export function SaveLoadDialog({
 
   const handleSavePreview = useCallback(() => {
     if (!saveName.trim()) return;
-    
-    const name = `${saveName.trim()} (フレーム ${currentFrame})`;
+
+    const name = `${saveName.trim()} (${t('saveLoad.frameLabel', { frame: currentFrame })})`;
     const newSlot = saveToSlot(currentMechanic, name);
     if (newSlot) {
       setSlots(getSaveSlots());
       setSaveName('');
     }
-  }, [currentMechanic, saveName, currentFrame]);
+  }, [currentMechanic, saveName, currentFrame, t]);
 
   const handleLoad = useCallback((slotId: string) => {
     const mechanic = loadFromSlot(slotId);
@@ -72,11 +74,11 @@ export function SaveLoadDialog({
 
   const handleDelete = useCallback((slotId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('この保存データを削除しますか？')) {
+    if (confirm(t('saveLoad.confirmDelete'))) {
       deleteSlot(slotId);
       setSlots(getSaveSlots());
     }
-  }, []);
+  }, [t]);
 
   const handleStartRename = useCallback((slot: SaveSlot, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -133,8 +135,8 @@ export function SaveLoadDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           borderBottom: '1px solid #3a3a5a',
           padding: '0 16px'
         }}>
@@ -151,7 +153,7 @@ export function SaveLoadDialog({
               cursor: 'pointer',
             }}
           >
-            💾 保存 ({slots.length}/5)
+            {t('saveLoad.saveTab', { count: slots.length })}
           </button>
           <button
             onClick={() => setActiveTab('load')}
@@ -166,7 +168,7 @@ export function SaveLoadDialog({
               cursor: 'pointer',
             }}
           >
-            📂 読み込み ({slots.length})
+            {t('saveLoad.loadTab', { count: slots.length })}
           </button>
         </div>
 
@@ -176,20 +178,20 @@ export function SaveLoadDialog({
             <div>
               {/* Save new section */}
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ 
-                  display: 'block', 
-                  fontSize: '13px', 
-                  color: '#aaa', 
-                  marginBottom: '8px' 
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  color: '#aaa',
+                  marginBottom: '8px'
                 }}>
-                  保存するデータ名
+                  {t('saveLoad.saveName')}
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="text"
                     value={saveName}
                     onChange={(e) => setSaveName(e.target.value)}
-                    placeholder="データ名を入力..."
+                    placeholder={t('saveLoad.namePlaceholder')}
                     style={{
                       flex: 1,
                       padding: '10px 12px',
@@ -215,7 +217,7 @@ export function SaveLoadDialog({
                       fontWeight: 'bold',
                     }}
                   >
-                    保存
+                    {t('saveLoad.saveButton')}
                   </button>
                 </div>
                 <button
@@ -232,23 +234,23 @@ export function SaveLoadDialog({
                     cursor: saveName.trim() && canSave ? 'pointer' : 'not-allowed',
                   }}
                 >
-                  📷 現在のフレーム ({currentFrame}) を保存
+                  {t('saveLoad.saveFrame', { frame: currentFrame })}
                 </button>
                 {!canSave && (
                   <p style={{ marginTop: '8px', fontSize: '12px', color: '#ff6b6b' }}>
-                    ⚠️ 保存スロットがいっぱいです。古いデータを削除してください。
+                    {t('saveLoad.slotsFull')}
                   </p>
                 )}
               </div>
 
               {/* Existing slots */}
-              <h4 style={{ 
-                margin: '0 0 12px', 
-                fontSize: '14px', 
+              <h4 style={{
+                margin: '0 0 12px',
+                fontSize: '14px',
                 color: '#aaa',
-                fontWeight: 'normal' 
+                fontWeight: 'normal'
               }}>
-                既存の保存データ（上書きする場合は削除してから保存）
+                {t('saveLoad.existingSlots')}
               </h4>
             </div>
           ) : null}
@@ -256,13 +258,13 @@ export function SaveLoadDialog({
           {/* Slots list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {slots.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '40px', 
+              <div style={{
+                textAlign: 'center',
+                padding: '40px',
                 color: '#666',
-                fontSize: '14px' 
+                fontSize: '14px'
               }}>
-                保存されたデータがありません
+                {t('saveLoad.noSavedData')}
               </div>
             ) : (
               slots.map((slot, index) => (
@@ -362,8 +364,8 @@ export function SaveLoadDialog({
                       </div>
                     ) : (
                       <>
-                        <div style={{ 
-                          fontWeight: 'bold', 
+                        <div style={{
+                          fontWeight: 'bold',
                           fontSize: '14px',
                           color: '#fff',
                           overflow: 'hidden',
@@ -372,12 +374,12 @@ export function SaveLoadDialog({
                         }}>
                           {slot.name}
                         </div>
-                        <div style={{ 
-                          fontSize: '12px', 
+                        <div style={{
+                          fontSize: '12px',
                           color: '#888',
                           marginTop: '2px'
                         }}>
-                          {formatDate(slot.savedAt)} · {slot.mechanic.timeline.length}イベント
+                          {formatDate(slot.savedAt)} · {t('saveLoad.eventsCount', { count: slot.mechanic.timeline.length })}
                         </div>
                       </>
                     )}
@@ -397,7 +399,7 @@ export function SaveLoadDialog({
                         cursor: 'pointer',
                       }}
                     >
-                      名前変更
+                      {t('saveLoad.rename')}
                     </button>
                   )}
                   {editingSlot !== slot.id && (
@@ -413,7 +415,7 @@ export function SaveLoadDialog({
                         cursor: 'pointer',
                       }}
                     >
-                      削除
+                      {t('common.delete')}
                     </button>
                   )}
                 </div>
@@ -423,8 +425,8 @@ export function SaveLoadDialog({
         </div>
 
         {/* Footer */}
-        <div style={{ 
-          padding: '16px 20px', 
+        <div style={{
+          padding: '16px 20px',
           borderTop: '1px solid #3a3a5a',
           display: 'flex',
           justifyContent: 'flex-end'
@@ -441,7 +443,7 @@ export function SaveLoadDialog({
               cursor: 'pointer',
             }}
           >
-            閉じる
+            {t('common.close')}
           </button>
         </div>
       </div>

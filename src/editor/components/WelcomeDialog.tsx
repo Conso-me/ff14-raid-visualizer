@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WelcomeDialogProps {
   isOpen: boolean;
@@ -9,72 +10,72 @@ interface WelcomeDialogProps {
 
 export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDialog }: WelcomeDialogProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
   const pages = [
     {
-      title: 'FF14 レイドギミックビジュアライザーへようこそ！',
+      title: t('welcome.title'),
       content: (
         <>
           <p style={{ marginBottom: '16px', lineHeight: '1.6' }}>
-            このツールを使えば、FF14のレイドギミックを簡単に視覚化できます。
+            {t('welcome.description')}
           </p>
-          <div style={{ 
-            background: '#2a2a4a', 
-            padding: '16px', 
+          <div style={{
+            background: '#2a2a4a',
+            padding: '16px',
             borderRadius: '8px',
             marginBottom: '16px'
           }}>
-            <h4 style={{ margin: '0 0 12px', color: '#ffcc00' }}>主な機能</h4>
+            <h4 style={{ margin: '0 0 12px', color: '#ffcc00' }}>{t('welcome.mainFeatures')}</h4>
             <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.8' }}>
-              <li>8人パーティの配置と移動</li>
-              <li>AoE（範囲攻撃）の設置</li>
-              <li>デバフの付与と管理</li>
-              <li>テキスト注釈の追加</li>
-              <li>動画としてエクスポート</li>
+              <li>{t('welcome.feature1')}</li>
+              <li>{t('welcome.feature2')}</li>
+              <li>{t('welcome.feature3')}</li>
+              <li>{t('welcome.feature4')}</li>
+              <li>{t('welcome.feature5')}</li>
             </ul>
           </div>
         </>
       )
     },
     {
-      title: '基本操作',
+      title: t('welcome.basicOps'),
       content: (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ 
-              background: '#2a2a4a', 
-              padding: '12px', 
+            <div style={{
+              background: '#2a2a4a',
+              padding: '12px',
               borderRadius: '8px'
             }}>
-              <h4 style={{ margin: '0 0 8px', color: '#51cf66' }}>1. プレイヤーの移動</h4>
+              <h4 style={{ margin: '0 0 8px', color: '#51cf66' }}>{t('welcome.movePlayerTitle')}</h4>
               <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.5' }}>
-                プレイヤーをドラッグ＆ドロップで移動、または選択して矢印キーで微調整できます。<br/>
-                <kbd style={{ background: '#444', padding: '2px 6px', borderRadius: '3px' }}>Shift</kbd> + 矢印キーで大きく移動
+                {t('welcome.movePlayerDesc')}
+                <kbd style={{ background: '#444', padding: '2px 6px', borderRadius: '3px' }}>Shift</kbd> {t('welcome.movePlayerShift')}
               </p>
             </div>
 
-            <div style={{ 
-              background: '#2a2a4a', 
-              padding: '12px', 
+            <div style={{
+              background: '#2a2a4a',
+              padding: '12px',
               borderRadius: '8px'
             }}>
-              <h4 style={{ margin: '0 0 8px', color: '#339af0' }}>2. 移動イベント</h4>
+              <h4 style={{ margin: '0 0 8px', color: '#339af0' }}>{t('welcome.moveEventTitle')}</h4>
               <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.5' }}>
-                左パネルの「移動」ボタンまたは「移動イベント追加」ツールで、<br/>
-                時間経過とともにプレイヤーを移動させるアニメーションを作成できます。
+                {t('welcome.moveEventDesc')}
               </p>
             </div>
 
-            <div style={{ 
-              background: '#2a2a4a', 
-              padding: '12px', 
+            <div style={{
+              background: '#2a2a4a',
+              padding: '12px',
               borderRadius: '8px'
             }}>
-              <h4 style={{ margin: '0 0 8px', color: '#ff6b6b' }}>3. AoE（範囲攻撃）</h4>
+              <h4 style={{ margin: '0 0 8px', color: '#ff6b6b' }}>{t('welcome.aoeTitle')}</h4>
               <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.5' }}>
-                「AoE追加」ツールで円形・扇形・直線・ドーナツ・十字の攻撃範囲を設置できます。
+                {t('welcome.aoeDesc')}
               </p>
             </div>
           </div>
@@ -82,48 +83,47 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
       )
     },
     {
-      title: '便利なショートカット',
+      title: t('welcome.shortcutsTitle'),
       content: (
         <>
           <p style={{ marginBottom: '16px' }}>
-            よく使う操作はキーボードショートカットで素早く実行できます。
+            {t('welcome.shortcutsDesc')}
           </p>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'auto 1fr', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
             gap: '8px 16px',
             background: '#2a2a4a',
             padding: '16px',
             borderRadius: '8px'
           }}>
             <kbd style={{ background: '#444', padding: '4px 8px', borderRadius: '3px', textAlign: 'center' }}>Ctrl+S</kbd>
-            <span>データをエクスポート</span>
-            
+            <span>{t('welcome.shortcutExport')}</span>
+
             <kbd style={{ background: '#444', padding: '4px 8px', borderRadius: '3px', textAlign: 'center' }}>Space</kbd>
-            <span>プレビュー再生/停止</span>
-            
+            <span>{t('welcome.shortcutPlayPause')}</span>
+
             <kbd style={{ background: '#444', padding: '4px 8px', borderRadius: '3px', textAlign: 'center' }}>←→</kbd>
-            <span>1フレーム移動</span>
-            
+            <span>{t('welcome.shortcut1Frame')}</span>
+
             <kbd style={{ background: '#444', padding: '4px 8px', borderRadius: '3px', textAlign: 'center' }}>↑↓</kbd>
-            <span>10フレーム移動</span>
-            
+            <span>{t('welcome.shortcut10Frame')}</span>
+
             <kbd style={{ background: '#444', padding: '4px 8px', borderRadius: '3px', textAlign: 'center' }}>Esc</kbd>
-            <span>操作キャンセル</span>
+            <span>{t('welcome.shortcutCancel')}</span>
           </div>
           <p style={{ marginTop: '16px', fontSize: '13px', color: '#aaa' }}>
-            ※ 詳細なショートカット一覧は右上の「?」ボタンからいつでも確認できます
+            {t('welcome.shortcutNote')}
           </p>
         </>
       )
     },
     {
-      title: 'さあ、始めましょう！',
+      title: t('welcome.letsBegin'),
       content: (
         <>
           <p style={{ marginBottom: '16px', lineHeight: '1.6' }}>
-            準備はできましたか？サンプルデータで試してみたり、<br/>
-            新規にギミックを作成したりできます。
+            {t('welcome.ready')}
           </p>
           {onOpenSampleDialog && (
             <button
@@ -144,7 +144,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
                 fontWeight: 'bold',
               }}
             >
-              サンプルギミックを試す
+              {t('welcome.trySample')}
             </button>
           )}
           <div style={{
@@ -153,31 +153,31 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
             borderRadius: '8px',
             marginBottom: '16px'
           }}>
-            <h4 style={{ margin: '0 0 12px', color: '#ffcc00' }}>ヒント</h4>
+            <h4 style={{ margin: '0 0 12px', color: '#ffcc00' }}>{t('welcome.hints')}</h4>
             <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.8' }}>
-              <li>右上の「?」ボタンでショートカット一覧を表示</li>
-              <li>「動画プレビュー」で実際の動きを確認</li>
-              <li>「動画出力」でMP4として保存</li>
-              <li>データは自動保存されます（ブラウザを閉じても復元）</li>
+              <li>{t('welcome.hint1')}</li>
+              <li>{t('welcome.hint2')}</li>
+              <li>{t('welcome.hint3')}</li>
+              <li>{t('welcome.hint4')}</li>
             </ul>
           </div>
           <label style={{
-            display: 'flex', 
-            alignItems: 'center', 
+            display: 'flex',
+            alignItems: 'center',
             gap: '8px',
             cursor: 'pointer',
             fontSize: '13px',
             color: '#aaa'
           }}>
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               onChange={(e) => {
                 if (e.target.checked) {
                   onDontShowAgain();
                 }
               }}
             />
-            次回からこのガイドを表示しない
+            {t('welcome.dontShowAgain')}
           </label>
         </>
       )
@@ -228,9 +228,9 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
         </div>
 
         {/* Title */}
-        <h2 style={{ 
-          margin: '0 0 20px', 
-          fontSize: '20px', 
+        <h2 style={{
+          margin: '0 0 20px',
+          fontSize: '20px',
           color: '#fff',
           textAlign: 'center'
         }}>
@@ -243,8 +243,8 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
         </div>
 
         {/* Navigation buttons */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           justifyContent: 'space-between',
           marginTop: '24px',
           gap: '12px'
@@ -262,7 +262,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
               cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
             }}
           >
-            前へ
+            {t('welcome.prev')}
           </button>
 
           {currentPage === totalPages - 1 ? (
@@ -279,7 +279,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
                 fontWeight: 'bold',
               }}
             >
-              始める！
+              {t('welcome.start')}
             </button>
           ) : (
             <button
@@ -294,7 +294,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
                 cursor: 'pointer',
               }}
             >
-              次へ →
+              {t('welcome.next')}
             </button>
           )}
         </div>
@@ -312,7 +312,7 @@ export function WelcomeDialog({ isOpen, onClose, onDontShowAgain, onOpenSampleDi
               textDecoration: 'underline',
             }}
           >
-            ガイドをスキップ
+            {t('welcome.skip')}
           </button>
         </div>
       </div>
