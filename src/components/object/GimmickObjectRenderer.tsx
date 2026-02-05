@@ -79,6 +79,8 @@ export const GimmickObjectRenderer: React.FC<GimmickObjectRendererProps> = ({
           />
         );
       }
+      case 'none':
+        return null;
       default:
         return null;
     }
@@ -99,7 +101,18 @@ export const GimmickObjectRenderer: React.FC<GimmickObjectRendererProps> = ({
       }}
     >
       {renderShape()}
-      {object.icon && (
+      {/* 画像または絵文字アイコンを表示 */}
+      {object.imageUrl ? (
+        <image
+          href={object.imageUrl}
+          x={screenPos.x - pixelSize * 0.3}
+          y={screenPos.y - pixelSize * 0.3}
+          width={pixelSize * 0.6}
+          height={pixelSize * 0.6}
+          preserveAspectRatio="xMidYMid meet"
+          opacity={opacity}
+        />
+      ) : object.icon && (
         <text
           x={screenPos.x}
           y={screenPos.y}

@@ -236,8 +236,8 @@ export function FieldEditor() {
         return;
       }
 
-      // Move event mode
-      if (tool === 'add_move_event') {
+      // Move event mode (both 'move' and 'add_move_event' tools)
+      if (tool === 'move' || tool === 'add_move_event') {
         if (!pendingMoveEvent) {
           // Step 1: Select player(s) to move
           const playersAtPos = findPlayersAtPos(gamePos);
@@ -321,17 +321,19 @@ export function FieldEditor() {
       }
 
       // Normal selection/drag mode
-      const found = findObjectAtPos(gamePos);
-      if (found) {
-        // Shift+click for multi-select (players only)
-        if (e.shiftKey && found.type === 'player') {
-          toggleMultiSelect(found.id, found.type);
+      if (tool === 'select') {
+        const found = findObjectAtPos(gamePos);
+        if (found) {
+          // Shift+click for multi-select (players only)
+          if (e.shiftKey && found.type === 'player') {
+            toggleMultiSelect(found.id, found.type);
+          } else {
+            selectObject(found.id, found.type);
+            setDragging(found);
+          }
         } else {
-          selectObject(found.id, found.type);
-          setDragging(found);
+          selectObject(null, null);
         }
-      } else {
-        selectObject(null, null);
       }
     },
     [getGamePosFromEvent, clampToField, findObjectAtPos, findPlayerAtPos, selectObject, toggleMultiSelect, tool, pendingMoveEvent, startMoveEvent, playersAtCurrentFrame, selectedObjectIds, selectedObjectType, moveFromListMode, cancelMoveFromList]
@@ -341,7 +343,7 @@ export function FieldEditor() {
     (e: React.MouseEvent) => {
       const gamePos = clampToField(getGamePosFromEvent(e));
 
-      if (tool === 'add_move_event' && pendingMoveEvent) {
+      if ((tool === 'move' || tool === 'add_move_event') && pendingMoveEvent) {
         setMousePos(gamePos);
       } else if (tool === 'add_aoe' && !showAoEDialog) {
         setMousePos(gamePos);
@@ -749,7 +751,7 @@ export function FieldEditor() {
   const getCursor = () => {
     if (dragging) return 'grabbing';
     if (moveFromListMode.active) return 'crosshair';
-    if (tool === 'add_move_event') {
+    if (tool === 'move' || tool === 'add_move_event') {
       if (pendingMoveEvent) return 'crosshair';
       return 'pointer';
     }
@@ -766,7 +768,7 @@ export function FieldEditor() {
       const player = mechanic.initialPlayers.find(p => p.id === moveFromListMode.playerId);
       return `フィールドをクリックして ${player?.role || 'プレイヤー'} の移動先を指定 | Escでキャンセル`;
     }
-    if (tool === 'add_move_event') {
+    if (tool === 'move' || tool === 'add_move_event') {
       if (pendingMoveEvent) {
         const playerCount = pendingMoveEvent.playerIds.length;
         const playerInfo = playerCount > 1 ? `${playerCount}人選択中` : pendingMoveEvent.playerIds[0];
@@ -1066,6 +1068,8 @@ export function FieldEditor() {
                       />
                     );
                   }
+                  case 'none':
+                    return null;
                   default:
                     return null;
                 }
@@ -1085,7 +1089,18 @@ export function FieldEditor() {
                   }}
                 >
                   {renderShape()}
-                  {obj.icon && (
+                  {/* 画像または絵文字アイコンを表示 */}
+                  {(obj as any).imageUrl ? (
+                    <image
+                      href={(obj as any).imageUrl}
+                      x={screenPos.x - pixelSize * 0.3}
+                      y={screenPos.y - pixelSize * 0.3}
+                      width={pixelSize * 0.6}
+                      height={pixelSize * 0.6}
+                      preserveAspectRatio="xMidYMid meet"
+                      opacity={(obj as any).currentOpacity ?? obj.opacity ?? 1}
+                    />
+                  ) : obj.icon && (
                     <text
                       x={screenPos.x}
                       y={screenPos.y}
@@ -1127,7 +1142,7 @@ export function FieldEditor() {
       </div>
 
       {/* Info bar */}
-      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : tool === 'add_move_event' ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'move' || tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
         {getInfoText()}
       </div>
 

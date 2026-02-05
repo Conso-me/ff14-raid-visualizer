@@ -109,10 +109,11 @@ export interface GimmickObject {
   id: string;
   name: string;
   position: Position;
-  shape: 'circle' | 'square' | 'triangle' | 'diamond';
+  shape: 'circle' | 'square' | 'triangle' | 'diamond' | 'none';
   size: number;
   color: string;
-  icon?: string;
+  icon?: string; // 絵文字アイコン
+  imageUrl?: string; // 画像URL（Base64または外部URL）
   opacity?: number;
 }
 

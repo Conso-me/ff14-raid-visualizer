@@ -61,6 +61,7 @@ const OBJECT_SHAPE_ICONS: Record<GimmickObject['shape'], string> = {
   square: '■',
   triangle: '▲',
   diamond: '◆',
+  none: '×',
 };
 
 // Helper functions
@@ -910,7 +911,7 @@ export function ObjectListPanel() {
                   key={object.id}
                   id={object.id}
                   objectType="object"
-                  name={`${object.icon || OBJECT_SHAPE_ICONS[object.shape]} ${object.name}`}
+                  name={`${object.imageUrl ? '[📷]' : (object.icon || OBJECT_SHAPE_ICONS[object.shape])} ${object.name}`}
                   subtitle={`${formatPosition(object.position)} [${frameInfo}]`}
                   color={object.color}
                   isSelected={isObjectSelected(object.id)}

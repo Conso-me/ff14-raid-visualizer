@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GimmickObject } from '../../../data/types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ObjectPropertiesProps {
   object: GimmickObject;
@@ -16,6 +17,7 @@ const SHAPES: Array<{ value: GimmickObject['shape']; label: string; icon: string
   { value: 'square', label: '四角', icon: '■' },
   { value: 'triangle', label: '三角', icon: '▲' },
   { value: 'diamond', label: 'ひし形', icon: '◆' },
+  { value: 'none', label: 'なし', icon: '×' },
 ];
 
 export function ObjectProperties({
@@ -27,8 +29,21 @@ export function ObjectProperties({
   onDelete,
   onUpdateTiming,
 }: ObjectPropertiesProps) {
+  const { t } = useLanguage();
   const [editingShowFrame, setEditingShowFrame] = React.useState(showFrame);
   const [editingHideFrame, setEditingHideFrame] = React.useState(hideFrame ?? '');
+
+  // 画像ファイル読み込み処理
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onUpdate({ imageUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   React.useEffect(() => {
     setEditingShowFrame(showFrame);
@@ -61,8 +76,12 @@ export function ObjectProperties({
   return (
     <div>
       <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#fff' }}>
-          {object.icon && <span style={{ marginRight: '6px' }}>{object.icon}</span>}
+        <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {object.imageUrl ? (
+            <img src={object.imageUrl} alt="" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+          ) : object.icon ? (
+            <span>{object.icon}</span>
+          ) : null}
           オブジェクト
         </h3>
         <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>
@@ -92,6 +111,63 @@ export function ObjectProperties({
             maxLength={2}
             style={{ ...inputStyle, textAlign: 'center', fontSize: '16px' }}
           />
+        </label>
+
+        {/* 画像設定 */}
+        <label style={{ ...labelStyle, marginTop: '12px' }}>
+          画像設定
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '4px' }}>
+            <input
+              type="text"
+              value={object.imageUrl || ''}
+              onChange={(e) => onUpdate({ imageUrl: e.target.value || undefined })}
+              placeholder="画像URLまたはBase64..."
+              style={{ ...inputStyle, flex: 1 }}
+            />
+            <label
+              style={{
+                padding: '6px 12px',
+                background: '#4a4a7a',
+                border: '1px solid #3a3a5a',
+                borderRadius: '4px',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              画像を選択
+            </label>
+          </div>
+          {object.imageUrl && (
+            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img
+                src={object.imageUrl}
+                alt="Preview"
+                style={{ maxWidth: '40px', maxHeight: '40px', borderRadius: '4px', border: '1px solid #3a3a5a' }}
+              />
+              <button
+                onClick={() => onUpdate({ imageUrl: undefined })}
+                style={{
+                  padding: '4px 8px',
+                  background: '#6b2020',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                }}
+              >
+                削除
+              </button>
+            </div>
+          )}
         </label>
       </div>
 
@@ -166,7 +242,7 @@ export function ObjectProperties({
               value={object.size}
               onChange={(e) => onUpdate({ size: parseFloat(e.target.value) || 1 })}
               min={0.5}
-              max={10}
+              max={100}
               step={0.5}
               style={inputStyle}
             />

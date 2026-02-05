@@ -43,6 +43,7 @@ export function ObjectDialog({
     { value: 'square', label: t('objectDialog.shapeSquare'), icon: '■' },
     { value: 'triangle', label: t('objectDialog.shapeTriangle'), icon: '▲' },
     { value: 'diamond', label: t('objectDialog.shapeDiamond'), icon: '◆' },
+    { value: 'none', label: t('objectDialog.shapeNone'), icon: '×' },
   ];
 
   const [name, setName] = useState('オブジェクト');
@@ -50,11 +51,24 @@ export function ObjectDialog({
   const [size, setSize] = useState(2);
   const [color, setColor] = useState('#ffcc00');
   const [icon, setIcon] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [startFrame, setStartFrame] = useState(currentFrame);
   const [hasEndFrame, setHasEndFrame] = useState(true);
   const [endFrame, setEndFrame] = useState(currentFrame + 90);
   const [fadeInDuration, setFadeInDuration] = useState(10);
   const [fadeOutDuration, setFadeOutDuration] = useState(15);
+
+  // 画像ファイル読み込み処理
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
 
@@ -66,6 +80,7 @@ export function ObjectDialog({
     setColor(preset.color);
     setSize(preset.size);
     setIcon(preset.icon);
+    setImageUrl(''); // プリセット選択時は画像をクリア
   };
 
   const handleConfirm = () => {
@@ -77,6 +92,7 @@ export function ObjectDialog({
       size,
       color,
       icon: icon || undefined,
+      imageUrl: imageUrl || undefined,
       opacity: 1,
     };
 
@@ -147,6 +163,8 @@ export function ObjectDialog({
             strokeWidth={2}
           />
         );
+      case 'none':
+        return null;
     }
   };
 
@@ -272,7 +290,7 @@ export function ObjectDialog({
                 value={size}
                 onChange={(e) => setSize(parseFloat(e.target.value) || 1)}
                 min={0.5}
-                max={10}
+                max={100}
                 step={0.5}
                 style={inputStyle}
               />
@@ -299,6 +317,65 @@ export function ObjectDialog({
                 style={{ ...inputStyle, textAlign: 'center', fontSize: '16px' }}
               />
             </label>
+          </div>
+
+          {/* 画像設定 */}
+          <div style={{ marginTop: '12px' }}>
+            <label style={{ ...labelStyle, marginBottom: '8px' }}>
+              {t('objectDialog.imageSettings')}
+            </label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder={t('objectDialog.imageUrlPlaceholder')}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <label
+                style={{
+                  padding: '6px 12px',
+                  background: '#4a4a7a',
+                  border: '1px solid #3a3a5a',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+                {t('objectDialog.selectImage')}
+              </label>
+            </div>
+            {imageUrl && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  style={{ maxWidth: '40px', maxHeight: '40px', borderRadius: '4px', border: '1px solid #3a3a5a' }}
+                />
+                <button
+                  onClick={() => setImageUrl('')}
+                  style={{
+                    padding: '4px 8px',
+                    background: '#6b2020',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                  }}
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -399,7 +476,18 @@ export function ObjectDialog({
                   {renderShapePreview()}
                 </g>
               </svg>
-              {icon && (
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt=""
+                  style={{
+                    position: 'absolute',
+                    width: '24px',
+                    height: '24px',
+                    objectFit: 'contain',
+                  }}
+                />
+              ) : icon && (
                 <span style={{
                   position: 'absolute',
                   fontSize: '20px',
