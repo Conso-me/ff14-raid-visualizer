@@ -29,6 +29,8 @@ export function PropertyPanel() {
     deleteTextAnnotation,
     updateObject,
     deleteObject,
+    updateTimelineEvent,
+    addTimelineEvent,
   } = useEditor();
 
   const { selectedObjectId, selectedObjectType, mechanic, currentFrame } = state;
@@ -125,6 +127,37 @@ export function PropertyPanel() {
             fps={mechanic.fps}
             onUpdate={(updates) => updateTextAnnotation(selectedObjectId, updates)}
             onDelete={() => deleteTextAnnotation(selectedObjectId)}
+            onUpdateTiming={(newShowFrame, newHideFrame) => {
+              // Find and update show event
+              const showEvent = mechanic.timeline.find(
+                (e) => e.type === 'text_show' && e.annotation.id === selectedObjectId
+              );
+              if (showEvent) {
+                updateTimelineEvent(showEvent.id, { frame: newShowFrame });
+              }
+              // Find and update/delete hide event
+              const hideEvent = mechanic.timeline.find(
+                (e) => e.type === 'text_hide' && e.annotationId === selectedObjectId
+              );
+              if (newHideFrame === null) {
+                // Remove hide event if exists
+                if (hideEvent) {
+                  deleteTimelineEvent(hideEvent.id);
+                }
+              } else if (hideEvent) {
+                // Update existing hide event
+                updateTimelineEvent(hideEvent.id, { frame: newHideFrame });
+              } else {
+                // Create new hide event
+                const newHideEvent = {
+                  id: `event_${Date.now()}`,
+                  type: 'text_hide' as const,
+                  frame: newHideFrame,
+                  annotationId: selectedObjectId,
+                };
+                addTimelineEvent(newHideEvent);
+              }
+            }}
           />
         );
       }
@@ -141,6 +174,37 @@ export function PropertyPanel() {
             fps={mechanic.fps}
             onUpdate={(updates) => updateObject(selectedObjectId, updates)}
             onDelete={() => deleteObject(selectedObjectId)}
+            onUpdateTiming={(newShowFrame, newHideFrame) => {
+              // Find and update show event
+              const showEvent = mechanic.timeline.find(
+                (e) => e.type === 'object_show' && e.object.id === selectedObjectId
+              );
+              if (showEvent) {
+                updateTimelineEvent(showEvent.id, { frame: newShowFrame });
+              }
+              // Find and update/delete hide event
+              const hideEvent = mechanic.timeline.find(
+                (e) => e.type === 'object_hide' && e.objectId === selectedObjectId
+              );
+              if (newHideFrame === null) {
+                // Remove hide event if exists
+                if (hideEvent) {
+                  deleteTimelineEvent(hideEvent.id);
+                }
+              } else if (hideEvent) {
+                // Update existing hide event
+                updateTimelineEvent(hideEvent.id, { frame: newHideFrame });
+              } else {
+                // Create new hide event
+                const newHideEvent = {
+                  id: `event_${Date.now()}`,
+                  type: 'object_hide' as const,
+                  frame: newHideFrame,
+                  objectId: selectedObjectId,
+                };
+                addTimelineEvent(newHideEvent);
+              }
+            }}
           />
         );
       }

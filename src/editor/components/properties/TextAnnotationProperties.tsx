@@ -8,6 +8,7 @@ interface TextAnnotationPropertiesProps {
   fps: number;
   onUpdate: (updates: Partial<TextAnnotation>) => void;
   onDelete: () => void;
+  onUpdateTiming?: (showFrame: number, hideFrame: number | null) => void;
 }
 
 const FONT_SIZES = [12, 14, 16, 18, 24, 32];
@@ -19,7 +20,15 @@ export function TextAnnotationProperties({
   fps,
   onUpdate,
   onDelete,
+  onUpdateTiming,
 }: TextAnnotationPropertiesProps) {
+  const [editingShowFrame, setEditingShowFrame] = React.useState(showFrame);
+  const [editingHideFrame, setEditingHideFrame] = React.useState(hideFrame ?? '');
+
+  React.useEffect(() => {
+    setEditingShowFrame(showFrame);
+    setEditingHideFrame(hideFrame ?? '');
+  }, [showFrame, hideFrame]);
   const inputStyle = {
     width: '100%',
     marginTop: '4px',
@@ -181,15 +190,77 @@ export function TextAnnotationProperties({
       {/* Timing */}
       <div style={sectionStyle}>
         <h4 style={{ margin: '0 0 8px', fontSize: '12px', color: '#aaa' }}>タイミング</h4>
-        <div style={{ fontSize: '12px', color: '#ccc' }}>
-          <div>表示開始: {showFrame}f ({(showFrame / fps).toFixed(2)}秒)</div>
-          {hideFrame !== null && (
-            <div>表示終了: {hideFrame}f ({(hideFrame / fps).toFixed(2)}秒)</div>
-          )}
-          {hideFrame !== null && (
-            <div>表示時間: {((hideFrame - showFrame) / fps).toFixed(2)}秒</div>
-          )}
-        </div>
+        {onUpdateTiming ? (
+          <>
+            <label style={labelStyle}>
+              表示開始 (フレーム)
+              <input
+                type="number"
+                value={editingShowFrame}
+                onChange={(e) => setEditingShowFrame(parseInt(e.target.value) || 0)}
+                onBlur={() => onUpdateTiming(editingShowFrame, hideFrame)}
+                min={0}
+                step={1}
+                style={inputStyle}
+              />
+              <span style={{ fontSize: '11px', color: '#888' }}>
+                {(editingShowFrame / fps).toFixed(2)}秒
+              </span>
+            </label>
+            <label style={labelStyle}>
+              表示終了 (フレーム)
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  value={editingHideFrame}
+                  onChange={(e) => setEditingHideFrame(e.target.value)}
+                  onBlur={() => {
+                    const val = editingHideFrame === '' ? null : parseInt(editingHideFrame as string) || null;
+                    onUpdateTiming(showFrame, val);
+                  }}
+                  min={showFrame + 1}
+                  step={1}
+                  placeholder="永続表示"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                {hideFrame !== null && (
+                  <button
+                    onClick={() => onUpdateTiming(showFrame, null)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#4a4a7a',
+                      border: '1px solid #3a3a5a',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                    }}
+                  >
+                    削除
+                  </button>
+                )}
+              </div>
+              <span style={{ fontSize: '11px', color: '#888' }}>
+                {editingHideFrame !== '' ? `${(parseInt(editingHideFrame as string) / fps).toFixed(2)}秒` : '永続表示'}
+              </span>
+            </label>
+            {hideFrame !== null && (
+              <div style={{ fontSize: '12px', color: '#ccc', marginTop: '8px' }}>
+                表示時間: {((hideFrame - showFrame) / fps).toFixed(2)}秒
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: '12px', color: '#ccc' }}>
+            <div>表示開始: {showFrame}f ({(showFrame / fps).toFixed(2)}秒)</div>
+            {hideFrame !== null && (
+              <div>表示終了: {hideFrame}f ({(hideFrame / fps).toFixed(2)}秒)</div>
+            )}
+            {hideFrame !== null && (
+              <div>表示時間: {((hideFrame - showFrame) / fps).toFixed(2)}秒</div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Delete */}
