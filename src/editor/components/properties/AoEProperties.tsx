@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AoE, AoEType, Player, AoESourceType, AoETrackingMode } from '../../../data/types';
+import type { AoE, AoEType, Player, AoESourceType, AoETrackingMode, GimmickObject } from '../../../data/types';
 import { PositionInput } from './inputs/PositionInput';
 import { NumberInput } from './inputs/NumberInput';
 import { ColorInput } from './inputs/ColorInput';
@@ -10,6 +10,7 @@ interface AoEPropertiesProps {
   onUpdate: (updates: Partial<AoE>) => void;
   onDelete: () => void;
   players?: Player[];
+  objects?: GimmickObject[];
 }
 
 const AOE_TYPE_OPTIONS = [
@@ -34,7 +35,7 @@ const TRACKING_MODE_OPTIONS = [
   { value: 'track_target', label: 'Track Target Player' },
 ];
 
-export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEPropertiesProps) {
+export function AoEProperties({ aoe, onUpdate, onDelete, players = [], objects = [] }: AoEPropertiesProps) {
   // Get source options based on sourceType
   const getSourceOptions = () => {
     switch (aoe.sourceType) {
@@ -46,7 +47,10 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [] }: AoEProp
           label: `${p.role}${p.name ? ` (${p.name})` : ''}`,
         }));
       case 'object':
-        return [];
+        return objects.map(obj => ({
+          value: obj.id,
+          label: obj.name || obj.id,
+        }));
       case 'debuff':
         return [];
       default:

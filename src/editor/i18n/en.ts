@@ -224,6 +224,7 @@ const en: DeepStringify<typeof ja> = {
     debuffPlayer: 'Player with debuff',
     bossSelect: 'Select Boss',
     playerSelect: 'Select Player',
+    objectSelect: 'Select Object',
     debuffId: 'Debuff ID',
     debuffIdPlaceholder: 'Enter debuff ID',
     objectId: 'Object ID',

@@ -221,6 +221,7 @@ const ja = {
     debuffPlayer: 'デバフ持ちプレイヤー',
     bossSelect: 'ボス選択',
     playerSelect: 'プレイヤー選択',
+    objectSelect: 'オブジェクト選択',
     debuffId: 'デバフID',
     debuffIdPlaceholder: 'デバフのIDを入力',
     objectId: 'オブジェクトID',

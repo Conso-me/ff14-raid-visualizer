@@ -8,7 +8,7 @@ import { AoEProperties } from './properties/AoEProperties';
 import { TextAnnotationProperties } from './properties/TextAnnotationProperties';
 import { ObjectProperties } from './properties/ObjectProperties';
 import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
-import { getObjectEventPairs } from '../utils/getActiveObjects';
+import { getObjectEventPairs, getActiveObjects } from '../utils/getActiveObjects';
 
 export function PropertyPanel() {
   const { t } = useLanguage();
@@ -88,6 +88,7 @@ export function PropertyPanel() {
       case 'aoe': {
         const aoes = getAoEsAtFrame(currentFrame);
         const aoe = aoes.find((a) => a.id === selectedObjectId);
+        const activeObjects = getActiveObjects(mechanic.timeline, currentFrame);
         if (!aoe) {
           // Try to find in timeline
           const event = mechanic.timeline.find(
@@ -100,6 +101,7 @@ export function PropertyPanel() {
                 onUpdate={(updates) => updateAoE(selectedObjectId, updates)}
                 onDelete={() => deleteAoE(selectedObjectId)}
                 players={mechanic.initialPlayers}
+                objects={activeObjects}
               />
             );
           }
@@ -111,6 +113,7 @@ export function PropertyPanel() {
             onUpdate={(updates) => updateAoE(selectedObjectId, updates)}
             onDelete={() => deleteAoE(selectedObjectId)}
             players={mechanic.initialPlayers}
+            objects={activeObjects}
           />
         );
       }

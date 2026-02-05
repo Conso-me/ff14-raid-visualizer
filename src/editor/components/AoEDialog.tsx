@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import type { Position, AoEType, AoESourceType, AoETrackingMode, Enemy, Player } from '../../data/types';
+import React, { useState, useMemo } from 'react';
+import type { Position, AoEType, AoESourceType, AoETrackingMode, Enemy, Player, GimmickObject } from '../../data/types';
 import type { AoESettings } from '../context/editorReducer';
 import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getActiveObjects } from '../utils/getActiveObjects';
 
 interface AoEDialogProps {
   isOpen: boolean;
@@ -62,6 +63,12 @@ export function AoEDialog({
   const [autoDirection, setAutoDirection] = useState(false);
 
   if (!isOpen) return null;
+
+  // タイムラインからオブジェクト一覧を取得
+  const availableObjects = useMemo(() => {
+    const activeObjects = getActiveObjects(state.mechanic.timeline, currentFrame);
+    return activeObjects;
+  }, [state.mechanic.timeline, currentFrame]);
 
   const typeNames: Record<AoEType, string> = {
     circle: t('aoeDialog.circle'),
@@ -243,14 +250,19 @@ export function AoEDialog({
 
           {sourceType === 'object' && (
             <label style={labelStyle}>
-              {t('aoeDialog.objectId')}
-              <input
-                type="text"
+              {t('aoeDialog.objectSelect')}
+              <select
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
-                placeholder={t('aoeDialog.objectIdPlaceholder')}
-                style={inputStyle}
-              />
+                style={selectStyle}
+              >
+                <option value="">{t('common.selectPlease')}</option>
+                {availableObjects.map((obj: GimmickObject) => (
+                  <option key={obj.id} value={obj.id}>
+                    {obj.name || obj.id}
+                  </option>
+                ))}
+              </select>
             </label>
           )}
 
