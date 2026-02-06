@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
 import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, TextAnnotation, GimmickObject } from '../../data/types';
-import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type MoveFromListMode } from './editorReducer';
+import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type FieldChangeSettings, type MoveFromListMode } from './editorReducer';
 
 interface EditorContextValue {
   state: EditorState;
@@ -76,6 +76,8 @@ interface EditorContextValue {
   cancelMoveFromList: () => void;
   // Arrow key movement
   movePlayerPosition: (playerId: string, dx: number, dy: number, frame: number) => void;
+  // Field change
+  completeFieldChange: (settings: FieldChangeSettings) => void;
   // Visibility toggle
   toggleVisibility: (id: string, objectType: string) => void;
   isObjectHidden: (id: string, objectType: string) => boolean;
@@ -428,6 +430,10 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'MOVE_PLAYER_POSITION', payload: { playerId, dx, dy, frame } });
   }, []);
 
+  const completeFieldChange = useCallback((settings: FieldChangeSettings) => {
+    dispatch({ type: 'COMPLETE_FIELD_CHANGE', payload: settings });
+  }, []);
+
   const toggleVisibility = useCallback((id: string, objectType: string) => {
     dispatch({ type: 'TOGGLE_VISIBILITY', payload: { id, objectType } });
   }, []);
@@ -463,9 +469,20 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
       case 'cast':
         dispatch({ type: 'DELETE_TIMELINE_EVENT', payload: selectedObjectId });
         break;
+      case 'field_change':
+        // Delete both field_change and field_revert events with matching fieldChangeId
+        state.mechanic.timeline.forEach((e) => {
+          if (
+            (e.type === 'field_change' && e.fieldChangeId === selectedObjectId) ||
+            (e.type === 'field_revert' && e.fieldChangeId === selectedObjectId)
+          ) {
+            dispatch({ type: 'DELETE_TIMELINE_EVENT', payload: e.id });
+          }
+        });
+        break;
     }
     dispatch({ type: 'SELECT_OBJECT', payload: { id: null, objectType: null } });
-  }, [state.selectedObjectId, state.selectedObjectType]);
+  }, [state.selectedObjectId, state.selectedObjectType, state.mechanic.timeline]);
 
   // Copy the currently selected object
   const copySelectedObject = useCallback(() => {
@@ -626,6 +643,7 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     startMoveFromList,
     cancelMoveFromList,
     movePlayerPosition,
+    completeFieldChange,
     toggleVisibility,
     isObjectHidden,
     canUndo: state.historyIndex > 0,

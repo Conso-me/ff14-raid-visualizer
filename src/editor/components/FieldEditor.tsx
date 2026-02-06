@@ -21,6 +21,7 @@ import { getActiveAoEs, type ActiveAoE } from '../utils/getActiveAoEs';
 import { getActiveAnnotations } from '../utils/getActiveAnnotations';
 import { getActiveObjects } from '../utils/getActiveObjects';
 import { getPlayerDebuffs } from '../utils/getPlayerDebuffs';
+import { getFieldAtFrame } from '../utils/getFieldAtFrame';
 import type { Position, Debuff, GimmickObject, CastEvent, CastDisplay } from '../../data/types';
 import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings } from '../context/editorReducer';
 import { CastBar } from '../../components/ui/CastBar';
@@ -86,6 +87,11 @@ export function FieldEditor() {
   const playersAtCurrentFrame = useMemo(() => {
     return getPlayersAtFrame(mechanic, currentFrame);
   }, [mechanic, currentFrame]);
+
+  // Calculate field state at current frame
+  const fieldAtCurrentFrame = useMemo(() => {
+    return getFieldAtFrame(mechanic.field, mechanic.timeline, currentFrame);
+  }, [mechanic.field, mechanic.timeline, currentFrame]);
 
   const snapToGrid = useCallback((pos: Position): Position => {
     if (!gridSnap) return pos;
@@ -900,10 +906,10 @@ export function FieldEditor() {
             width={mechanic.field.width}
             height={mechanic.field.height}
             screenSize={SCREEN_SIZE}
-            backgroundColor={mechanic.field.backgroundColor}
+            backgroundColor={fieldAtCurrentFrame.backgroundColor}
             gridEnabled={mechanic.field.gridEnabled}
-            backgroundImage={mechanic.field.backgroundImage}
-            backgroundOpacity={mechanic.field.backgroundOpacity}
+            backgroundImage={fieldAtCurrentFrame.backgroundImage}
+            backgroundOpacity={fieldAtCurrentFrame.backgroundOpacity}
           >
             {/* AoEs (render first, below other elements) - with fade animation */}
             {activeAoEs.filter((aoe) => !isObjectHidden(aoe.id, 'aoe')).map((aoe) => (

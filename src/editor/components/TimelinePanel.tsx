@@ -3,6 +3,7 @@ import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
 import { TimelineImportDialog } from './TimelineImportDialog';
 import { CastEventDialog } from './CastEventDialog';
+import { FieldChangeDialog, type FieldChangeSettings } from './FieldChangeDialog';
 import type { TimelineEvent, Role, ObjectShowEvent, CastEvent } from '../../data/types';
 
 // フレームを時間文字列に変換
@@ -22,7 +23,7 @@ interface TimelineEntry {
 }
 
 // タイムラインパネルに表示するイベントタイプ
-const DISPLAY_EVENT_TYPES = new Set(['text', 'cast']);
+const DISPLAY_EVENT_TYPES = new Set(['text', 'cast', 'field_change']);
 
 // イベントから表示名を取得
 function getEventDisplayName(event: TimelineEvent): string | null {
@@ -31,6 +32,8 @@ function getEventDisplayName(event: TimelineEvent): string | null {
       return typeof event.content === 'string' ? event.content : 'Text';
     case 'cast':
       return event.skillName || 'Cast';
+    case 'field_change':
+      return '🎨 ' + (event.override.backgroundColor ? event.override.backgroundColor : 'Background Change');
     default:
       return null;
   }
@@ -38,10 +41,11 @@ function getEventDisplayName(event: TimelineEvent): string | null {
 
 export function TimelinePanel() {
   const { t } = useLanguage();
-  const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy, selectObject } = useEditor();
+  const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy, selectObject, completeFieldChange } = useEditor();
   const { mechanic, currentFrame } = state;
   const [showImport, setShowImport] = useState(false);
   const [showCastDialog, setShowCastDialog] = useState(false);
+  const [showFieldChangeDialog, setShowFieldChangeDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const entryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const fps = mechanic.fps;
@@ -176,12 +180,14 @@ export function TimelinePanel() {
     if (setCurrentFrame) {
       setCurrentFrame(Math.round(entry.time * fps));
     }
-    // castイベントの場合、PropertyPanelに連携
+    // castイベント/field_changeイベントの場合、PropertyPanelに連携
     if (entry.sourceEventIds.length > 0) {
       const firstEventId = entry.sourceEventIds[0];
       const event = mechanic.timeline.find(e => e.id === firstEventId);
       if (event && event.type === 'cast') {
         selectObject(event.id, 'cast');
+      } else if (event && event.type === 'field_change') {
+        selectObject(event.fieldChangeId, 'field_change');
       }
     }
   }, [setCurrentFrame, fps, mechanic.timeline, selectObject]);
@@ -362,6 +368,23 @@ export function TimelinePanel() {
           </button>
 
           <button
+            onClick={() => setShowFieldChangeDialog(true)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              background: '#2a2a4a',
+              border: '1px solid #3a3a5a',
+              borderRadius: '4px',
+              color: '#fff',
+              fontSize: '13px',
+              cursor: 'pointer',
+              marginBottom: '8px',
+            }}
+          >
+            {t('timeline.addFieldChange')}
+          </button>
+
+          <button
             onClick={() => setShowImport(true)}
             style={{
               width: '100%',
@@ -427,6 +450,17 @@ export function TimelinePanel() {
           setShowCastDialog(false);
         }}
         onCancel={() => setShowCastDialog(false)}
+      />
+
+      <FieldChangeDialog
+        isOpen={showFieldChangeDialog}
+        currentFrame={currentFrame}
+        fps={fps}
+        onConfirm={(settings: FieldChangeSettings) => {
+          completeFieldChange(settings);
+          setShowFieldChangeDialog(false);
+        }}
+        onCancel={() => setShowFieldChangeDialog(false)}
       />
     </>
   );

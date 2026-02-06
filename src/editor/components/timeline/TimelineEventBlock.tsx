@@ -89,6 +89,10 @@ function getEventLabel(event: TimelineEvent): string {
       return `Obj: ${event.object.name}`;
     case 'object_hide':
       return `Hide Obj: ${event.objectId}`;
+    case 'field_change':
+      return `BG Change`;
+    case 'field_revert':
+      return `BG Revert`;
   }
 }
 

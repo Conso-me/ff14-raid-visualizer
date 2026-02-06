@@ -8,9 +8,11 @@ import { AoEProperties } from './properties/AoEProperties';
 import { TextAnnotationProperties } from './properties/TextAnnotationProperties';
 import { ObjectProperties } from './properties/ObjectProperties';
 import { CastEventProperties } from './properties/CastEventProperties';
+import { FieldChangeProperties } from './properties/FieldChangeProperties';
 import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getObjectEventPairs, getActiveObjects } from '../utils/getActiveObjects';
-import type { CastEvent } from '../../data/types';
+import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
+import type { CastEvent, FieldOverride } from '../../data/types';
 
 export function PropertyPanel() {
   const { t } = useLanguage();
@@ -227,6 +229,86 @@ export function PropertyPanel() {
                 };
                 addTimelineEvent(newHideEvent);
               }
+            }}
+          />
+        );
+      }
+
+      case 'field_change': {
+        const fieldChangePairs = getFieldChangeEventPairs(mechanic.timeline);
+        const fcPair = fieldChangePairs.find((p) => p.fieldChangeId === selectedObjectId);
+        if (!fcPair) return null;
+        return (
+          <FieldChangeProperties
+            fieldChangeId={fcPair.fieldChangeId}
+            override={fcPair.override}
+            changeFrame={fcPair.changeFrame}
+            revertFrame={fcPair.revertFrame}
+            fadeInDuration={fcPair.fadeInDuration}
+            fadeOutDuration={fcPair.fadeOutDuration}
+            fps={mechanic.fps}
+            onUpdateOverride={(updates: Partial<FieldOverride>) => {
+              const changeEvent = mechanic.timeline.find(
+                (e) => e.type === 'field_change' && e.fieldChangeId === selectedObjectId
+              );
+              if (changeEvent) {
+                updateTimelineEvent(changeEvent.id, {
+                  override: { ...fcPair.override, ...updates },
+                } as Partial<typeof changeEvent>);
+              }
+            }}
+            onUpdateTiming={(newChangeFrame, newRevertFrame) => {
+              // Update change event frame
+              const changeEvent = mechanic.timeline.find(
+                (e) => e.type === 'field_change' && e.fieldChangeId === selectedObjectId
+              );
+              if (changeEvent) {
+                updateTimelineEvent(changeEvent.id, { frame: newChangeFrame });
+              }
+              // Update/delete/create revert event
+              const revertEvent = mechanic.timeline.find(
+                (e) => e.type === 'field_revert' && e.fieldChangeId === selectedObjectId
+              );
+              if (newRevertFrame === null) {
+                if (revertEvent) {
+                  deleteTimelineEvent(revertEvent.id);
+                }
+              } else if (revertEvent) {
+                updateTimelineEvent(revertEvent.id, { frame: newRevertFrame });
+              } else {
+                addTimelineEvent({
+                  id: `${selectedObjectId}-revert`,
+                  type: 'field_revert' as const,
+                  frame: newRevertFrame,
+                  fieldChangeId: selectedObjectId,
+                  fadeOutDuration: fcPair.fadeOutDuration,
+                });
+              }
+            }}
+            onUpdateFade={(newFadeIn, newFadeOut) => {
+              const changeEvent = mechanic.timeline.find(
+                (e) => e.type === 'field_change' && e.fieldChangeId === selectedObjectId
+              );
+              if (changeEvent) {
+                updateTimelineEvent(changeEvent.id, { fadeInDuration: newFadeIn } as Partial<typeof changeEvent>);
+              }
+              const revertEvent = mechanic.timeline.find(
+                (e) => e.type === 'field_revert' && e.fieldChangeId === selectedObjectId
+              );
+              if (revertEvent) {
+                updateTimelineEvent(revertEvent.id, { fadeOutDuration: newFadeOut } as Partial<typeof revertEvent>);
+              }
+            }}
+            onDelete={() => {
+              // Delete both change and revert events
+              mechanic.timeline.forEach((e) => {
+                if (
+                  (e.type === 'field_change' && e.fieldChangeId === selectedObjectId) ||
+                  (e.type === 'field_revert' && e.fieldChangeId === selectedObjectId)
+                ) {
+                  deleteTimelineEvent(e.id);
+                }
+              });
             }}
           />
         );

@@ -22,8 +22,11 @@ import {
   BossMoveEvent,
   ObjectShowEvent,
   ObjectHideEvent,
+  FieldChangeEvent,
+  FieldRevertEvent,
 } from '../data/types';
 import { animatePosition, animateOpacity } from '../utils/animation';
+import { getFieldAtFrame, type FieldAtFrame } from '../editor/utils/getFieldAtFrame';
 
 // タイムラインの状態
 export interface TimelineState {
@@ -33,6 +36,7 @@ export interface TimelineState {
   activeAoEs: AoEDisplay[];
   activeTexts: TextDisplay[];
   activeCasts: CastDisplay[];
+  fieldState: FieldAtFrame;
 }
 
 // 内部で使用するAoE追跡用の型
@@ -665,6 +669,9 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       }
     }
 
+    // フィールド状態を計算
+    const fieldState = getFieldAtFrame(mechanic.field, mechanic.timeline, frame);
+
     return {
       players,
       enemies,
@@ -672,6 +679,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       activeAoEs,
       activeTexts,
       activeCasts,
+      fieldState,
     };
   }, [mechanic, frame]);
 }

@@ -1,7 +1,7 @@
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent } from '../../data/types';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent, FieldChangeEvent, FieldRevertEvent } from '../../data/types';
 
 export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object';
-export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | null;
+export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | null;
 
 export interface PendingMoveEvent {
   playerIds: string[];
@@ -47,6 +47,16 @@ export interface ObjectSettings {
   endFrame?: number;
   fadeInDuration?: number;
   fadeOutDuration?: number;
+}
+
+export interface FieldChangeSettings {
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundOpacity?: number;
+  startFrame: number;
+  endFrame?: number;
+  fadeInDuration: number;
+  fadeOutDuration: number;
 }
 
 export interface AoESettings {
@@ -168,6 +178,8 @@ export type EditorAction =
   | { type: 'MOVE_PLAYER_POSITION'; payload: { playerId: string; dx: number; dy: number; frame: number } }
   // Relocate player (move initial position + shift all move events by the same delta)
   | { type: 'RELOCATE_PLAYER'; payload: { id: string; newPosition: Position } }
+  // Field change
+  | { type: 'COMPLETE_FIELD_CHANGE'; payload: FieldChangeSettings }
   // Visibility toggle (editor UI only)
   | { type: 'TOGGLE_VISIBILITY'; payload: { id: string; objectType: string } };
 
@@ -1066,6 +1078,50 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           mechanic: { ...stateWithHistory.mechanic, timeline: newTimeline },
         };
       }
+    }
+
+    case 'COMPLETE_FIELD_CHANGE': {
+      const settings = action.payload;
+      const fieldChangeId = `field-change-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const override: { backgroundColor?: string; backgroundImage?: string; backgroundOpacity?: number } = {};
+      if (settings.backgroundColor !== undefined) override.backgroundColor = settings.backgroundColor;
+      if (settings.backgroundImage !== undefined) override.backgroundImage = settings.backgroundImage;
+      if (settings.backgroundOpacity !== undefined) override.backgroundOpacity = settings.backgroundOpacity;
+
+      const changeEvent: FieldChangeEvent = {
+        id: `${fieldChangeId}-change`,
+        type: 'field_change',
+        frame: settings.startFrame,
+        fieldChangeId,
+        override,
+        fadeInDuration: settings.fadeInDuration,
+      };
+
+      const newEvents: TimelineEvent[] = [changeEvent];
+
+      if (settings.endFrame !== undefined) {
+        const revertEvent: FieldRevertEvent = {
+          id: `${fieldChangeId}-revert`,
+          type: 'field_revert',
+          frame: settings.endFrame,
+          fieldChangeId,
+          fadeOutDuration: settings.fadeOutDuration,
+        };
+        newEvents.push(revertEvent);
+      }
+
+      const stateWithHistory = pushHistory(state);
+      const newTimeline = [...stateWithHistory.mechanic.timeline, ...newEvents]
+        .sort((a, b) => a.frame - b.frame);
+
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: newTimeline,
+        },
+      };
     }
 
     case 'TOGGLE_VISIBILITY': {

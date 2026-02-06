@@ -50,10 +50,10 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
         width={mechanic.field.width}
         height={mechanic.field.height}
         screenSize={FIELD_DEFAULTS.screenSize}
-        backgroundColor={mechanic.field.backgroundColor}
+        backgroundColor={state.fieldState.backgroundColor}
         gridEnabled={mechanic.field.gridEnabled}
-        backgroundImage={mechanic.field.backgroundImage}
-        backgroundOpacity={mechanic.field.backgroundOpacity}
+        backgroundImage={state.fieldState.backgroundImage}
+        backgroundOpacity={state.fieldState.backgroundOpacity}
       >
         {/* フィールドマーカー */}
         {mechanic.markers.map((marker) => (

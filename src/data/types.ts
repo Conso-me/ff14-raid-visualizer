@@ -124,6 +124,13 @@ export interface FieldMarker {
   position: Position;
 }
 
+// フィールドオーバーライド（背景変更用）
+export interface FieldOverride {
+  backgroundColor?: string;
+  backgroundImage?: string;
+  backgroundOpacity?: number;
+}
+
 // ============================================
 // タイムラインシステム
 // ============================================
@@ -141,7 +148,9 @@ export type TimelineEventType =
   | 'text_show' // テキスト注釈表示
   | 'text_hide' // テキスト注釈非表示
   | 'object_show' // オブジェクト表示
-  | 'object_hide'; // オブジェクト非表示
+  | 'object_hide' // オブジェクト非表示
+  | 'field_change' // フィールド背景変更
+  | 'field_revert'; // フィールド背景復元
 
 // タイムラインイベント基底
 export interface TimelineEventBase {
@@ -248,6 +257,21 @@ export interface ObjectHideEvent extends TimelineEventBase {
   fadeOutDuration?: number;
 }
 
+// フィールド背景変更イベント
+export interface FieldChangeEvent extends TimelineEventBase {
+  type: 'field_change';
+  fieldChangeId: string; // field_revert とのペアリング用ID
+  override: FieldOverride;
+  fadeInDuration?: number; // フェードインのフレーム数
+}
+
+// フィールド背景復元イベント
+export interface FieldRevertEvent extends TimelineEventBase {
+  type: 'field_revert';
+  fieldChangeId: string; // field_change とのペアリング用ID
+  fadeOutDuration?: number; // フェードアウトのフレーム数
+}
+
 // 全イベント型
 export type TimelineEvent =
   | MoveEvent
@@ -261,7 +285,9 @@ export type TimelineEvent =
   | TextShowEvent
   | TextHideEvent
   | ObjectShowEvent
-  | ObjectHideEvent;
+  | ObjectHideEvent
+  | FieldChangeEvent
+  | FieldRevertEvent;
 
 // 敵（ボス）
 export interface Enemy {

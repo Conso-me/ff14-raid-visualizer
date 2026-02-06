@@ -6,7 +6,8 @@ import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
 import { getActiveAnnotations, getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getActiveObjects, getObjectEventPairs } from '../utils/getActiveObjects';
 import { DraggableList } from './DraggableList';
-import type { Role, MarkerType, AoEType, Position, GimmickObject, Player } from '../../data/types';
+import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
+import type { Role, MarkerType, AoEType, Position, GimmickObject, Player, CastEvent } from '../../data/types';
 
 // Role colors (match existing player rendering)
 const ROLE_COLORS: Record<Role, string> = {
@@ -188,7 +189,7 @@ function VisibilityToggle({ isHidden, onToggle, showTitle, hideTitle }: Visibili
 // ObjectItem component
 interface ObjectItemProps {
   id: string;
-  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object';
+  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change';
   name: string;
   subtitle?: string;
   color?: string;
@@ -546,6 +547,8 @@ export function ObjectListPanel() {
     isObjectHidden,
   } = useEditor();
 
+  const [activeTab, setActiveTab] = useState<'objects' | 'events'>('objects');
+
   const { mechanic, currentFrame, selectedObjectId, selectedObjectType, selectedObjectIds } = state;
 
   // Handle player reorder via drag and drop
@@ -599,6 +602,18 @@ export function ObjectListPanel() {
   const activeObjectIds = useMemo(() =>
     new Set(activeObjectsAtFrame.map(o => o.id)),
     [activeObjectsAtFrame]
+  );
+
+  // Get cast events
+  const castEvents = useMemo(() =>
+    mechanic.timeline.filter((e): e is CastEvent => e.type === 'cast'),
+    [mechanic.timeline]
+  );
+
+  // Get field change event pairs
+  const fieldChangePairs = useMemo(() =>
+    getFieldChangeEventPairs(mechanic.timeline),
+    [mechanic.timeline]
   );
 
   // Selection state helpers
@@ -674,6 +689,47 @@ export function ObjectListPanel() {
       {/* Action toolbar */}
       <ActionToolbar />
 
+      {/* Tab bar */}
+      <div style={{
+        display: 'flex',
+        marginBottom: '12px',
+        borderBottom: '1px solid #3a3a5a',
+      }}>
+        <button
+          onClick={() => setActiveTab('objects')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'objects' ? '2px solid #3753c7' : '2px solid transparent',
+            color: activeTab === 'objects' ? '#fff' : '#888',
+            fontSize: '13px',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'objects' ? 'bold' : 'normal',
+          }}
+        >
+          {t('objectList.tabObjects')}
+        </button>
+        <button
+          onClick={() => setActiveTab('events')}
+          style={{
+            flex: 1,
+            padding: '8px 12px',
+            background: 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'events' ? '2px solid #3753c7' : '2px solid transparent',
+            color: activeTab === 'events' ? '#fff' : '#888',
+            fontSize: '13px',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'events' ? 'bold' : 'normal',
+          }}
+        >
+          {t('objectList.tabEvents')}
+        </button>
+      </div>
+
+      {activeTab === 'objects' && <>
       {/* Players group */}
       <CollapsibleGroup title={t('objectList.players')} count={mechanic.initialPlayers.length}>
         {mechanic.initialPlayers.length === 0 ? (
@@ -930,6 +986,64 @@ export function ObjectListPanel() {
           </>
         )}
       </CollapsibleGroup>
+      </>}
+
+      {activeTab === 'events' && <>
+        {/* Cast bars section */}
+        <CollapsibleGroup title={t('objectList.castBars')} count={castEvents.length}>
+          {castEvents.length === 0 ? (
+            <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
+              {t('objectList.noCastBars')}
+            </div>
+          ) : (
+            castEvents.map((castEvent) => {
+              const frameInfo = `${castEvent.frame}f - ${castEvent.frame + castEvent.duration}f`;
+              return (
+                <ObjectItem
+                  key={castEvent.id}
+                  id={castEvent.id}
+                  objectType="cast"
+                  name={castEvent.skillName}
+                  subtitle={frameInfo}
+                  icon={<span style={{ fontSize: '14px' }}>🔮</span>}
+                  isSelected={selectedObjectId === castEvent.id && selectedObjectType === 'cast'}
+                  onSelect={() => selectObject(castEvent.id, 'cast')}
+                />
+              );
+            })
+          )}
+        </CollapsibleGroup>
+
+        {/* Field changes section */}
+        <CollapsibleGroup title={t('objectList.fieldChanges')} count={fieldChangePairs.length}>
+          {fieldChangePairs.length === 0 ? (
+            <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
+              {t('objectList.noFieldChanges')}
+            </div>
+          ) : (
+            fieldChangePairs.map((pair) => {
+              const frameInfo = pair.revertFrame !== null
+                ? `${pair.changeFrame}f - ${pair.revertFrame}f`
+                : `${pair.changeFrame}f -`;
+              const overrideSummary = pair.override.backgroundImage
+                ? t('fieldChangeDialog.backgroundImage')
+                : pair.override.backgroundColor || t('fieldChangeDialog.fieldChange');
+              return (
+                <ObjectItem
+                  key={pair.fieldChangeId}
+                  id={pair.fieldChangeId}
+                  objectType="field_change"
+                  name={overrideSummary}
+                  subtitle={frameInfo}
+                  icon={<span style={{ fontSize: '14px' }}>🎨</span>}
+                  isSelected={selectedObjectId === pair.fieldChangeId && selectedObjectType === 'field_change'}
+                  onSelect={() => selectObject(pair.fieldChangeId, 'field_change')}
+                />
+              );
+            })
+          )}
+        </CollapsibleGroup>
+      </>}
     </div>
   );
 }
