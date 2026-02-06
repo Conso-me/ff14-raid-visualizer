@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { DebuffSettings } from '../context/editorReducer';
+import type { DebuffAddEvent } from '../../data/types';
 import { DebuffIcon } from '../../components/debuff/DebuffIcon';
 import { useLanguage } from '../context/LanguageContext';
+import { useEditor } from '../context/EditorContext';
+import { generateUniqueName } from '../../utils/naming';
 
 interface DebuffDialogProps {
   isOpen: boolean;
@@ -23,6 +26,13 @@ export function DebuffDialog({
   onCancel,
 }: DebuffDialogProps) {
   const { t } = useLanguage();
+  const { state } = useEditor();
+
+  const existingDebuffNames = useMemo(() => {
+    return state.mechanic.timeline
+      .filter((e): e is DebuffAddEvent => e.type === 'debuff_add')
+      .map((e) => e.debuff.name);
+  }, [state.mechanic.timeline]);
 
   const DEBUFF_PRESETS = [
     { id: 'spread', name: t('debuffDialog.spread'), color: '#ff00ff' },
@@ -57,14 +67,14 @@ export function DebuffDialog({
       if (preset) {
         return {
           id: `${preset.id}-${Date.now()}`,
-          name: preset.name,
+          name: generateUniqueName(preset.name, existingDebuffNames),
           color: preset.color,
         };
       }
     }
     return {
       id: `custom-${Date.now()}`,
-      name: customName || 'Custom',
+      name: generateUniqueName(customName || t('debuffDialog.custom'), existingDebuffNames),
       color: customColor,
     };
   };

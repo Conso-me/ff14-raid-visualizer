@@ -2,6 +2,7 @@ import React from 'react';
 import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
 import type { Role, MarkerType, AoEType } from '../../data/types';
+import { generateUniqueName } from '../../utils/naming';
 
 const TOOLS = [
   { id: 'select', icon: '\u2196', shortcut: '1' },
@@ -79,9 +80,10 @@ export function ToolPanelContent() {
 
   const handleAddEnemy = () => {
     const id = `enemy_${Date.now()}`;
+    const existingNames = state.mechanic.enemies.map((e) => e.name);
     addEnemy({
       id,
-      name: 'Boss',
+      name: generateUniqueName(t('tools.defaultEnemyName'), existingNames),
       position: { x: 0, y: 0 },
       size: 3,
       color: '#ff0000',

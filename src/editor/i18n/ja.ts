@@ -109,6 +109,7 @@ const ja = {
     presets: 'Presets',
     preset8Player: '8-Player Setup',
     presetMarkers: 'Standard Markers',
+    defaultEnemyName: 'ボス',
     aoeCircle: '円形',
     aoeCone: '扇形',
     aoeLine: '直線',

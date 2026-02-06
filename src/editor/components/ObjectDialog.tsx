@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import type { Position, GimmickObject } from '../../data/types';
+import React, { useState, useMemo } from 'react';
+import type { Position, GimmickObject, ObjectShowEvent } from '../../data/types';
 import type { ObjectSettings } from '../context/editorReducer';
 import { useLanguage } from '../context/LanguageContext';
+import { useEditor } from '../context/EditorContext';
+import { generateUniqueName } from '../../utils/naming';
 
 interface ObjectDialogProps {
   isOpen: boolean;
@@ -21,6 +23,13 @@ export function ObjectDialog({
   onCancel,
 }: ObjectDialogProps) {
   const { t } = useLanguage();
+  const { state } = useEditor();
+
+  const existingObjectNames = useMemo(() => {
+    return state.mechanic.timeline
+      .filter((e): e is ObjectShowEvent => e.type === 'object_show')
+      .map((e) => e.object.name);
+  }, [state.mechanic.timeline]);
 
   const PRESETS: Array<{
     name: string;
@@ -46,7 +55,7 @@ export function ObjectDialog({
     { value: 'none', label: t('objectDialog.shapeNone'), icon: '×' },
   ];
 
-  const [name, setName] = useState('オブジェクト');
+  const [name, setName] = useState(() => generateUniqueName(t('objectDialog.defaultName'), existingObjectNames));
   const [shape, setShape] = useState<GimmickObject['shape']>('circle');
   const [size, setSize] = useState(2);
   const [color, setColor] = useState('#ffcc00');
@@ -75,7 +84,7 @@ export function ObjectDialog({
   if (!isOpen) return null;
 
   const handlePreset = (preset: typeof PRESETS[0]) => {
-    setName(preset.name);
+    setName(generateUniqueName(preset.name, existingObjectNames));
     setShape(preset.shape);
     setColor(preset.color);
     setSize(preset.size);

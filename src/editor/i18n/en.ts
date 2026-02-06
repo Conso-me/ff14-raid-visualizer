@@ -112,6 +112,7 @@ const en: DeepStringify<typeof ja> = {
     presets: 'Presets',
     preset8Player: '8-Player Setup',
     presetMarkers: 'Standard Markers',
+    defaultEnemyName: 'Boss',
     aoeCircle: 'Circle',
     aoeCone: 'Cone',
     aoeLine: 'Line',

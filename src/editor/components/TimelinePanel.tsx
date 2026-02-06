@@ -116,7 +116,7 @@ export function TimelinePanel() {
 
     // ボスが未配置なら中央に自動追加
     if (mechanic.enemies.length === 0) {
-      addEnemy({ id: 'boss', name: 'Boss', position: { x: 0, y: 0 } });
+      addEnemy({ id: 'boss', name: t('tools.defaultEnemyName'), position: { x: 0, y: 0 } });
     }
 
     // object_showイベントからオブジェクトを事前生成してタイムラインに追加
