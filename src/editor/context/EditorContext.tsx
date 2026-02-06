@@ -455,6 +455,9 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
       case 'object':
         dispatch({ type: 'DELETE_OBJECT', payload: selectedObjectId });
         break;
+      case 'cast':
+        dispatch({ type: 'DELETE_TIMELINE_EVENT', payload: selectedObjectId });
+        break;
     }
     dispatch({ type: 'SELECT_OBJECT', payload: { id: null, objectType: null } });
   }, [state.selectedObjectId, state.selectedObjectType]);

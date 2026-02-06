@@ -424,6 +424,19 @@ const en: DeepStringify<typeof ja> = {
     copyTitle: 'Copy (Ctrl+D)',
     copyDisabledTitle: 'Players and markers cannot be copied',
     deleteTitle: 'Delete (Delete)',
+    castBar: 'Cast Bar',
+  },
+  castDialog: {
+    title: 'Add Cast Bar',
+    skillName: 'Skill Name',
+    skillNamePlaceholder: 'Enter skill name...',
+    caster: 'Caster',
+    selectCaster: 'Select caster',
+    duration: 'Cast Duration (sec)',
+    durationFrames: '{{frames}} frames',
+    startFrame: 'Start Frame',
+    startFrameDesc: 'Cast starts at {{seconds}}s',
+    add: 'Add',
   },
   objectList: {
     players: 'Players',
@@ -458,6 +471,7 @@ const en: DeepStringify<typeof ja> = {
     confirmClear: 'Clear all timeline entries?',
     deleteEntry: 'Delete this entry',
     currentMarker: '▶ Now here!',
+    addCast: 'Add Cast Bar',
   },
   recovery: {
     title: 'Unsaved data found',

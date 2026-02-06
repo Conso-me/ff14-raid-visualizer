@@ -421,6 +421,19 @@ const ja = {
     copyTitle: 'コピー (Ctrl+D)',
     copyDisabledTitle: 'プレイヤーとマーカーはコピーできません',
     deleteTitle: '削除 (Delete)',
+    castBar: 'キャストバー',
+  },
+  castDialog: {
+    title: 'キャストバー追加',
+    skillName: '技名',
+    skillNamePlaceholder: '技名を入力...',
+    caster: 'キャスター',
+    selectCaster: 'キャスターを選択',
+    duration: '詠唱時間（秒）',
+    durationFrames: '{{frames}}フレーム',
+    startFrame: '開始フレーム',
+    startFrameDesc: '{{seconds}}秒時点で詠唱開始',
+    add: '追加',
   },
   objectList: {
     players: 'プレイヤー',
@@ -455,6 +468,7 @@ const ja = {
     confirmClear: 'タイムラインをすべてクリアしますか？',
     deleteEntry: 'このエントリを削除',
     currentMarker: '▶ 今ここ！',
+    addCast: 'キャストバーを追加',
   },
   recovery: {
     title: '未保存のデータがあります',

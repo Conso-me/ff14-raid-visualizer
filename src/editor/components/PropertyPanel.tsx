@@ -7,8 +7,10 @@ import { MarkerProperties } from './properties/MarkerProperties';
 import { AoEProperties } from './properties/AoEProperties';
 import { TextAnnotationProperties } from './properties/TextAnnotationProperties';
 import { ObjectProperties } from './properties/ObjectProperties';
+import { CastEventProperties } from './properties/CastEventProperties';
 import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getObjectEventPairs, getActiveObjects } from '../utils/getActiveObjects';
+import type { CastEvent } from '../../data/types';
 
 export function PropertyPanel() {
   const { t } = useLanguage();
@@ -160,6 +162,24 @@ export function PropertyPanel() {
                 };
                 addTimelineEvent(newHideEvent);
               }
+            }}
+          />
+        );
+      }
+
+      case 'cast': {
+        const castEvent = mechanic.timeline.find(
+          (e) => e.type === 'cast' && e.id === selectedObjectId
+        ) as CastEvent | undefined;
+        if (!castEvent) return null;
+        return (
+          <CastEventProperties
+            castEvent={castEvent}
+            enemies={mechanic.enemies}
+            fps={mechanic.fps}
+            onUpdate={(id, updates) => updateTimelineEvent(id, updates)}
+            onDelete={(id) => {
+              deleteTimelineEvent(id);
             }}
           />
         );

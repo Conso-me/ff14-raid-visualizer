@@ -2,7 +2,8 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
 import { TimelineImportDialog } from './TimelineImportDialog';
-import type { TimelineEvent, Role, ObjectShowEvent } from '../../data/types';
+import { CastEventDialog } from './CastEventDialog';
+import type { TimelineEvent, Role, ObjectShowEvent, CastEvent } from '../../data/types';
 
 // フレームを時間文字列に変換
 function formatTime(frames: number, fps: number): string {
@@ -17,6 +18,7 @@ interface TimelineEntry {
   time: number;
   name: string;
   type: string;
+  sourceEventIds: string[];
 }
 
 // タイムラインパネルに表示するイベントタイプ
@@ -36,9 +38,10 @@ function getEventDisplayName(event: TimelineEvent): string | null {
 
 export function TimelinePanel() {
   const { t } = useLanguage();
-  const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy } = useEditor();
+  const { state, setCurrentFrame, addTimelineEvent, deleteTimelineEvent, updateMechanicMeta, addPlayer, addEnemy, selectObject } = useEditor();
   const { mechanic, currentFrame } = state;
   const [showImport, setShowImport] = useState(false);
+  const [showCastDialog, setShowCastDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const entryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const fps = mechanic.fps;
@@ -50,17 +53,18 @@ export function TimelinePanel() {
       .sort((a, b) => a.frame - b.frame);
 
     // 同じ秒数のイベントをグループ化
-    const groupMap = new Map<number, { names: string[]; frame: number; type: string }>();
+    const groupMap = new Map<number, { names: string[]; frame: number; type: string; sourceEventIds: string[] }>();
     for (const event of displayEvents) {
       const name = getEventDisplayName(event);
       if (!name) continue;
 
       const seconds = Math.floor(event.frame / fps);
       if (!groupMap.has(seconds)) {
-        groupMap.set(seconds, { names: [], frame: event.frame, type: event.type });
+        groupMap.set(seconds, { names: [], frame: event.frame, type: event.type, sourceEventIds: [] });
       }
       const group = groupMap.get(seconds)!;
       group.names.push(name);
+      group.sourceEventIds.push(event.id);
       // グループ内の最小フレームを保持
       if (event.frame < group.frame) {
         group.frame = event.frame;
@@ -74,6 +78,7 @@ export function TimelinePanel() {
         time: group.frame / fps,
         name: group.names.join('\n'),
         type: group.type,
+        sourceEventIds: group.sourceEventIds,
       }));
   }, [mechanic.timeline, fps]);
 
@@ -167,11 +172,19 @@ export function TimelinePanel() {
     setShowImport(false);
   }, [addTimelineEvent, fps, mechanic.initialPlayers.length, mechanic.enemies.length, addPlayer, addEnemy, updateMechanicMeta]);
 
-  const handleEntryClick = useCallback((time: number) => {
+  const handleEntryClick = useCallback((entry: TimelineEntry) => {
     if (setCurrentFrame) {
-      setCurrentFrame(Math.round(time * fps));
+      setCurrentFrame(Math.round(entry.time * fps));
     }
-  }, [setCurrentFrame, fps]);
+    // castイベントの場合、PropertyPanelに連携
+    if (entry.sourceEventIds.length > 0) {
+      const firstEventId = entry.sourceEventIds[0];
+      const event = mechanic.timeline.find(e => e.id === firstEventId);
+      if (event && event.type === 'cast') {
+        selectObject(event.id, 'cast');
+      }
+    }
+  }, [setCurrentFrame, fps, mechanic.timeline, selectObject]);
 
   // タイムライン全クリア
   const handleClearTimeline = useCallback(() => {
@@ -250,7 +263,7 @@ export function TimelinePanel() {
                     transition: 'all 0.2s ease',
                     border: isCurrent ? '2px solid #5a7aff' : '2px solid transparent',
                   }}
-                  onClick={() => handleEntryClick(entry.time)}
+                  onClick={() => handleEntryClick(entry)}
                 >
                   {isCurrent && (
                     <div style={{
@@ -332,6 +345,23 @@ export function TimelinePanel() {
           borderTop: '1px solid #3a3a5a',
         }}>
           <button
+            onClick={() => setShowCastDialog(true)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              background: '#2a2a4a',
+              border: '1px solid #3a3a5a',
+              borderRadius: '4px',
+              color: '#fff',
+              fontSize: '13px',
+              cursor: 'pointer',
+              marginBottom: '8px',
+            }}
+          >
+            {t('timeline.addCast')}
+          </button>
+
+          <button
             onClick={() => setShowImport(true)}
             style={{
               width: '100%',
@@ -376,6 +406,27 @@ export function TimelinePanel() {
         onImport={handleImport}
         fps={fps}
         players={mechanic.initialPlayers}
+      />
+
+      <CastEventDialog
+        isOpen={showCastDialog}
+        currentFrame={currentFrame}
+        fps={fps}
+        enemies={mechanic.enemies}
+        onConfirm={(settings) => {
+          const castEvent: CastEvent = {
+            id: `cast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: 'cast',
+            frame: settings.startFrame,
+            casterId: settings.casterId,
+            skillName: settings.skillName,
+            duration: settings.durationFrames,
+          };
+          addTimelineEvent(castEvent);
+          selectObject(castEvent.id, 'cast');
+          setShowCastDialog(false);
+        }}
+        onCancel={() => setShowCastDialog(false)}
       />
     </>
   );

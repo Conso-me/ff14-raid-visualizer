@@ -21,8 +21,9 @@ import { getActiveAoEs, type ActiveAoE } from '../utils/getActiveAoEs';
 import { getActiveAnnotations } from '../utils/getActiveAnnotations';
 import { getActiveObjects } from '../utils/getActiveObjects';
 import { getPlayerDebuffs } from '../utils/getPlayerDebuffs';
-import type { Position, Debuff, GimmickObject } from '../../data/types';
+import type { Position, Debuff, GimmickObject, CastEvent, CastDisplay } from '../../data/types';
 import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings } from '../context/editorReducer';
+import { CastBar } from '../../components/ui/CastBar';
 
 const SCREEN_SIZE = 600;
 
@@ -563,6 +564,25 @@ export function FieldEditor() {
     }
     return result;
   }, [mechanic.timeline, mechanic.initialPlayers, currentFrame, mechanic.fps]);
+
+  // Get active casts at current frame
+  const activeCasts = useMemo(() => {
+    const casts: CastDisplay[] = [];
+    for (const event of mechanic.timeline) {
+      if (event.type !== 'cast') continue;
+      const castEvent = event as CastEvent;
+      const endFrame = castEvent.frame + castEvent.duration;
+      if (currentFrame < castEvent.frame || currentFrame > endFrame) continue;
+      const progress = (currentFrame - castEvent.frame) / castEvent.duration;
+      casts.push({
+        id: castEvent.id,
+        casterId: castEvent.casterId,
+        skillName: castEvent.skillName,
+        progress: Math.min(1, Math.max(0, progress)),
+      });
+    }
+    return casts;
+  }, [mechanic.timeline, currentFrame]);
 
   const scaledSize = SCREEN_SIZE * zoom;
 
@@ -1138,6 +1158,19 @@ export function FieldEditor() {
             {/* AoE Preview */}
             {renderAoEPreview()}
           </Field>
+
+          {/* Cast Bars */}
+          {activeCasts.map((cast) => {
+            const enemy = mechanic.enemies.find((e) => e.id === cast.casterId);
+            return (
+              <CastBar
+                key={cast.id}
+                skillName={cast.skillName}
+                progress={cast.progress}
+                casterName={enemy?.name}
+              />
+            );
+          })}
         </div>
       </div>
 
