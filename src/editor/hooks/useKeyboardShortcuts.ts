@@ -9,12 +9,11 @@ interface UseKeyboardShortcutsOptions {
 
 const TOOL_KEYS: Record<string, Tool> = {
   '1': 'select',
-  '2': 'move',
-  '3': 'add_move_event',
-  '4': 'add_aoe',
-  '5': 'add_debuff',
-  '6': 'add_text',
-  '7': 'add_object',
+  '2': 'add_move_event',
+  '3': 'add_aoe',
+  '4': 'add_debuff',
+  '5': 'add_text',
+  '6': 'add_object',
 };
 
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) {
@@ -211,12 +210,11 @@ export const SHORTCUTS = [
   { keys: ['Ctrl', 'S'], descriptionKey: 'shortcuts.saveJson' },
   { divider: true },
   { keys: ['1'], descriptionKey: 'shortcuts.selectTool' },
-  { keys: ['2'], descriptionKey: 'shortcuts.moveTool' },
-  { keys: ['3'], descriptionKey: 'shortcuts.addMoveEventTool' },
-  { keys: ['4'], descriptionKey: 'shortcuts.addAoETool' },
-  { keys: ['5'], descriptionKey: 'shortcuts.addDebuffTool' },
-  { keys: ['6'], descriptionKey: 'shortcuts.addTextTool' },
-  { keys: ['7'], descriptionKey: 'shortcuts.addObjectTool' },
+  { keys: ['2'], descriptionKey: 'shortcuts.addMoveEventTool' },
+  { keys: ['3'], descriptionKey: 'shortcuts.addAoETool' },
+  { keys: ['4'], descriptionKey: 'shortcuts.addDebuffTool' },
+  { keys: ['5'], descriptionKey: 'shortcuts.addTextTool' },
+  { keys: ['6'], descriptionKey: 'shortcuts.addObjectTool' },
   { divider: true },
   { keys: ['?'], descriptionKey: 'shortcuts.shortcutHelp' },
 ] as const;

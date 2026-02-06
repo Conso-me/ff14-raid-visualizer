@@ -1,6 +1,6 @@
 import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent } from '../../data/types';
 
-export type Tool = 'select' | 'move' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object';
+export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object';
 export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | null;
 
 export interface PendingMoveEvent {
@@ -166,6 +166,8 @@ export type EditorAction =
   | { type: 'CANCEL_MOVE_FROM_LIST' }
   // Direct position movement (arrow keys)
   | { type: 'MOVE_PLAYER_POSITION'; payload: { playerId: string; dx: number; dy: number; frame: number } }
+  // Relocate player (move initial position + shift all move events by the same delta)
+  | { type: 'RELOCATE_PLAYER'; payload: { id: string; newPosition: Position } }
   // Visibility toggle (editor UI only)
   | { type: 'TOGGLE_VISIBILITY'; payload: { id: string; objectType: string } };
 
@@ -244,6 +246,42 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           initialPlayers: stateWithHistory.mechanic.initialPlayers.map((p) =>
             p.id === action.payload.id ? { ...p, ...action.payload.updates } : p
           ),
+        },
+      };
+    }
+
+    case 'RELOCATE_PLAYER': {
+      const { id, newPosition } = action.payload;
+      const player = state.mechanic.initialPlayers.find(p => p.id === id);
+      if (!player) return state;
+
+      const dx = newPosition.x - player.position.x;
+      const dy = newPosition.y - player.position.y;
+
+      // Only shift the first move event's `from` (it corresponds to the player's initial position).
+      // Subsequent move events have `from` matching the previous move's `to`, which is unchanged.
+      const playerMoveEvents = state.mechanic.timeline
+        .filter((e): e is MoveEvent => e.type === 'move' && e.targetId === id)
+        .sort((a, b) => a.frame - b.frame);
+      const firstMoveEvent = playerMoveEvents[0];
+
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          initialPlayers: stateWithHistory.mechanic.initialPlayers.map(p =>
+            p.id === id ? { ...p, position: newPosition } : p
+          ),
+          timeline: stateWithHistory.mechanic.timeline.map(e => {
+            if (e.type !== 'move' || e.targetId !== id) return e;
+            if (!firstMoveEvent || e.id !== firstMoveEvent.id) return e;
+            const moveEvent = e as MoveEvent;
+            return {
+              ...moveEvent,
+              from: moveEvent.from ? { x: moveEvent.from.x + dx, y: moveEvent.from.y + dy } : undefined,
+            };
+          }),
         },
       };
     }

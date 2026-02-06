@@ -1,0 +1,12 @@
+[
+  { "time": "08:22", "name": "レプリケーション", "type": "cast" },
+  { "time": "08:22", "name": "※軽減を早まらないよう注意", "type": "text" },
+  { "time": "08:28", "name": "分身出現", "type": "object_show", "shape": "diamond", "size": 2, "color": "#ff3300", "x": -10, "y": 0, "duration": 20 },
+  { "time": "08:28", "name": "分身出現", "type": "object_show", "shape": "diamond", "size": 2, "color": "#9933ff", "x": 10, "y": 0, "duration": 20 },
+  { "time": "08:35", "name": "アルカディアン・ヘル (全体攻撃1)", "type": "text" },
+  { "time": "08:35", "name": "アルカディアン・ヘル 1回目", "type": "aoe_show", "shape": "circle", "radius": 20, "source": "boss", "duration": 2, "color": "#ff0000" },
+  { "time": "08:51", "name": "アルカディアン・ヘル (全体攻撃2)", "type": "text" },
+  { "time": "08:51", "name": "アルカディアン・ヘル 2回目", "type": "aoe_show", "shape": "circle", "radius": 20, "source": "boss", "duration": 2, "color": "#ff0000" },
+  { "time": "09:14", "name": "時間切れ (アルカディアン・ヘル)", "type": "text" },
+  { "time": "09:14", "name": "時間切れ — 全滅", "type": "aoe_show", "shape": "circle", "radius": 20, "source": "boss", "duration": 3, "color": "#ff0000" }
+]

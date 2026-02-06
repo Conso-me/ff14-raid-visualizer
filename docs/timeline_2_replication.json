@@ -1,0 +1,15 @@
+[
+  { "time": "00:28", "name": "レプリケーション", "type": "cast" },
+  { "time": "00:35", "name": "分身出現", "type": "object_show", "shape": "diamond", "size": 2, "color": "#ff3300", "x": -10, "y": 0, "duration": 15 },
+  { "time": "00:35", "name": "分身出現", "type": "object_show", "shape": "diamond", "size": 2, "color": "#9933ff", "x": 10, "y": 0, "duration": 15 },
+  { "time": "00:40", "name": "トップティアスラム / マイティマジック", "type": "text" },
+  { "time": "00:40", "name": "ペア頭割り or 散開", "type": "aoe_show", "shape": "circle", "radius": 4, "source": "player", "count": 8, "duration": 2, "color": "#3366ff" },
+  { "time": "00:46", "name": "スネークキック", "type": "aoe_show", "shape": "cone", "source": "boss", "direction": 0, "angle": 180, "duration": 2, "color": "#ff0000" },
+  { "time": "01:10", "name": "ダブルソバット (1回目)", "type": "cast" },
+  { "time": "01:10", "name": "MT無敵受け推奨", "type": "text" },
+  { "time": "01:14", "name": "前方範囲1回目", "type": "aoe_show", "shape": "cone", "source": "boss", "direction": 0, "angle": 180, "duration": 1, "color": "#6666ff" },
+  { "time": "01:16", "name": "前方範囲2回目", "type": "aoe_show", "shape": "cone", "source": "boss", "direction": 180, "angle": 180, "duration": 1, "color": "#6666ff" },
+  { "time": "01:18", "name": "巨大円（T1）", "type": "aoe_show", "shape": "circle", "radius": 8, "source": "player", "target": "T1", "duration": 2, "color": "#6666ff" },
+  { "time": "01:18", "name": "巨大円（T2）", "type": "aoe_show", "shape": "circle", "radius": 8, "source": "player", "target": "T2", "duration": 2, "color": "#6666ff" },
+  { "time": "01:17", "name": "マナコンビネーション", "type": "cast" }
+]

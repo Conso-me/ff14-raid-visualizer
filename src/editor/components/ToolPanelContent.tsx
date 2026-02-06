@@ -5,8 +5,7 @@ import type { Role, MarkerType, AoEType } from '../../data/types';
 
 const TOOLS = [
   { id: 'select', icon: '\u2196', shortcut: '1' },
-  { id: 'move', icon: '\u270B', shortcut: '2' },
-  { id: 'add_move_event', icon: '\u2192', shortcut: '3' },
+  { id: 'add_move_event', icon: '\u2192', shortcut: '2' },
 ] as const;
 
 const ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
@@ -32,7 +31,6 @@ export function ToolPanelContent() {
 
   const toolLabels: Record<string, string> = {
     select: t('tools.select'),
-    move: t('tools.move'),
     add_move_event: t('tools.addMoveEvent'),
   };
 
@@ -197,7 +195,7 @@ export function ToolPanelContent() {
           }}
         >
           <span>{state.tool === 'add_aoe' ? t('tools.aoePlacementModeOn') : t('tools.aoePlacementMode')}</span>
-          <span style={shortcutStyle}>4</span>
+          <span style={shortcutStyle}>3</span>
         </button>
 
         {/* AoE type selection (shown when in add_aoe mode) */}
@@ -250,7 +248,7 @@ export function ToolPanelContent() {
           }}
         >
           <span>{state.tool === 'add_debuff' ? t('tools.debuffModeOn') : t('tools.debuffMode')}</span>
-          <span style={shortcutStyle}>5</span>
+          <span style={shortcutStyle}>4</span>
         </button>
 
         {state.tool === 'add_debuff' && (
@@ -271,7 +269,7 @@ export function ToolPanelContent() {
           }}
         >
           <span>{state.tool === 'add_text' ? t('tools.textModeOn') : t('tools.textMode')}</span>
-          <span style={shortcutStyle}>6</span>
+          <span style={shortcutStyle}>5</span>
         </button>
         {state.tool === 'add_text' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
@@ -291,7 +289,7 @@ export function ToolPanelContent() {
           }}
         >
           <span>{state.tool === 'add_object' ? t('tools.objectModeOn') : t('tools.objectMode')}</span>
-          <span style={shortcutStyle}>7</span>
+          <span style={shortcutStyle}>6</span>
         </button>
         {state.tool === 'add_object' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>

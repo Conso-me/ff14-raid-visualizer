@@ -1,0 +1,22 @@
+[
+  { "time": "03:04", "name": "変異細胞 (αβ付与)", "type": "debuff_add" },
+  { "time": "03:04", "name": "αまたはβデバフ付与 — 属性に注意", "type": "text" },
+  { "time": "03:10", "name": "マナスフィア 北西", "type": "object_show", "shape": "circle", "size": 2, "color": "#ffffff", "x": -8, "y": -8, "duration": 28 },
+  { "time": "03:10", "name": "マナスフィア 北東", "type": "object_show", "shape": "circle", "size": 2, "color": "#ffffff", "x": 8, "y": -8, "duration": 28 },
+  { "time": "03:10", "name": "マナスフィア 南西", "type": "object_show", "shape": "circle", "size": 2, "color": "#ffffff", "x": -8, "y": 8, "duration": 28 },
+  { "time": "03:10", "name": "マナスフィア 南東", "type": "object_show", "shape": "circle", "size": 2, "color": "#ffffff", "x": 8, "y": 8, "duration": 28 },
+  { "time": "03:38", "name": "マナスフィア・アウェイク", "type": "text" },
+  { "time": "03:38", "name": "マナスフィア爆発 (円)", "type": "aoe_show", "shape": "circle", "radius": 8, "source": "fixed", "duration": 2, "color": "#ffffff" },
+  { "time": "03:50", "name": "ネザーワールド・(ファー or ニア)", "type": "text" },
+  { "time": "03:50", "name": "デバフに応じてタゲサ内外へ移動", "type": "text" },
+  { "time": "03:57", "name": "アルカディアン・フレイム", "type": "cast" },
+  { "time": "04:01", "name": "全体攻撃着弾（軽減・バリア）", "type": "text" },
+  { "time": "04:01", "name": "アルカディアン・フレイム", "type": "aoe_show", "shape": "circle", "radius": 20, "source": "boss", "duration": 2, "color": "#ff6600" },
+  { "time": "04:07", "name": "ダブルソバット (2回目)", "type": "cast" },
+  { "time": "04:07", "name": "ST無敵受け推奨", "type": "text" },
+  { "time": "04:11", "name": "前方範囲1回目", "type": "aoe_show", "shape": "cone", "source": "boss", "direction": 0, "angle": 180, "duration": 1, "color": "#6666ff" },
+  { "time": "04:13", "name": "前方範囲2回目", "type": "aoe_show", "shape": "cone", "source": "boss", "direction": 180, "angle": 180, "duration": 1, "color": "#6666ff" },
+  { "time": "04:15", "name": "巨大円（T1）", "type": "aoe_show", "shape": "circle", "radius": 8, "source": "player", "target": "T1", "duration": 2, "color": "#6666ff" },
+  { "time": "04:15", "name": "巨大円（T2）", "type": "aoe_show", "shape": "circle", "radius": 8, "source": "player", "target": "T2", "duration": 2, "color": "#6666ff" },
+  { "time": "04:14", "name": "マナコンビネーション", "type": "cast" }
+]

@@ -1,0 +1,6 @@
+[
+  { "time": "00:00", "name": "戦闘開始！", "type": "text" },
+  { "time": "00:16", "name": "アルカディアン・フレイム", "type": "cast" },
+  { "time": "00:20", "name": "全体魔法攻撃（軽減・バリア）", "type": "text" },
+  { "time": "00:20", "name": "アルカディアン・フレイム", "type": "aoe_show", "shape": "circle", "radius": 20, "source": "boss", "duration": 2, "color": "#ff6600" }
+]

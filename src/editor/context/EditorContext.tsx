@@ -9,6 +9,7 @@ interface EditorContextValue {
   setMechanic: (mechanic: MechanicData) => void;
   selectObject: (id: string | null, objectType: SelectedObjectType) => void;
   updatePlayer: (id: string, updates: Partial<Player>) => void;
+  relocatePlayer: (id: string, newPosition: Position) => void;
   addPlayer: (player: Player) => void;
   deletePlayer: (id: string) => void;
   updatePlayersOrder: (players: Player[]) => void;
@@ -168,6 +169,10 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
 
   const updatePlayer = useCallback((id: string, updates: Partial<Player>) => {
     dispatch({ type: 'UPDATE_PLAYER', payload: { id, updates } });
+  }, []);
+
+  const relocatePlayer = useCallback((id: string, newPosition: Position) => {
+    dispatch({ type: 'RELOCATE_PLAYER', payload: { id, newPosition } });
   }, []);
 
   const addPlayer = useCallback((player: Player) => {
@@ -563,6 +568,7 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     setMechanic,
     selectObject,
     updatePlayer,
+    relocatePlayer,
     addPlayer,
     deletePlayer,
     updatePlayersOrder,

@@ -16,7 +16,7 @@ import { MovementPaths } from './MovementPaths';
 import { DebuffDialog } from './DebuffDialog';
 import { TextAnnotationDialog } from './TextAnnotationDialog';
 import { ObjectDialog } from './ObjectDialog';
-import { getPlayersAtFrame, findActiveMoveEvent } from '../utils/getPlayersAtFrame';
+import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, type ActiveAoE } from '../utils/getActiveAoEs';
 import { getActiveAnnotations } from '../utils/getActiveAnnotations';
 import { getActiveObjects } from '../utils/getActiveObjects';
@@ -31,7 +31,7 @@ export function FieldEditor() {
   const {
     state,
     selectObject,
-    updatePlayer,
+    relocatePlayer,
     updateEnemy,
     updateMarker,
     updateAoE,
@@ -41,7 +41,6 @@ export function FieldEditor() {
     startMoveEvent,
     completeMoveEvent,
     cancelMoveEvent,
-    updateTimelineEvent,
     startAoEPlacement,
     completeAoEPlacement,
     cancelAoEPlacement,
@@ -238,7 +237,7 @@ export function FieldEditor() {
       }
 
       // Move event mode (both 'move' and 'add_move_event' tools)
-      if (tool === 'move' || tool === 'add_move_event') {
+      if (tool === 'add_move_event') {
         if (!pendingMoveEvent) {
           // Step 1: Select player(s) to move
           const playersAtPos = findPlayersAtPos(gamePos);
@@ -344,7 +343,7 @@ export function FieldEditor() {
     (e: React.MouseEvent) => {
       const gamePos = clampToField(getGamePosFromEvent(e));
 
-      if ((tool === 'move' || tool === 'add_move_event') && pendingMoveEvent) {
+      if ((tool === 'add_move_event') && pendingMoveEvent) {
         setMousePos(gamePos);
       } else if (tool === 'add_aoe' && !showAoEDialog) {
         setMousePos(gamePos);
@@ -394,16 +393,7 @@ export function FieldEditor() {
 
       switch (dragging.type) {
         case 'player': {
-          // Check if there's an active move event at the current frame
-          const activeMoveEvent = findActiveMoveEvent(mechanic.timeline, dragging.id, currentFrame);
-
-          if (activeMoveEvent) {
-            // Update the move event's 'to' position
-            updateTimelineEvent(activeMoveEvent.id, { to: gamePos });
-          } else {
-            // Update the initial position
-            updatePlayer(dragging.id, { position: gamePos });
-          }
+          relocatePlayer(dragging.id, gamePos);
           break;
         }
         case 'enemy':
@@ -435,7 +425,7 @@ export function FieldEditor() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, getGamePosFromEvent, clampToField, updatePlayer, updateEnemy, updateMarker, updateAoE, updateTextAnnotation, updateObject, mechanic.timeline, currentFrame, updateTimelineEvent]);
+  }, [dragging, getGamePosFromEvent, clampToField, relocatePlayer, updateEnemy, updateMarker, updateAoE, updateTextAnnotation, updateObject]);
 
   // Cancel move event or AoE placement on Escape
   React.useEffect(() => {
@@ -771,7 +761,7 @@ export function FieldEditor() {
   const getCursor = () => {
     if (dragging) return 'grabbing';
     if (moveFromListMode.active) return 'crosshair';
-    if (tool === 'move' || tool === 'add_move_event') {
+    if (tool === 'add_move_event') {
       if (pendingMoveEvent) return 'crosshair';
       return 'pointer';
     }
@@ -788,7 +778,7 @@ export function FieldEditor() {
       const player = mechanic.initialPlayers.find(p => p.id === moveFromListMode.playerId);
       return `フィールドをクリックして ${player?.role || 'プレイヤー'} の移動先を指定 | Escでキャンセル`;
     }
-    if (tool === 'move' || tool === 'add_move_event') {
+    if (tool === 'add_move_event') {
       if (pendingMoveEvent) {
         const playerCount = pendingMoveEvent.playerIds.length;
         const playerInfo = playerCount > 1 ? `${playerCount}人選択中` : pendingMoveEvent.playerIds[0];
@@ -1175,7 +1165,7 @@ export function FieldEditor() {
       </div>
 
       {/* Info bar */}
-      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'move' || tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
         {getInfoText()}
       </div>
 
