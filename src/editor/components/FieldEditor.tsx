@@ -910,6 +910,8 @@ export function FieldEditor() {
             gridEnabled={mechanic.field.gridEnabled}
             backgroundImage={fieldAtCurrentFrame.backgroundImage}
             backgroundOpacity={fieldAtCurrentFrame.backgroundOpacity}
+            prevBackgroundImage={fieldAtCurrentFrame.prevBackgroundImage}
+            prevBackgroundOpacity={fieldAtCurrentFrame.prevBackgroundOpacity}
           >
             {/* AoEs (render first, below other elements) - with fade animation */}
             {activeAoEs.filter((aoe) => !isObjectHidden(aoe.id, 'aoe')).map((aoe) => (

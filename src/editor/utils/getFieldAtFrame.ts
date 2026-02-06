@@ -4,6 +4,8 @@ export interface FieldAtFrame {
   backgroundColor: string;
   backgroundImage?: string;
   backgroundOpacity?: number;
+  prevBackgroundImage?: string;     // フェード中の前画像
+  prevBackgroundOpacity?: number;   // フェード中の前画像opacity
 }
 
 export function getFieldAtFrame(
@@ -72,22 +74,27 @@ export function getFieldAtFrame(
       (currentFrame - activeRevert.frame) / Math.max(1, fadeOut)
     );
     // override → base に戻していく
-    if (override.backgroundOpacity !== undefined) {
-      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
-      result.backgroundOpacity =
-        override.backgroundOpacity +
-        (baseOpacity - override.backgroundOpacity) * progress;
-    }
     if (override.backgroundColor !== undefined) {
       // 色のフェードは難しいので、進行率50%以上でベースに戻す
       result.backgroundColor =
         progress >= 0.5 ? baseField.backgroundColor : override.backgroundColor;
     }
     if (override.backgroundImage !== undefined) {
-      result.backgroundImage =
-        progress >= 0.5
-          ? baseField.backgroundImage
-          : override.backgroundImage;
+      // 画像変更あり → クロスフェード: override画像がフェードアウト、base画像がフェードイン
+      const overrideOpacity = override.backgroundOpacity ?? baseField.backgroundOpacity ?? 0.5;
+      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
+      if (override.backgroundImage) {
+        result.prevBackgroundImage = override.backgroundImage;
+        result.prevBackgroundOpacity = overrideOpacity * (1 - progress);
+      }
+      result.backgroundImage = baseField.backgroundImage;
+      result.backgroundOpacity = baseOpacity * progress;
+    } else if (override.backgroundOpacity !== undefined) {
+      // 画像変更なし、opacityのみ → 従来通り補間
+      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
+      result.backgroundOpacity =
+        override.backgroundOpacity +
+        (baseOpacity - override.backgroundOpacity) * progress;
     }
     return result;
   }
@@ -100,21 +107,26 @@ export function getFieldAtFrame(
       (currentFrame - activeChange.frame) / Math.max(1, fadeIn)
     );
     // base → override に向かっていく
-    if (override.backgroundOpacity !== undefined) {
-      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
-      result.backgroundOpacity =
-        baseOpacity +
-        (override.backgroundOpacity - baseOpacity) * progress;
-    }
     if (override.backgroundColor !== undefined) {
       result.backgroundColor =
         progress >= 0.5 ? override.backgroundColor : baseField.backgroundColor;
     }
     if (override.backgroundImage !== undefined) {
-      result.backgroundImage =
-        progress >= 0.5
-          ? override.backgroundImage
-          : baseField.backgroundImage;
+      // 画像変更あり → クロスフェード: base画像がフェードアウト、override画像がフェードイン
+      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
+      const targetOpacity = override.backgroundOpacity ?? baseOpacity;
+      if (baseField.backgroundImage) {
+        result.prevBackgroundImage = baseField.backgroundImage;
+        result.prevBackgroundOpacity = baseOpacity * (1 - progress);
+      }
+      result.backgroundImage = override.backgroundImage;
+      result.backgroundOpacity = targetOpacity * progress;
+    } else if (override.backgroundOpacity !== undefined) {
+      // 画像変更なし、opacityのみ → 従来通り補間
+      const baseOpacity = baseField.backgroundOpacity ?? 0.5;
+      result.backgroundOpacity =
+        baseOpacity +
+        (override.backgroundOpacity - baseOpacity) * progress;
     }
     return result;
   }

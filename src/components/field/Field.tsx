@@ -11,6 +11,8 @@ interface FieldProps {
   gridEnabled?: boolean;
   backgroundImage?: string; // Base64画像データ
   backgroundOpacity?: number; // 0-1
+  prevBackgroundImage?: string; // クロスフェード中の前画像
+  prevBackgroundOpacity?: number; // クロスフェード中の前画像opacity
   children?: React.ReactNode;
 }
 
@@ -24,6 +26,8 @@ export const Field: React.FC<FieldProps> = ({
   gridEnabled = true,
   backgroundImage,
   backgroundOpacity = 0.5,
+  prevBackgroundImage,
+  prevBackgroundOpacity,
   children,
 }) => {
   const halfSize = screenSize / 2;
@@ -151,10 +155,15 @@ export const Field: React.FC<FieldProps> = ({
   };
 
   // Render background image with clip path
+  const clipId = React.useId();
   const renderBackgroundImage = () => {
-    if (!backgroundImage) return null;
+    if (!backgroundImage && !prevBackgroundImage) return null;
 
-    const clipPathId = `field-clip-${Math.random().toString(36).substr(2, 9)}`;
+    const clipPathId = `field-clip-${clipId}`;
+    const imgX = type === 'rectangle' ? (screenSize - screenWidth) / 2 : 0;
+    const imgY = type === 'rectangle' ? (screenSize - screenHeight) / 2 : 0;
+    const imgW = type === 'rectangle' ? screenWidth : screenSize;
+    const imgH = type === 'rectangle' ? screenHeight : screenSize;
 
     return (
       <>
@@ -174,16 +183,32 @@ export const Field: React.FC<FieldProps> = ({
             )}
           </clipPath>
         </defs>
-        <image
-          href={backgroundImage}
-          x={type === 'rectangle' ? (screenSize - screenWidth) / 2 : 0}
-          y={type === 'rectangle' ? (screenSize - screenHeight) / 2 : 0}
-          width={type === 'rectangle' ? screenWidth : screenSize}
-          height={type === 'rectangle' ? screenHeight : screenSize}
-          opacity={backgroundOpacity}
-          preserveAspectRatio="xMidYMid slice"
-          clipPath={`url(#${clipPathId})`}
-        />
+        {/* 前画像（クロスフェード中のフェードアウト側） */}
+        {prevBackgroundImage && prevBackgroundOpacity != null && prevBackgroundOpacity > 0 && (
+          <image
+            href={prevBackgroundImage}
+            x={imgX}
+            y={imgY}
+            width={imgW}
+            height={imgH}
+            opacity={prevBackgroundOpacity}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#${clipPathId})`}
+          />
+        )}
+        {/* 現在画像 */}
+        {backgroundImage && (
+          <image
+            href={backgroundImage}
+            x={imgX}
+            y={imgY}
+            width={imgW}
+            height={imgH}
+            opacity={backgroundOpacity}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#${clipPathId})`}
+          />
+        )}
       </>
     );
   };

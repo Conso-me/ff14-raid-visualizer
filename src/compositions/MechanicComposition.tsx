@@ -54,6 +54,8 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
         gridEnabled={mechanic.field.gridEnabled}
         backgroundImage={state.fieldState.backgroundImage}
         backgroundOpacity={state.fieldState.backgroundOpacity}
+        prevBackgroundImage={state.fieldState.prevBackgroundImage}
+        prevBackgroundOpacity={state.fieldState.prevBackgroundOpacity}
       >
         {/* フィールドマーカー */}
         {mechanic.markers.map((marker) => (
