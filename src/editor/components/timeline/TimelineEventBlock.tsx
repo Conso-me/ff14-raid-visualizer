@@ -35,6 +35,10 @@ function getEventColor(event: TimelineEvent): string {
       return '#ffaa00';
     case 'object_hide':
       return '#ffaa0080';
+    case 'marker_show':
+      return '#ff4488';
+    case 'marker_hide':
+      return '#ff448880';
     default:
       return '#888';
   }
@@ -57,6 +61,10 @@ function getEventDuration(event: TimelineEvent): number {
     case 'object_show':
       return event.fadeInDuration || 1;
     case 'object_hide':
+      return event.fadeOutDuration || 1;
+    case 'marker_show':
+      return event.fadeInDuration || 1;
+    case 'marker_hide':
       return event.fadeOutDuration || 1;
     default:
       return 10; // Default width for instant events
@@ -93,6 +101,10 @@ function getEventLabel(event: TimelineEvent): string {
       return `BG Change`;
     case 'field_revert':
       return `BG Revert`;
+    case 'marker_show':
+      return `Marker: ${event.marker.type}`;
+    case 'marker_hide':
+      return `Hide Marker: ${event.markerId}`;
   }
 }
 

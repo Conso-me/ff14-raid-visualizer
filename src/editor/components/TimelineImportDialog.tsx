@@ -806,6 +806,8 @@ export function TimelineImportDialog({
       object_hide: 'Object Hide',
       field_change: 'Background Change',
       field_revert: 'Background Revert',
+      marker_show: 'Marker',
+      marker_hide: 'Marker Hide',
     };
     return labels[type] || type;
   }, []);

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { Position, AoEType, AoESourceType, AoETrackingMode, Enemy, Player, GimmickObject } from '../../data/types';
+import type { Position, AoEType, AoEIndicator, AoESourceType, AoETrackingMode, Enemy, Player, GimmickObject } from '../../data/types';
 import type { AoESettings } from '../context/editorReducer';
 import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,6 +9,7 @@ interface AoEDialogProps {
   isOpen: boolean;
   position: Position;
   type: AoEType;
+  indicator?: AoEIndicator | null;
   currentFrame: number;
   fps: number;
   onConfirm: (settings: AoESettings) => void;
@@ -27,6 +28,10 @@ function getDefaultParams(type: AoEType): Record<string, number> {
       return { innerRadius: 5, outerRadius: 12 };
     case 'cross':
       return { width: 4, length: 20 };
+    case 'distance_decay':
+      return { direction: 0, length: 20, width: 15 };
+    case 'rectangle':
+      return { rectWidth: 10, rectHeight: 6, rotation: 0 };
     default:
       return {};
   }
@@ -36,6 +41,7 @@ export function AoEDialog({
   isOpen,
   position,
   type,
+  indicator,
   currentFrame,
   fps,
   onConfirm,
@@ -61,6 +67,7 @@ export function AoEDialog({
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
   const [autoDirection, setAutoDirection] = useState(false);
+  const [indicatorCountValue, setIndicatorCountValue] = useState(1);
 
   if (!isOpen) return null;
 
@@ -76,13 +83,34 @@ export function AoEDialog({
     line: t('aoeDialog.line'),
     donut: t('aoeDialog.donut'),
     cross: t('aoeDialog.cross'),
+    distance_decay: t('aoeDialog.distanceDecay'),
+    rectangle: t('aoeDialog.rectangle'),
   };
+
+  // indicator がある場合はタイトルに付加
+  const indicatorNameMap: Record<string, string> = {
+    stack: t('aoeDialog.indicatorStack'),
+    knockback: t('aoeDialog.indicatorKnockback'),
+    eye: t('aoeDialog.indicatorEye'),
+    stack_count: t('aoeDialog.indicatorStackCount'),
+    proximity: t('aoeDialog.indicatorProximity'),
+    tankbuster: t('aoeDialog.indicatorTankbuster'),
+    target: t('aoeDialog.indicatorTarget'),
+    chase: t('aoeDialog.indicatorChase'),
+    knockback_radial: t('aoeDialog.indicatorKnockbackRadial'),
+    knockback_line: t('aoeDialog.indicatorKnockbackLine'),
+  };
+  const indicatorSuffix = indicator && indicatorNameMap[indicator]
+    ? `（${indicatorNameMap[indicator]}）`
+    : '';
 
   const handleConfirm = () => {
     onConfirm({
       type,
       position,
       ...params,
+      ...(indicator ? { indicator } : {}),
+      ...(indicator === 'stack_count' ? { indicatorCount: indicatorCountValue } : {}),
       color,
       opacity,
       startFrame,
@@ -158,7 +186,7 @@ export function AoEDialog({
         }}
       >
         <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#fff' }}>
-          {t('aoeDialog.title', { type: typeNames[type] })}
+          {t('aoeDialog.title', { type: typeNames[type] + indicatorSuffix })}
         </h2>
 
         {/* Position (read-only) */}
@@ -375,18 +403,34 @@ export function AoEDialog({
           <div style={sectionTitleStyle}>{t('aoeDialog.sizeSettings')}</div>
 
           {type === 'circle' && (
-            <label style={labelStyle}>
-              {t('aoeDialog.radius')}
-              <input
-                type="number"
-                value={params.radius || 5}
-                onChange={(e) => setParams({ ...params, radius: parseFloat(e.target.value) || 0 })}
-                min={1}
-                max={30}
-                step={0.5}
-                style={inputStyle}
-              />
-            </label>
+            <>
+              <label style={labelStyle}>
+                {t('aoeDialog.radius')}
+                <input
+                  type="number"
+                  value={params.radius || 5}
+                  onChange={(e) => setParams({ ...params, radius: parseFloat(e.target.value) || 0 })}
+                  min={1}
+                  max={30}
+                  step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+              {indicator === 'stack_count' && (
+                <label style={labelStyle}>
+                  {t('aoeDialog.indicatorCount')}
+                  <input
+                    type="number"
+                    value={indicatorCountValue}
+                    onChange={(e) => setIndicatorCountValue(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
+                    min={1}
+                    max={4}
+                    step={1}
+                    style={inputStyle}
+                  />
+                </label>
+              )}
+            </>
           )}
 
           {type === 'cone' && (
@@ -523,6 +567,88 @@ export function AoEDialog({
                   min={1}
                   max={40}
                   step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+            </>
+          )}
+
+          {type === 'distance_decay' && (
+            <>
+              <label style={labelStyle}>
+                {t('aoeDialog.direction')}
+                <input
+                  type="number"
+                  value={params.direction ?? 0}
+                  onChange={(e) => setParams({ ...params, direction: parseFloat(e.target.value) || 0 })}
+                  min={-180}
+                  max={180}
+                  step={5}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t('aoeDialog.length')}
+                <input
+                  type="number"
+                  value={params.length || 20}
+                  onChange={(e) => setParams({ ...params, length: parseFloat(e.target.value) || 0 })}
+                  min={1}
+                  max={40}
+                  step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t('aoeDialog.lineWidth')}
+                <input
+                  type="number"
+                  value={params.width || 15}
+                  onChange={(e) => setParams({ ...params, width: parseFloat(e.target.value) || 0 })}
+                  min={1}
+                  max={40}
+                  step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+            </>
+          )}
+
+          {type === 'rectangle' && (
+            <>
+              <label style={labelStyle}>
+                {t('aoeDialog.rectWidth')}
+                <input
+                  type="number"
+                  value={params.rectWidth || 10}
+                  onChange={(e) => setParams({ ...params, rectWidth: parseFloat(e.target.value) || 0 })}
+                  min={0.5}
+                  max={40}
+                  step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t('aoeDialog.rectHeight')}
+                <input
+                  type="number"
+                  value={params.rectHeight || 6}
+                  onChange={(e) => setParams({ ...params, rectHeight: parseFloat(e.target.value) || 0 })}
+                  min={0.5}
+                  max={40}
+                  step={0.5}
+                  style={inputStyle}
+                />
+              </label>
+              <label style={labelStyle}>
+                {t('aoeDialog.rotation')}
+                <input
+                  type="number"
+                  value={params.rotation ?? 0}
+                  onChange={(e) => setParams({ ...params, rotation: parseFloat(e.target.value) || 0 })}
+                  min={-180}
+                  max={180}
+                  step={5}
                   style={inputStyle}
                 />
               </label>

@@ -8,6 +8,7 @@ import { FieldMarker } from '../components/marker/FieldMarker';
 import { Player } from '../components/player/Player';
 import { Enemy } from '../components/enemy/Enemy';
 import { AoE } from '../components/aoe/AoE';
+import { MechanicMarker } from '../components/markers/MechanicMarker';
 import { GimmickObjectRenderer } from '../components/object/GimmickObjectRenderer';
 import {
   ExplanationText,
@@ -86,6 +87,10 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             armWidth={aoe.armWidth}
             armLength={aoe.armLength}
             rotation={aoe.rotation}
+            indicator={aoe.indicator}
+            indicatorCount={aoe.indicatorCount}
+            rectWidth={aoe.rectWidth}
+            rectHeight={aoe.rectHeight}
             fieldSize={mechanic.field.size}
             screenSize={FIELD_DEFAULTS.screenSize}
           />
@@ -96,6 +101,22 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
           <GimmickObjectRenderer
             key={obj.id}
             object={obj}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
+          />
+        ))}
+
+        {/* メカニクスマーカー */}
+        {state.activeMechanicMarkers.map((mm) => (
+          <MechanicMarker
+            key={mm.id}
+            type={mm.type}
+            position={mm.position}
+            size={mm.size}
+            color={mm.color}
+            opacity={mm.currentOpacity}
+            rotation={mm.rotation}
+            count={mm.count}
             fieldSize={mechanic.field.size}
             screenSize={FIELD_DEFAULTS.screenSize}
           />

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AoE, AoEType, Player, AoESourceType, AoETrackingMode, GimmickObject } from '../../../data/types';
+import type { AoE, AoEType, AoEIndicator, Player, AoESourceType, AoETrackingMode, GimmickObject } from '../../../data/types';
 import { PositionInput } from './inputs/PositionInput';
 import { NumberInput } from './inputs/NumberInput';
 import { ColorInput } from './inputs/ColorInput';
@@ -19,6 +19,28 @@ const AOE_TYPE_OPTIONS = [
   { value: 'cone', label: 'Cone' },
   { value: 'line', label: 'Line' },
   { value: 'cross', label: 'Cross' },
+  { value: 'distance_decay', label: 'Distance Decay' },
+  { value: 'rectangle', label: 'Rectangle' },
+];
+
+const INDICATOR_OPTIONS_BASIC = [
+  { value: '', label: 'None' },
+  { value: 'stack', label: 'Stack' },
+  { value: 'knockback', label: 'Knockback' },
+];
+
+const INDICATOR_OPTIONS_CIRCLE = [
+  { value: '', label: 'None' },
+  { value: 'stack', label: 'Stack' },
+  { value: 'knockback', label: 'Knockback' },
+  { value: 'eye', label: 'Eye' },
+  { value: 'stack_count', label: 'Stack Count' },
+  { value: 'proximity', label: 'Proximity' },
+  { value: 'tankbuster', label: 'Tankbuster' },
+  { value: 'target', label: 'Target' },
+  { value: 'chase', label: 'Chase' },
+  { value: 'knockback_radial', label: 'KB (Radial)' },
+  { value: 'knockback_line', label: 'KB (Line)' },
 ];
 
 const SOURCE_TYPE_OPTIONS = [
@@ -184,6 +206,66 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [], objects =
           </>
         );
 
+      case 'distance_decay':
+        return (
+          <>
+            <NumberInput
+              label="Direction (degrees)"
+              value={aoe.direction || 0}
+              onChange={(value) => onUpdate({ direction: value })}
+              min={0}
+              max={360}
+              step={5}
+            />
+            <NumberInput
+              label="Length"
+              value={aoe.length || 20}
+              onChange={(value) => onUpdate({ length: value })}
+              min={1}
+              max={40}
+              step={0.5}
+            />
+            <NumberInput
+              label="Width"
+              value={aoe.width || 15}
+              onChange={(value) => onUpdate({ width: value })}
+              min={1}
+              max={40}
+              step={0.5}
+            />
+          </>
+        );
+
+      case 'rectangle':
+        return (
+          <>
+            <NumberInput
+              label="Width"
+              value={aoe.rectWidth || 10}
+              onChange={(value) => onUpdate({ rectWidth: value })}
+              min={0.5}
+              max={40}
+              step={0.5}
+            />
+            <NumberInput
+              label="Height"
+              value={aoe.rectHeight || 6}
+              onChange={(value) => onUpdate({ rectHeight: value })}
+              min={0.5}
+              max={40}
+              step={0.5}
+            />
+            <NumberInput
+              label="Rotation (degrees)"
+              value={aoe.rotation || 0}
+              onChange={(value) => onUpdate({ rotation: value })}
+              min={0}
+              max={360}
+              step={5}
+            />
+          </>
+        );
+
       default:
         return null;
     }
@@ -203,6 +285,30 @@ export function AoEProperties({ aoe, onUpdate, onDelete, players = [], objects =
         onChange={(value) => onUpdate({ type: value as AoEType })}
         options={AOE_TYPE_OPTIONS}
       />
+
+      {(aoe.type === 'circle' || aoe.type === 'line' || aoe.type === 'rectangle') && (
+        <>
+          <SelectInput
+            label="Indicator"
+            value={aoe.indicator || ''}
+            onChange={(value) => onUpdate({
+              indicator: (value || undefined) as AoEIndicator | undefined,
+              ...(value !== 'stack_count' ? { indicatorCount: undefined } : {}),
+            })}
+            options={aoe.type === 'circle' ? INDICATOR_OPTIONS_CIRCLE : INDICATOR_OPTIONS_BASIC}
+          />
+          {aoe.type === 'circle' && aoe.indicator === 'stack_count' && (
+            <NumberInput
+              label="Count (1-4)"
+              value={aoe.indicatorCount || 1}
+              onChange={(value) => onUpdate({ indicatorCount: Math.max(1, Math.min(4, value)) })}
+              min={1}
+              max={4}
+              step={1}
+            />
+          )}
+        </>
+      )}
 
       <PositionInput
         label="Position"

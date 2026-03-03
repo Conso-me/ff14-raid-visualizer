@@ -7,10 +7,12 @@ import { MarkerProperties } from './properties/MarkerProperties';
 import { AoEProperties } from './properties/AoEProperties';
 import { TextAnnotationProperties } from './properties/TextAnnotationProperties';
 import { ObjectProperties } from './properties/ObjectProperties';
+import { MechanicMarkerProperties } from './properties/MechanicMarkerProperties';
 import { CastEventProperties } from './properties/CastEventProperties';
 import { FieldChangeProperties } from './properties/FieldChangeProperties';
 import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getObjectEventPairs, getActiveObjects } from '../utils/getActiveObjects';
+import { getMarkerEventPairs } from '../utils/getActiveMechanicMarkers';
 import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
 import type { CastEvent, FieldOverride } from '../../data/types';
 
@@ -33,6 +35,8 @@ export function PropertyPanel() {
     deleteTextAnnotation,
     updateObject,
     deleteObject,
+    updateMechanicMarker,
+    deleteMechanicMarker,
     updateTimelineEvent,
     addTimelineEvent,
   } = useEditor();
@@ -228,6 +232,47 @@ export function PropertyPanel() {
                   objectId: selectedObjectId,
                 };
                 addTimelineEvent(newHideEvent);
+              }
+            }}
+          />
+        );
+      }
+
+      case 'mechanic_marker': {
+        const markerPairs = getMarkerEventPairs(mechanic.timeline);
+        const mmPair = markerPairs.find((p) => p.marker.id === selectedObjectId);
+        if (!mmPair) return null;
+        return (
+          <MechanicMarkerProperties
+            marker={mmPair.marker}
+            showFrame={mmPair.showFrame}
+            hideFrame={mmPair.hideFrame}
+            fps={mechanic.fps}
+            onUpdate={(updates) => updateMechanicMarker(selectedObjectId, updates)}
+            onDelete={() => deleteMechanicMarker(selectedObjectId)}
+            onUpdateTiming={(newShowFrame, newHideFrame) => {
+              const showEvent = mechanic.timeline.find(
+                (e) => e.type === 'marker_show' && e.marker.id === selectedObjectId
+              );
+              if (showEvent) {
+                updateTimelineEvent(showEvent.id, { frame: newShowFrame });
+              }
+              const hideEvent = mechanic.timeline.find(
+                (e) => e.type === 'marker_hide' && e.markerId === selectedObjectId
+              );
+              if (newHideFrame === null) {
+                if (hideEvent) {
+                  deleteTimelineEvent(hideEvent.id);
+                }
+              } else if (hideEvent) {
+                updateTimelineEvent(hideEvent.id, { frame: newHideFrame });
+              } else {
+                addTimelineEvent({
+                  id: `event_${Date.now()}`,
+                  type: 'marker_hide' as const,
+                  frame: newHideFrame,
+                  markerId: selectedObjectId,
+                });
               }
             }}
           />

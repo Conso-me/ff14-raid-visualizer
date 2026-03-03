@@ -30,7 +30,20 @@ export interface Player {
 }
 
 // AoE（攻撃範囲）の種類
-export type AoEType = 'circle' | 'cone' | 'line' | 'donut' | 'cross';
+export type AoEType = 'circle' | 'cone' | 'line' | 'donut' | 'cross' | 'distance_decay' | 'rectangle';
+
+// AoEインジケーター（頭割り/ノックバック/マーカーオーバーレイ）
+export type AoEIndicator =
+  | 'stack'
+  | 'knockback' // 後方互換: knockback_radialと同一扱い
+  | 'eye'
+  | 'stack_count'
+  | 'proximity'
+  | 'tankbuster'
+  | 'target'
+  | 'chase'
+  | 'knockback_radial'
+  | 'knockback_line';
 
 // AoEの起点タイプ
 export type AoESourceType = 'fixed' | 'boss' | 'object' | 'player' | 'debuff';
@@ -61,6 +74,12 @@ export interface AoE {
   armWidth?: number;
   armLength?: number;
   rotation?: number; // 回転角度（度）
+  // rectangle（矩形）用
+  rectWidth?: number;
+  rectHeight?: number;
+  // 頭割り/ノックバック矢印オーバーレイ
+  indicator?: AoEIndicator;
+  indicatorCount?: number; // stack_count用（1-4）
   // ===== 新規: 起点設定 =====
   sourceType?: AoESourceType; // 'fixed'=紐づけなし（従来通り）
   sourceId?: string; // boss/object/player ID
@@ -79,6 +98,36 @@ export interface AoE {
   // line/coneタイプで使用: 起点からターゲットへの方向を自動設定
   // ソースからのオフセット
   offsetFromSource?: Position;
+}
+
+// メカニクスマーカーの種類
+export type MechanicMarkerType =
+  | 'eye'
+  | 'stack'
+  | 'stack_count'
+  | 'proximity'
+  | 'tankbuster'
+  | 'target'
+  | 'chase'
+  | 'knockback_radial'
+  | 'knockback_line'
+  | 'telegraph';
+
+// メカニクスマーカー
+export interface MechanicMarker {
+  id: string;
+  type: MechanicMarkerType;
+  position: Position;
+  size?: number; // デフォルト: 3
+  color?: string;
+  opacity?: number;
+  rotation?: number;
+  count?: number; // stack_count用（1-4）
+}
+
+// メカニクスマーカー表示状態
+export interface MechanicMarkerDisplay extends MechanicMarker {
+  currentOpacity: number;
 }
 
 // フィールド
@@ -150,7 +199,9 @@ export type TimelineEventType =
   | 'object_show' // オブジェクト表示
   | 'object_hide' // オブジェクト非表示
   | 'field_change' // フィールド背景変更
-  | 'field_revert'; // フィールド背景復元
+  | 'field_revert' // フィールド背景復元
+  | 'marker_show' // メカニクスマーカー表示
+  | 'marker_hide'; // メカニクスマーカー非表示
 
 // タイムラインイベント基底
 export interface TimelineEventBase {
@@ -272,6 +323,20 @@ export interface FieldRevertEvent extends TimelineEventBase {
   fadeOutDuration?: number; // フェードアウトのフレーム数
 }
 
+// メカニクスマーカー表示イベント
+export interface MarkerShowEvent extends TimelineEventBase {
+  type: 'marker_show';
+  marker: MechanicMarker;
+  fadeInDuration?: number;
+}
+
+// メカニクスマーカー非表示イベント
+export interface MarkerHideEvent extends TimelineEventBase {
+  type: 'marker_hide';
+  markerId: string;
+  fadeOutDuration?: number;
+}
+
 // 全イベント型
 export type TimelineEvent =
   | MoveEvent
@@ -287,7 +352,9 @@ export type TimelineEvent =
   | ObjectShowEvent
   | ObjectHideEvent
   | FieldChangeEvent
-  | FieldRevertEvent;
+  | FieldRevertEvent
+  | MarkerShowEvent
+  | MarkerHideEvent;
 
 // 敵（ボス）
 export interface Enemy {

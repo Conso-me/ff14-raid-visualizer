@@ -14,6 +14,7 @@ const TOOL_KEYS: Record<string, Tool> = {
   '4': 'add_debuff',
   '5': 'add_text',
   '6': 'add_object',
+  '7': 'add_mechanic_marker',
 };
 
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) {
@@ -215,6 +216,7 @@ export const SHORTCUTS = [
   { keys: ['4'], descriptionKey: 'shortcuts.addDebuffTool' },
   { keys: ['5'], descriptionKey: 'shortcuts.addTextTool' },
   { keys: ['6'], descriptionKey: 'shortcuts.addObjectTool' },
+  { keys: ['7'], descriptionKey: 'shortcuts.addMechanicMarkerTool' },
   { divider: true },
   { keys: ['?'], descriptionKey: 'shortcuts.shortcutHelp' },
 ] as const;

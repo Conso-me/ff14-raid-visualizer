@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, TextAnnotation, GimmickObject } from '../../data/types';
-import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type FieldChangeSettings, type MoveFromListMode } from './editorReducer';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, TextAnnotation, GimmickObject, MechanicMarkerType, MechanicMarker } from '../../data/types';
+import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type FieldChangeSettings, type MoveFromListMode, type MechanicMarkerSettings } from './editorReducer';
 
 interface EditorContextValue {
   state: EditorState;
@@ -49,6 +49,7 @@ interface EditorContextValue {
   cancelMoveEvent: () => void;
   // AoE placement methods
   setAoEType: (type: AoEType) => void;
+  setAoEIndicator: (indicator: AoEIndicator | null) => void;
   startAoEPlacement: (position: Position) => void;
   completeAoEPlacement: (settings: AoESettings) => void;
   cancelAoEPlacement: () => void;
@@ -68,6 +69,13 @@ interface EditorContextValue {
   cancelObjectPlacement: () => void;
   updateObject: (id: string, updates: Partial<GimmickObject>) => void;
   deleteObject: (id: string) => void;
+  // Mechanic marker methods
+  setMechanicMarkerType: (type: MechanicMarkerType) => void;
+  startMechanicMarkerPlacement: (position: Position) => void;
+  completeMechanicMarkerPlacement: (settings: MechanicMarkerSettings) => void;
+  cancelMechanicMarkerPlacement: () => void;
+  updateMechanicMarker: (id: string, updates: Partial<MechanicMarker>) => void;
+  deleteMechanicMarker: (id: string) => void;
   // Selection actions
   deleteSelectedObject: () => void;
   copySelectedObject: () => void;
@@ -354,6 +362,10 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'SET_AOE_TYPE', payload: type });
   }, []);
 
+  const setAoEIndicator = useCallback((indicator: AoEIndicator | null) => {
+    dispatch({ type: 'SET_AOE_INDICATOR', payload: indicator });
+  }, []);
+
   const startAoEPlacement = useCallback((position: Position) => {
     dispatch({ type: 'START_AOE_PLACEMENT', payload: { position } });
   }, []);
@@ -418,6 +430,30 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'DELETE_OBJECT', payload: id });
   }, []);
 
+  const setMechanicMarkerType = useCallback((type: MechanicMarkerType) => {
+    dispatch({ type: 'SET_MECHANIC_MARKER_TYPE', payload: type });
+  }, []);
+
+  const startMechanicMarkerPlacement = useCallback((position: Position) => {
+    dispatch({ type: 'START_MECHANIC_MARKER_PLACEMENT', payload: { position } });
+  }, []);
+
+  const completeMechanicMarkerPlacement = useCallback((settings: MechanicMarkerSettings) => {
+    dispatch({ type: 'COMPLETE_MECHANIC_MARKER_PLACEMENT', payload: settings });
+  }, []);
+
+  const cancelMechanicMarkerPlacement = useCallback(() => {
+    dispatch({ type: 'CANCEL_MECHANIC_MARKER_PLACEMENT' });
+  }, []);
+
+  const updateMechanicMarker = useCallback((id: string, updates: Partial<MechanicMarker>) => {
+    dispatch({ type: 'UPDATE_MECHANIC_MARKER', payload: { id, updates } });
+  }, []);
+
+  const deleteMechanicMarker = useCallback((id: string) => {
+    dispatch({ type: 'DELETE_MECHANIC_MARKER', payload: id });
+  }, []);
+
   const startMoveFromList = useCallback((playerId: string) => {
     dispatch({ type: 'START_MOVE_FROM_LIST', payload: { playerId } });
   }, []);
@@ -468,6 +504,9 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
         break;
       case 'cast':
         dispatch({ type: 'DELETE_TIMELINE_EVENT', payload: selectedObjectId });
+        break;
+      case 'mechanic_marker':
+        dispatch({ type: 'DELETE_MECHANIC_MARKER', payload: selectedObjectId });
         break;
       case 'field_change':
         // Delete both field_change and field_revert events with matching fieldChangeId
@@ -622,6 +661,7 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     completeMoveEvent,
     cancelMoveEvent,
     setAoEType,
+    setAoEIndicator,
     startAoEPlacement,
     completeAoEPlacement,
     cancelAoEPlacement,
@@ -638,6 +678,12 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     cancelObjectPlacement,
     updateObject,
     deleteObject,
+    setMechanicMarkerType,
+    startMechanicMarkerPlacement,
+    completeMechanicMarkerPlacement,
+    cancelMechanicMarkerPlacement,
+    updateMechanicMarker,
+    deleteMechanicMarker,
     deleteSelectedObject,
     copySelectedObject,
     startMoveFromList,

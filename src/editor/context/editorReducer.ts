@@ -1,7 +1,7 @@
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent, FieldChangeEvent, FieldRevertEvent } from '../../data/types';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent, FieldChangeEvent, FieldRevertEvent, MechanicMarkerType, MechanicMarker, MarkerShowEvent, MarkerHideEvent } from '../../data/types';
 
-export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object';
-export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | null;
+export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object' | 'add_mechanic_marker';
+export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker' | null;
 
 export interface PendingMoveEvent {
   playerIds: string[];
@@ -49,6 +49,24 @@ export interface ObjectSettings {
   fadeOutDuration?: number;
 }
 
+export interface PendingMechanicMarker {
+  position: Position;
+}
+
+export interface MechanicMarkerSettings {
+  type: MechanicMarkerType;
+  position: Position;
+  size: number;
+  color: string;
+  opacity: number;
+  rotation?: number;
+  count?: number;
+  startFrame: number;
+  duration: number;
+  fadeInDuration: number;
+  fadeOutDuration: number;
+}
+
 export interface FieldChangeSettings {
   backgroundColor?: string;
   backgroundImage?: string;
@@ -70,6 +88,15 @@ export interface AoESettings {
   direction?: number;
   length?: number;
   width?: number;
+  armWidth?: number;
+  armLength?: number;
+  rotation?: number;
+  // Rectangle
+  rectWidth?: number;
+  rectHeight?: number;
+  // Indicator (stack/knockback/etc.)
+  indicator?: AoEIndicator;
+  indicatorCount?: number; // stack_count用（1-4）
   // Common parameters
   color: string;
   opacity: number;
@@ -109,9 +136,12 @@ export interface EditorState {
   pendingMoveEvent: PendingMoveEvent | null;
   pendingAoE: PendingAoE | null;
   selectedAoEType: AoEType;
+  selectedAoEIndicator: AoEIndicator | null;
   pendingDebuff: PendingDebuff | null;
   pendingText: PendingText | null;
   pendingObject: PendingObject | null;
+  pendingMechanicMarker: PendingMechanicMarker | null;
+  selectedMechanicMarkerType: MechanicMarkerType;
   // Mode for adding move from object list
   moveFromListMode: MoveFromListMode;
   // Hidden object IDs for editor preview (composite key: `${objectType}:${id}`)
@@ -152,6 +182,7 @@ export type EditorAction =
   | { type: 'COMPLETE_MOVE_EVENT'; payload: { toPosition: Position; startFrame: number; duration: number; easing: MoveEvent['easing'] } }
   | { type: 'CANCEL_MOVE_EVENT' }
   | { type: 'SET_AOE_TYPE'; payload: AoEType }
+  | { type: 'SET_AOE_INDICATOR'; payload: AoEIndicator | null }
   | { type: 'START_AOE_PLACEMENT'; payload: { position: Position } }
   | { type: 'COMPLETE_AOE_PLACEMENT'; payload: AoESettings }
   | { type: 'CANCEL_AOE_PLACEMENT' }
@@ -180,6 +211,13 @@ export type EditorAction =
   | { type: 'RELOCATE_PLAYER'; payload: { id: string; newPosition: Position } }
   // Field change
   | { type: 'COMPLETE_FIELD_CHANGE'; payload: FieldChangeSettings }
+  // Mechanic marker actions
+  | { type: 'SET_MECHANIC_MARKER_TYPE'; payload: MechanicMarkerType }
+  | { type: 'START_MECHANIC_MARKER_PLACEMENT'; payload: { position: Position } }
+  | { type: 'COMPLETE_MECHANIC_MARKER_PLACEMENT'; payload: MechanicMarkerSettings }
+  | { type: 'CANCEL_MECHANIC_MARKER_PLACEMENT' }
+  | { type: 'UPDATE_MECHANIC_MARKER'; payload: { id: string; updates: Partial<MechanicMarker> } }
+  | { type: 'DELETE_MECHANIC_MARKER'; payload: string }
   // Visibility toggle (editor UI only)
   | { type: 'TOGGLE_VISIBILITY'; payload: { id: string; objectType: string } };
 
@@ -642,6 +680,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       };
     }
 
+    case 'SET_AOE_INDICATOR': {
+      return {
+        ...state,
+        selectedAoEIndicator: action.payload,
+      };
+    }
+
     case 'START_AOE_PLACEMENT': {
       return {
         ...state,
@@ -669,6 +714,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           ...(settings.direction !== undefined && { direction: settings.direction }),
           ...(settings.length !== undefined && { length: settings.length }),
           ...(settings.width !== undefined && { width: settings.width }),
+          ...(settings.armWidth !== undefined && { armWidth: settings.armWidth }),
+          ...(settings.armLength !== undefined && { armLength: settings.armLength }),
+          ...(settings.rotation !== undefined && { rotation: settings.rotation }),
+          ...(settings.rectWidth !== undefined && { rectWidth: settings.rectWidth }),
+          ...(settings.rectHeight !== undefined && { rectHeight: settings.rectHeight }),
+          ...(settings.indicator !== undefined && { indicator: settings.indicator }),
+          ...(settings.indicatorCount !== undefined && { indicatorCount: settings.indicatorCount }),
           color: settings.color,
           opacity: settings.opacity,
           // 起点・追従設定
@@ -1124,6 +1176,110 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       };
     }
 
+    case 'SET_MECHANIC_MARKER_TYPE': {
+      return {
+        ...state,
+        selectedMechanicMarkerType: action.payload,
+      };
+    }
+
+    case 'START_MECHANIC_MARKER_PLACEMENT': {
+      return {
+        ...state,
+        pendingMechanicMarker: { position: action.payload.position },
+      };
+    }
+
+    case 'COMPLETE_MECHANIC_MARKER_PLACEMENT': {
+      const settings = action.payload;
+      const markerId = `marker-${Date.now()}`;
+
+      const showEvent: MarkerShowEvent = {
+        id: `${markerId}-show`,
+        type: 'marker_show',
+        frame: settings.startFrame,
+        marker: {
+          id: markerId,
+          type: settings.type,
+          position: settings.position,
+          size: settings.size,
+          color: settings.color,
+          opacity: settings.opacity,
+          ...(settings.rotation !== undefined && { rotation: settings.rotation }),
+          ...(settings.count !== undefined && { count: settings.count }),
+        },
+        fadeInDuration: settings.fadeInDuration,
+      };
+
+      const hideEvent: MarkerHideEvent = {
+        id: `${markerId}-hide`,
+        type: 'marker_hide',
+        frame: settings.startFrame + settings.duration,
+        markerId: markerId,
+        fadeOutDuration: settings.fadeOutDuration,
+      };
+
+      const stateWithHistory = pushHistory(state);
+      const newTimeline = [...stateWithHistory.mechanic.timeline, showEvent, hideEvent]
+        .sort((a, b) => a.frame - b.frame);
+
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: newTimeline,
+        },
+        pendingMechanicMarker: null,
+        tool: 'select',
+        selectedObjectId: markerId,
+        selectedObjectType: 'mechanic_marker',
+      };
+    }
+
+    case 'CANCEL_MECHANIC_MARKER_PLACEMENT': {
+      return {
+        ...state,
+        pendingMechanicMarker: null,
+        tool: 'select',
+      };
+    }
+
+    case 'UPDATE_MECHANIC_MARKER': {
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: stateWithHistory.mechanic.timeline.map((event) => {
+            if (event.type === 'marker_show' && event.marker.id === action.payload.id) {
+              return {
+                ...event,
+                marker: { ...event.marker, ...action.payload.updates },
+              };
+            }
+            return event;
+          }),
+        },
+      };
+    }
+
+    case 'DELETE_MECHANIC_MARKER': {
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: stateWithHistory.mechanic.timeline.filter((event) => {
+            if (event.type === 'marker_show') return event.marker.id !== action.payload;
+            if (event.type === 'marker_hide') return event.markerId !== action.payload;
+            return true;
+          }),
+        },
+        selectedObjectId: state.selectedObjectId === action.payload ? null : state.selectedObjectId,
+        selectedObjectType: state.selectedObjectId === action.payload ? null : state.selectedObjectType,
+      };
+    }
+
     case 'TOGGLE_VISIBILITY': {
       const compositeKey = `${action.payload.objectType}:${action.payload.id}`;
       const hiddenObjectIds = state.hiddenObjectIds.includes(compositeKey)
@@ -1156,9 +1312,12 @@ export function createInitialState(mechanic: MechanicData): EditorState {
     pendingMoveEvent: null,
     pendingAoE: null,
     selectedAoEType: 'circle',
+    selectedAoEIndicator: null,
     pendingDebuff: null,
     pendingText: null,
     pendingObject: null,
+    pendingMechanicMarker: null,
+    selectedMechanicMarkerType: 'eye',
     moveFromListMode: {
       active: false,
       playerId: null,

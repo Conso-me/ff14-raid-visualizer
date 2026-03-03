@@ -5,9 +5,10 @@ import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
 import { getActiveAnnotations, getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getActiveObjects, getObjectEventPairs } from '../utils/getActiveObjects';
+import { getActiveMechanicMarkers, getMarkerEventPairs } from '../utils/getActiveMechanicMarkers';
 import { DraggableList } from './DraggableList';
 import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
-import type { Role, MarkerType, AoEType, Position, GimmickObject, Player, CastEvent } from '../../data/types';
+import type { Role, MarkerType, AoEType, MechanicMarkerType, Position, GimmickObject, Player, CastEvent } from '../../data/types';
 
 // Role colors (match existing player rendering)
 const ROLE_COLORS: Record<Role, string> = {
@@ -45,6 +46,8 @@ const AOE_TYPE_KEYS: Record<AoEType, string> = {
   line: 'tools.aoeLine',
   donut: 'tools.aoeDonut',
   cross: 'tools.aoeCross',
+  distance_decay: 'tools.aoeDistanceDecay',
+  rectangle: 'tools.aoeRectangle',
 };
 
 // AoE type icons
@@ -54,6 +57,22 @@ const AOE_TYPE_ICONS: Record<AoEType, string> = {
   line: '│',
   donut: '◎',
   cross: '✚',
+  distance_decay: '▽',
+  rectangle: '▭',
+};
+
+// Mechanic marker type icons
+const MECHANIC_MARKER_ICONS: Record<MechanicMarkerType, string> = {
+  eye: '\uD83D\uDC41',
+  stack: '\u21E8',
+  stack_count: '\u2460',
+  proximity: '\u25BC',
+  tankbuster: '\u2694',
+  target: '\u25CE',
+  chase: '\u00BB',
+  knockback_radial: '\u21D4',
+  knockback_line: '\u21D1',
+  telegraph: '\u26A0',
 };
 
 // Object shape icons
@@ -189,7 +208,7 @@ function VisibilityToggle({ isHidden, onToggle, showTitle, hideTitle }: Visibili
 // ObjectItem component
 interface ObjectItemProps {
   id: string;
-  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change';
+  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker';
   name: string;
   subtitle?: string;
   color?: string;
@@ -604,6 +623,20 @@ export function ObjectListPanel() {
     [activeObjectsAtFrame]
   );
 
+  // Get mechanic markers
+  const mechanicMarkerPairs = useMemo(() =>
+    getMarkerEventPairs(mechanic.timeline),
+    [mechanic.timeline]
+  );
+  const activeMechanicMarkersAtFrame = useMemo(() =>
+    getActiveMechanicMarkers(mechanic.timeline, currentFrame),
+    [mechanic.timeline, currentFrame]
+  );
+  const activeMechanicMarkerIds = useMemo(() =>
+    new Set(activeMechanicMarkersAtFrame.map(m => m.id)),
+    [activeMechanicMarkersAtFrame]
+  );
+
   // Get cast events
   const castEvents = useMemo(() =>
     mechanic.timeline.filter((e): e is CastEvent => e.type === 'cast'),
@@ -631,6 +664,9 @@ export function ObjectListPanel() {
 
   const isObjectSelected = (id: string) =>
     selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'object');
+
+  const isMechanicMarkerSelected = (id: string) =>
+    selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'mechanic_marker');
 
   // Handle multi-select clicks
   const handlePlayerSelect = (e: React.MouseEvent, id: string) => {
@@ -670,6 +706,14 @@ export function ObjectListPanel() {
       toggleMultiSelect(id, 'object');
     } else {
       selectObject(id, 'object');
+    }
+  };
+
+  const handleMechanicMarkerSelect = (e: React.MouseEvent, id: string) => {
+    if (e.shiftKey) {
+      toggleMultiSelect(id, 'mechanic_marker');
+    } else {
+      selectObject(id, 'mechanic_marker');
     }
   };
 
@@ -984,6 +1028,43 @@ export function ObjectListPanel() {
               );
             })}
           </>
+        )}
+      </CollapsibleGroup>
+
+      {/* Mechanic Markers */}
+      <CollapsibleGroup title={t('objectList.mechanicMarkers')} count={mechanicMarkerPairs.length}>
+        {mechanicMarkerPairs.length === 0 ? (
+          <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
+            {t('objectList.noMechanicMarkers')}
+          </div>
+        ) : (
+          mechanicMarkerPairs.map(({ marker, showFrame, hideFrame }) => {
+            const isActive = activeMechanicMarkerIds.has(marker.id);
+            const frameInfo = hideFrame !== null
+              ? `${showFrame}f - ${hideFrame}f`
+              : `${showFrame}f -`;
+
+            return (
+              <ObjectItem
+                key={marker.id}
+                id={marker.id}
+                objectType="mechanic_marker"
+                name={`${MECHANIC_MARKER_ICONS[marker.type]} ${marker.type}`}
+                subtitle={`${formatPosition(marker.position)} [${frameInfo}]`}
+                color={marker.color ?? '#ffcc00'}
+                isSelected={isMechanicMarkerSelected(marker.id)}
+                isActive={isActive}
+                isHidden={isObjectHidden(marker.id, 'mechanic_marker')}
+                onSelect={(e) => handleMechanicMarkerSelect(e, marker.id)}
+                onToggleVisibility={(e) => {
+                  e.stopPropagation();
+                  toggleVisibility(marker.id, 'mechanic_marker');
+                }}
+                showTitle={t('objectList.showItem')}
+                hideTitle={t('objectList.hideItem')}
+              />
+            );
+          })
         )}
       </CollapsibleGroup>
       </>}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEditor } from '../context/EditorContext';
 import { useLanguage } from '../context/LanguageContext';
-import type { Role, MarkerType, AoEType } from '../../data/types';
+import type { Role, MarkerType, AoEType, AoEIndicator, MechanicMarkerType } from '../../data/types';
 import { generateUniqueName } from '../../utils/naming';
 
 const TOOLS = [
@@ -10,12 +10,53 @@ const TOOLS = [
 ] as const;
 
 const ROLES: Role[] = ['T1', 'T2', 'H1', 'H2', 'D1', 'D2', 'D3', 'D4'];
-const AOE_TYPES: { type: AoEType; icon: string }[] = [
-  { type: 'circle', icon: '\u25CB' },
-  { type: 'cone', icon: '\u25D7' },
-  { type: 'line', icon: '\u2502' },
-  { type: 'donut', icon: '\u25CE' },
-  { type: 'cross', icon: '\u271A' },
+
+interface AoEEntry {
+  type: AoEType;
+  icon: string;
+  indicator?: AoEIndicator;
+  labelKey: string;
+}
+
+const AOE_ENTRIES: AoEEntry[] = [
+  { type: 'circle', icon: '\u25CB', labelKey: 'tools.aoeCircle' },
+  { type: 'circle', icon: '\u2295', indicator: 'stack', labelKey: 'tools.aoeCircleStack' },
+  { type: 'circle', icon: '\u2297', indicator: 'knockback', labelKey: 'tools.aoeCircleKnockback' },
+  { type: 'circle', icon: '\uD83D\uDC41', indicator: 'eye', labelKey: 'tools.aoeCircleEye' },
+  { type: 'circle', icon: '\u2460', indicator: 'stack_count', labelKey: 'tools.aoeCircleStackCount' },
+  { type: 'circle', icon: '\u25BC', indicator: 'proximity', labelKey: 'tools.aoeCircleProximity' },
+  { type: 'circle', icon: '\u2694', indicator: 'tankbuster', labelKey: 'tools.aoeCircleTankbuster' },
+  { type: 'circle', icon: '\u25CE', indicator: 'target', labelKey: 'tools.aoeCircleTarget' },
+  { type: 'circle', icon: '\u00BB', indicator: 'chase', labelKey: 'tools.aoeCircleChase' },
+  { type: 'circle', icon: '\u21D4', indicator: 'knockback_radial', labelKey: 'tools.aoeCircleKnockbackRadial' },
+  { type: 'circle', icon: '\u21D1', indicator: 'knockback_line', labelKey: 'tools.aoeCircleKnockbackLine' },
+  { type: 'cone', icon: '\u25D7', labelKey: 'tools.aoeCone' },
+  { type: 'line', icon: '\u2502', labelKey: 'tools.aoeLine' },
+  { type: 'line', icon: '\u21E5', indicator: 'stack', labelKey: 'tools.aoeLineStack' },
+  { type: 'line', icon: '\u21E4', indicator: 'knockback', labelKey: 'tools.aoeLineKnockback' },
+  { type: 'donut', icon: '\u25CE', labelKey: 'tools.aoeDonut' },
+  { type: 'cross', icon: '\u271A', labelKey: 'tools.aoeCross' },
+  { type: 'distance_decay', icon: '\u25BD', labelKey: 'tools.aoeDistanceDecay' },
+  { type: 'rectangle', icon: '\u25AD', labelKey: 'tools.aoeRectangle' },
+];
+
+interface MechanicMarkerEntry {
+  type: MechanicMarkerType;
+  icon: string;
+  labelKey: string;
+}
+
+const MECHANIC_MARKER_ENTRIES: MechanicMarkerEntry[] = [
+  { type: 'eye', icon: '\uD83D\uDC41', labelKey: 'tools.markerEye' },
+  { type: 'stack', icon: '\u21E8', labelKey: 'tools.markerStack' },
+  { type: 'stack_count', icon: '\u2460', labelKey: 'tools.markerStackCount' },
+  { type: 'proximity', icon: '\u25BC', labelKey: 'tools.markerProximity' },
+  { type: 'tankbuster', icon: '\u2694', labelKey: 'tools.markerTankbuster' },
+  { type: 'target', icon: '\u25CE', labelKey: 'tools.markerTarget' },
+  { type: 'chase', icon: '\u00BB', labelKey: 'tools.markerChase' },
+  { type: 'knockback_radial', icon: '\u21D4', labelKey: 'tools.markerKnockbackRadial' },
+  { type: 'knockback_line', icon: '\u21D1', labelKey: 'tools.markerKnockbackLine' },
+  { type: 'telegraph', icon: '\u26A0', labelKey: 'tools.markerTelegraph' },
 ];
 
 export function ToolPanelContent() {
@@ -27,20 +68,14 @@ export function ToolPanelContent() {
     addEnemy,
     addMarker,
     setAoEType,
+    setAoEIndicator,
+    setMechanicMarkerType,
   } = useEditor();
   const { t } = useLanguage();
 
   const toolLabels: Record<string, string> = {
     select: t('tools.select'),
     add_move_event: t('tools.addMoveEvent'),
-  };
-
-  const aoeLabels: Record<AoEType, string> = {
-    circle: t('tools.aoeCircle'),
-    cone: t('tools.aoeCone'),
-    line: t('tools.aoeLine'),
-    donut: t('tools.aoeDonut'),
-    cross: t('tools.aoeCross'),
   };
 
   const buttonStyle = (active: boolean) => ({
@@ -94,13 +129,17 @@ export function ToolPanelContent() {
     setTool('add_aoe');
   };
 
-  const handleSelectAoEType = (type: AoEType) => {
-    setAoEType(type);
+  const handleSelectAoEEntry = (entry: AoEEntry) => {
+    setAoEType(entry.type);
+    setAoEIndicator(entry.indicator ?? null);
+  };
+
+  const isAoEEntryActive = (entry: AoEEntry) => {
+    return state.selectedAoEType === entry.type
+      && state.selectedAoEIndicator === (entry.indicator ?? null);
   };
 
   const handlePreset8Players = () => {
-    // Standard 8-player spread positions (clock positions)
-    // DPS positions swapped: D1/D3, D2/D4
     const positions: { role: Role; x: number; y: number }[] = [
       { role: 'T1', x: 0, y: -8 },
       { role: 'T2', x: 0, y: 8 },
@@ -207,17 +246,17 @@ export function ToolPanelContent() {
               {t('tools.selectType')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-              {AOE_TYPES.map(({ type, icon }) => (
+              {AOE_ENTRIES.map((entry, i) => (
                 <button
-                  key={type}
-                  onClick={() => handleSelectAoEType(type)}
+                  key={`${entry.type}-${entry.indicator ?? 'none'}-${i}`}
+                  onClick={() => handleSelectAoEEntry(entry)}
                   style={{
                     padding: '8px 10px',
-                    background: state.selectedAoEType === type ? '#ff6600' : '#3a3a5a',
+                    background: isAoEEntryActive(entry) ? '#ff6600' : '#3a3a5a',
                     border: '1px solid #4a4a6a',
                     borderRadius: '4px',
                     color: '#fff',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -225,8 +264,8 @@ export function ToolPanelContent() {
                     gap: '4px',
                   }}
                 >
-                  <span>{icon}</span>
-                  <span>{aoeLabels[type]}</span>
+                  <span>{entry.icon}</span>
+                  <span>{t(entry.labelKey as any)}</span>
                 </button>
               ))}
             </div>
@@ -296,6 +335,57 @@ export function ToolPanelContent() {
         {state.tool === 'add_object' && (
           <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
             {t('tools.clickFieldToPlace')}
+          </div>
+        )}
+      </div>
+
+      {/* Add Mechanic Marker */}
+      <div style={sectionStyle}>
+        <button
+          onClick={() => setTool('add_mechanic_marker')}
+          style={{
+            ...buttonStyle(state.tool === 'add_mechanic_marker'),
+            width: '100%',
+            marginBottom: '10px',
+            background: state.tool === 'add_mechanic_marker' ? '#ff4488' : '#2a2a4a',
+          }}
+        >
+          <span>{state.tool === 'add_mechanic_marker' ? t('tools.mechanicMarkerModeOn') : t('tools.mechanicMarkerMode')}</span>
+          <span style={shortcutStyle}>7</span>
+        </button>
+
+        {state.tool === 'add_mechanic_marker' && (
+          <div style={{ marginTop: '10px' }}>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
+              {t('tools.selectType')}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+              {MECHANIC_MARKER_ENTRIES.map((entry) => (
+                <button
+                  key={entry.type}
+                  onClick={() => setMechanicMarkerType(entry.type)}
+                  style={{
+                    padding: '8px 10px',
+                    background: state.selectedMechanicMarkerType === entry.type ? '#ff4488' : '#3a3a5a',
+                    border: '1px solid #4a4a6a',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>{entry.icon}</span>
+                  <span>{t(entry.labelKey as any)}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
+              {t('tools.clickFieldToPlace')}
+            </div>
           </div>
         )}
       </div>

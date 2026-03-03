@@ -87,6 +87,35 @@ export function AoEPreview({ type, position, screenPos }: AoEPreviewProps) {
         </g>
       );
 
+    case 'distance_decay': {
+      // 逆三角形プレビュー（頂点が中心、底辺が上）
+      const triHeight = defaultRadius * 1.5;
+      const triWidth = defaultRadius * 1.2;
+      const points = [
+        `${screenPos.x},${screenPos.y}`,
+        `${screenPos.x - triWidth / 2},${screenPos.y - triHeight}`,
+        `${screenPos.x + triWidth / 2},${screenPos.y - triHeight}`,
+      ].join(' ');
+      return (
+        <polygon
+          points={points}
+          {...previewStyle}
+          fillOpacity={0.3}
+        />
+      );
+    }
+
+    case 'rectangle':
+      return (
+        <rect
+          x={screenPos.x - defaultRadius * 0.8}
+          y={screenPos.y - defaultRadius * 0.5}
+          width={defaultRadius * 1.6}
+          height={defaultRadius * 1.0}
+          {...previewStyle}
+        />
+      );
+
     default:
       return null;
   }

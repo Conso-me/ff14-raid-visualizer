@@ -20,10 +20,13 @@ import { getPlayersAtFrame } from '../utils/getPlayersAtFrame';
 import { getActiveAoEs, type ActiveAoE } from '../utils/getActiveAoEs';
 import { getActiveAnnotations } from '../utils/getActiveAnnotations';
 import { getActiveObjects } from '../utils/getActiveObjects';
+import { getActiveMechanicMarkers } from '../utils/getActiveMechanicMarkers';
 import { getPlayerDebuffs } from '../utils/getPlayerDebuffs';
 import { getFieldAtFrame } from '../utils/getFieldAtFrame';
+import { MechanicMarker as MechanicMarkerComponent } from '../../components/markers/MechanicMarker';
+import { MechanicMarkerDialog } from './MechanicMarkerDialog';
 import type { Position, Debuff, GimmickObject, CastEvent, CastDisplay } from '../../data/types';
-import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings } from '../context/editorReducer';
+import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings, MechanicMarkerSettings } from '../context/editorReducer';
 import { CastBar } from '../../components/ui/CastBar';
 
 const SCREEN_SIZE = 600;
@@ -56,9 +59,12 @@ export function FieldEditor() {
     updateObject,
     cancelMoveFromList,
     isObjectHidden,
+    completeMechanicMarkerPlacement,
+    cancelMechanicMarkerPlacement,
+    updateMechanicMarker,
   } = useEditor();
 
-  const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, pendingDebuff, moveFromListMode } = state;
+  const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, selectedAoEIndicator, pendingDebuff, moveFromListMode } = state;
 
   const [dragging, setDragging] = useState<{
     id: string;
@@ -80,6 +86,8 @@ export function FieldEditor() {
   const [pendingTextPosition, setPendingTextPosition] = useState<Position | null>(null);
   const [showObjectDialog, setShowObjectDialog] = useState(false);
   const [pendingObjectPosition, setPendingObjectPosition] = useState<Position | null>(null);
+  const [showMechanicMarkerDialog, setShowMechanicMarkerDialog] = useState(false);
+  const [pendingMechanicMarkerPosition, setPendingMechanicMarkerPosition] = useState<Position | null>(null);
 
   const fieldContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -132,6 +140,9 @@ export function FieldEditor() {
 
   // Get active objects - moved up for use in findObjectAtPos
   const activeObjects = useMemo(() => getActiveObjects(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);
+
+  // Get active mechanic markers
+  const activeMechanicMarkers = useMemo(() => getActiveMechanicMarkers(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);
 
   // Find all players at position (using calculated positions)
   const findPlayersAtPos = useCallback((gamePos: Position): Player[] => {
@@ -214,8 +225,18 @@ export function FieldEditor() {
       }
     }
 
+    // Check mechanic markers
+    for (const marker of activeMechanicMarkers) {
+      const dx = marker.position.x - gamePos.x;
+      const dy = marker.position.y - gamePos.y;
+      const markerSize = (marker.size ?? 3) / 2 + 1;
+      if (Math.sqrt(dx * dx + dy * dy) < markerSize) {
+        return { id: marker.id, type: 'mechanic_marker' as const };
+      }
+    }
+
     return null;
-  }, [playersAtCurrentFrame, mechanic.enemies, mechanic.markers, getAoEsAtFrame, currentFrame, activeAnnotations, activeObjects]);
+  }, [playersAtCurrentFrame, mechanic.enemies, mechanic.markers, getAoEsAtFrame, currentFrame, activeAnnotations, activeObjects, activeMechanicMarkers]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -326,6 +347,13 @@ export function FieldEditor() {
         return;
       }
 
+      // Mechanic marker placement mode
+      if (tool === 'add_mechanic_marker') {
+        setPendingMechanicMarkerPosition(gamePos);
+        setShowMechanicMarkerDialog(true);
+        return;
+      }
+
       // Normal selection/drag mode
       if (tool === 'select') {
         const found = findObjectAtPos(gamePos);
@@ -352,6 +380,8 @@ export function FieldEditor() {
       if ((tool === 'add_move_event') && pendingMoveEvent) {
         setMousePos(gamePos);
       } else if (tool === 'add_aoe' && !showAoEDialog) {
+        setMousePos(gamePos);
+      } else if (tool === 'add_mechanic_marker' && !showMechanicMarkerDialog) {
         setMousePos(gamePos);
       }
     },
@@ -417,6 +447,9 @@ export function FieldEditor() {
         case 'object':
           updateObject(dragging.id, { position: gamePos });
           break;
+        case 'mechanic_marker':
+          updateMechanicMarker(dragging.id, { position: gamePos });
+          break;
       }
     };
 
@@ -463,6 +496,11 @@ export function FieldEditor() {
           setPendingObjectPosition(null);
           cancelObjectPlacement();
         }
+        if (showMechanicMarkerDialog) {
+          setShowMechanicMarkerDialog(false);
+          setPendingMechanicMarkerPosition(null);
+          cancelMechanicMarkerPlacement();
+        }
         if (showPlayerSelectionDialog) {
           handlePlayerSelectionCancel();
         }
@@ -470,7 +508,7 @@ export function FieldEditor() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, showPlayerSelectionDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, moveFromListMode, cancelMoveFromList, handlePlayerSelectionCancel]);
+  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, showMechanicMarkerDialog, showPlayerSelectionDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, cancelMechanicMarkerPlacement, moveFromListMode, cancelMoveFromList, handlePlayerSelectionCancel]);
 
   // Use activeAoEsForLookup as activeAoEs for rendering (already computed earlier)
   const activeAoEs = activeAoEsForLookup;
@@ -546,6 +584,18 @@ export function FieldEditor() {
   const handleObjectDialogCancel = useCallback(() => {
     setShowObjectDialog(false);
     setPendingObjectPosition(null);
+  }, []);
+
+  const handleMechanicMarkerDialogConfirm = useCallback((settings: MechanicMarkerSettings) => {
+    completeMechanicMarkerPlacement(settings);
+    setShowMechanicMarkerDialog(false);
+    setPendingMechanicMarkerPosition(null);
+    setMousePos(null);
+  }, [completeMechanicMarkerPlacement]);
+
+  const handleMechanicMarkerDialogCancel = useCallback(() => {
+    setShowMechanicMarkerDialog(false);
+    setPendingMechanicMarkerPosition(null);
   }, []);
 
   // Get debuffs for each player at current frame
@@ -646,6 +696,12 @@ export function FieldEditor() {
       case 'aoe': {
         const aoe = visibleAoEs.find(a => a.id === selectedObjectId);
         if (aoe) pos = aoe.position;
+        size = 40;
+        break;
+      }
+      case 'mechanic_marker': {
+        const mm = activeMechanicMarkers.find(m => m.id === selectedObjectId);
+        if (mm) pos = mm.position;
         size = 40;
         break;
       }
@@ -775,6 +831,7 @@ export function FieldEditor() {
     if (tool === 'add_debuff') return 'pointer';
     if (tool === 'add_text') return 'text';
     if (tool === 'add_object') return 'crosshair';
+    if (tool === 'add_mechanic_marker') return 'crosshair';
     return 'crosshair';
   };
 
@@ -802,8 +859,22 @@ export function FieldEditor() {
         line: '直線',
         donut: 'ドーナツ',
         cross: '十字',
+        distance_decay: '距離減衰',
       };
-      return `フィールドをクリックしてAoEを配置 | タイプ: ${typeNames[selectedAoEType]} | Escでキャンセル`;
+      const indicatorNames: Record<string, string> = {
+        stack: '頭割り',
+        knockback: 'ノックバック',
+        eye: '視線',
+        stack_count: '人数指定',
+        proximity: '距離減衰',
+        tankbuster: '強攻撃',
+        target: 'ターゲット',
+        chase: '追尾',
+        knockback_radial: '放射KB',
+        knockback_line: '方向KB',
+      };
+      const indicatorSuffix = selectedAoEIndicator ? `（${indicatorNames[selectedAoEIndicator]}）` : '';
+      return `フィールドをクリックしてAoEを配置 | タイプ: ${typeNames[selectedAoEType]}${indicatorSuffix} | Escでキャンセル`;
     }
     if (tool === 'add_debuff') {
       return 'デバフを付与するプレイヤーをクリック | Escでキャンセル';
@@ -813,6 +884,9 @@ export function FieldEditor() {
     }
     if (tool === 'add_object') {
       return 'フィールドをクリックしてオブジェクトを配置 | Escでキャンセル';
+    }
+    if (tool === 'add_mechanic_marker') {
+      return 'フィールドをクリックしてメカニクスマーカーを配置 | Escでキャンセル';
     }
     return `${gridSnap ? 'Grid snap: ON (0.5 units)' : 'Grid snap: OFF'} | Frame: ${currentFrame} | Ctrl+Scroll to zoom`;
   };
@@ -1144,6 +1218,52 @@ export function FieldEditor() {
               );
             })}
 
+            {/* Mechanic Markers */}
+            {activeMechanicMarkers.filter((mm) => !isObjectHidden(mm.id, 'mechanic_marker')).map((mm) => {
+              const isSelected = selectedObjectId === mm.id && selectedObjectType === 'mechanic_marker';
+              return (
+                <React.Fragment key={mm.id}>
+                  <MechanicMarkerComponent
+                    type={mm.type}
+                    position={mm.position}
+                    size={mm.size}
+                    color={mm.color}
+                    opacity={mm.currentOpacity}
+                    rotation={mm.rotation}
+                    count={mm.count}
+                    fieldSize={mechanic.field.size}
+                    screenSize={SCREEN_SIZE}
+                  />
+                  {isSelected && (() => {
+                    const screenPos = gameToScreen(mm.position, mechanic.field.size, SCREEN_SIZE);
+                    const pixelSize = Math.max(30, ((mm.size ?? 3) / mechanic.field.size) * SCREEN_SIZE);
+                    return (
+                      <svg
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: SCREEN_SIZE,
+                          height: SCREEN_SIZE,
+                          pointerEvents: 'none',
+                          overflow: 'visible',
+                        }}
+                      >
+                        <circle
+                          cx={screenPos.x}
+                          cy={screenPos.y}
+                          r={pixelSize / 2 + 4}
+                          fill="none"
+                          stroke="#00ffff"
+                          strokeWidth={3}
+                        />
+                      </svg>
+                    );
+                  })()}
+                </React.Fragment>
+              );
+            })}
+
             {/* Movement Paths (when player is selected) */}
             {renderMovementPaths()}
 
@@ -1173,7 +1293,7 @@ export function FieldEditor() {
       </div>
 
       {/* Info bar */}
-      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : tool === 'add_mechanic_marker' ? '#ff4488' : '#666' }}>
         {getInfoText()}
       </div>
 
@@ -1194,10 +1314,11 @@ export function FieldEditor() {
       {/* AoE Dialog */}
       {showAoEDialog && pendingAoEPosition && (
         <AoEDialog
-          key={`${selectedAoEType}-${currentFrame}`}
+          key={`${selectedAoEType}-${selectedAoEIndicator}-${currentFrame}`}
           isOpen={showAoEDialog}
           position={pendingAoEPosition}
           type={selectedAoEType}
+          indicator={selectedAoEIndicator}
           currentFrame={currentFrame}
           fps={mechanic.fps}
           onConfirm={handleAoEDialogConfirm}
@@ -1240,6 +1361,19 @@ export function FieldEditor() {
           fps={mechanic.fps}
           onConfirm={handleObjectDialogConfirm}
           onCancel={handleObjectDialogCancel}
+        />
+      )}
+
+      {/* Mechanic Marker Dialog */}
+      {showMechanicMarkerDialog && pendingMechanicMarkerPosition && (
+        <MechanicMarkerDialog
+          key={currentFrame}
+          isOpen={showMechanicMarkerDialog}
+          position={pendingMechanicMarkerPosition}
+          currentFrame={currentFrame}
+          fps={mechanic.fps}
+          onConfirm={handleMechanicMarkerDialogConfirm}
+          onCancel={handleMechanicMarkerDialogCancel}
         />
       )}
 

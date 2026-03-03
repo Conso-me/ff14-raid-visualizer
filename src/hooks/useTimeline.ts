@@ -13,6 +13,7 @@ import {
   AoETrackingMode,
   TextDisplay,
   CastDisplay,
+  MechanicMarkerDisplay,
   MoveEvent,
   AoEShowEvent,
   AoEHideEvent,
@@ -24,6 +25,8 @@ import {
   ObjectHideEvent,
   FieldChangeEvent,
   FieldRevertEvent,
+  MarkerShowEvent,
+  MarkerHideEvent,
 } from '../data/types';
 import { animatePosition, animateOpacity } from '../utils/animation';
 import { getFieldAtFrame, type FieldAtFrame } from '../editor/utils/getFieldAtFrame';
@@ -36,6 +39,7 @@ export interface TimelineState {
   activeAoEs: AoEDisplay[];
   activeTexts: TextDisplay[];
   activeCasts: CastDisplay[];
+  activeMechanicMarkers: MechanicMarkerDisplay[];
   fieldState: FieldAtFrame;
 }
 
@@ -67,6 +71,15 @@ interface ObjectTracker {
   object: GimmickObject;
   showFrame: number;
   fadeInDuration?: number;
+  hideFrame?: number;
+  fadeOutDuration?: number;
+}
+
+// 内部で使用するメカニクスマーカー追跡用の型
+interface MechanicMarkerTracker {
+  marker: MarkerShowEvent['marker'];
+  showFrame: number;
+  fadeInDuration: number;
   hideFrame?: number;
   fadeOutDuration?: number;
 }
@@ -128,6 +141,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
     const castTrackers: Map<string, CastTracker> = new Map();
     const moveTrackers: Map<string, MoveTracker[]> = new Map();
     const objectTrackers: Map<string, ObjectTracker> = new Map();
+    const mechanicMarkerTrackers: Map<string, MechanicMarkerTracker> = new Map();
 
     // プレイヤーIDから現在位置を取得するヘルパー
     const getPlayerPosition = (playerId: string): Position => {
@@ -373,6 +387,30 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
           const hideEvent = event as ObjectHideEvent;
           if (event.frame <= frame) {
             const tracker = objectTrackers.get(hideEvent.objectId);
+            if (tracker) {
+              tracker.hideFrame = event.frame;
+              tracker.fadeOutDuration = hideEvent.fadeOutDuration ?? 0;
+            }
+          }
+          break;
+        }
+
+        case 'marker_show': {
+          const showEvent = event as MarkerShowEvent;
+          if (event.frame <= frame) {
+            mechanicMarkerTrackers.set(showEvent.marker.id, {
+              marker: showEvent.marker,
+              showFrame: event.frame,
+              fadeInDuration: showEvent.fadeInDuration ?? 0,
+            });
+          }
+          break;
+        }
+
+        case 'marker_hide': {
+          const hideEvent = event as MarkerHideEvent;
+          if (event.frame <= frame) {
+            const tracker = mechanicMarkerTrackers.get(hideEvent.markerId);
             if (tracker) {
               tracker.hideFrame = event.frame;
               tracker.fadeOutDuration = hideEvent.fadeOutDuration ?? 0;
@@ -669,6 +707,41 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       }
     }
 
+    // メカニクスマーカーの不透明度を計算
+    const activeMechanicMarkers: MechanicMarkerDisplay[] = [];
+    for (const [, tracker] of mechanicMarkerTrackers) {
+      const { marker, showFrame, fadeInDuration, hideFrame, fadeOutDuration } = tracker;
+
+      // 非表示フレームを過ぎたら表示しない
+      if (hideFrame !== undefined && fadeOutDuration !== undefined) {
+        const fadeOutEnd = hideFrame + fadeOutDuration;
+        if (frame > fadeOutEnd) continue;
+      }
+
+      let opacity = marker.opacity ?? 0.9;
+
+      // フェードイン
+      if (fadeInDuration > 0 && frame < showFrame + fadeInDuration) {
+        const progress = (frame - showFrame) / fadeInDuration;
+        opacity *= Math.max(0, Math.min(1, progress));
+      }
+
+      // フェードアウト
+      if (hideFrame !== undefined && fadeOutDuration !== undefined && fadeOutDuration > 0) {
+        if (frame >= hideFrame) {
+          const progress = (frame - hideFrame) / fadeOutDuration;
+          opacity *= Math.max(0, 1 - progress);
+        }
+      }
+
+      if (opacity > 0) {
+        activeMechanicMarkers.push({
+          ...marker,
+          currentOpacity: opacity,
+        });
+      }
+    }
+
     // フィールド状態を計算
     const fieldState = getFieldAtFrame(mechanic.field, mechanic.timeline, frame);
 
@@ -679,6 +752,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       activeAoEs,
       activeTexts,
       activeCasts,
+      activeMechanicMarkers,
       fieldState,
     };
   }, [mechanic, frame]);

@@ -115,7 +115,7 @@ function EditorContent() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Left: Tool Panel */}
         <div style={{
-          width: '260px',
+          width: '300px',
           borderRight: '1px solid #3a3a5a',
           display: 'flex',
           flexDirection: 'column',
