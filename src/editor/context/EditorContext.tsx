@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, TextAnnotation, GimmickObject, MechanicMarkerType, MechanicMarker } from '../../data/types';
-import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type FieldChangeSettings, type MoveFromListMode, type MechanicMarkerSettings } from './editorReducer';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, TextAnnotation, GimmickObject, MechanicMarkerType, MechanicMarker, Tether } from '../../data/types';
+import { editorReducer, createInitialState, type EditorState, type EditorAction, type Tool, type SelectedObjectType, type PendingMoveEvent, type PendingAoE, type AoESettings, type DebuffSettings, type TextSettings, type ObjectSettings, type FieldChangeSettings, type MoveFromListMode, type MechanicMarkerSettings, type TetherSettings } from './editorReducer';
 
 interface EditorContextValue {
   state: EditorState;
@@ -76,6 +76,12 @@ interface EditorContextValue {
   cancelMechanicMarkerPlacement: () => void;
   updateMechanicMarker: (id: string, updates: Partial<MechanicMarker>) => void;
   deleteMechanicMarker: (id: string) => void;
+  // Tether methods
+  startTetherPlacement: () => void;
+  completeTetherPlacement: (settings: TetherSettings) => void;
+  cancelTetherPlacement: () => void;
+  updateTether: (id: string, updates: Partial<Tether>) => void;
+  deleteTether: (id: string) => void;
   // Selection actions
   deleteSelectedObject: () => void;
   copySelectedObject: () => void;
@@ -454,6 +460,26 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     dispatch({ type: 'DELETE_MECHANIC_MARKER', payload: id });
   }, []);
 
+  const startTetherPlacement = useCallback(() => {
+    dispatch({ type: 'START_TETHER_PLACEMENT' });
+  }, []);
+
+  const completeTetherPlacement = useCallback((settings: TetherSettings) => {
+    dispatch({ type: 'COMPLETE_TETHER_PLACEMENT', payload: settings });
+  }, []);
+
+  const cancelTetherPlacement = useCallback(() => {
+    dispatch({ type: 'CANCEL_TETHER_PLACEMENT' });
+  }, []);
+
+  const updateTether = useCallback((id: string, updates: Partial<Tether>) => {
+    dispatch({ type: 'UPDATE_TETHER', payload: { id, updates } });
+  }, []);
+
+  const deleteTether = useCallback((id: string) => {
+    dispatch({ type: 'DELETE_TETHER', payload: id });
+  }, []);
+
   const startMoveFromList = useCallback((playerId: string) => {
     dispatch({ type: 'START_MOVE_FROM_LIST', payload: { playerId } });
   }, []);
@@ -507,6 +533,9 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
         break;
       case 'mechanic_marker':
         dispatch({ type: 'DELETE_MECHANIC_MARKER', payload: selectedObjectId });
+        break;
+      case 'tether':
+        dispatch({ type: 'DELETE_TETHER', payload: selectedObjectId });
         break;
       case 'field_change':
         // Delete both field_change and field_revert events with matching fieldChangeId
@@ -684,6 +713,11 @@ export function EditorProvider({ children, initialMechanic }: EditorProviderProp
     cancelMechanicMarkerPlacement,
     updateMechanicMarker,
     deleteMechanicMarker,
+    startTetherPlacement,
+    completeTetherPlacement,
+    cancelTetherPlacement,
+    updateTether,
+    deleteTether,
     deleteSelectedObject,
     copySelectedObject,
     startMoveFromList,

@@ -38,6 +38,12 @@ export function filterHiddenObjects(
           return !isHidden(event.object.id, 'object');
         case 'object_hide':
           return !isHidden(event.objectId, 'object');
+        case 'tether_show':
+          return !isHidden(event.tether.id, 'tether');
+        case 'tether_hide':
+          return !isHidden(event.tetherId, 'tether');
+        case 'tether_update':
+          return !isHidden(event.tetherId, 'tether');
         default:
           return true;
       }

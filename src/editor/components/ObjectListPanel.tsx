@@ -6,6 +6,7 @@ import { getActiveAoEs, getAoEEventPairs } from '../utils/getActiveAoEs';
 import { getActiveAnnotations, getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getActiveObjects, getObjectEventPairs } from '../utils/getActiveObjects';
 import { getActiveMechanicMarkers, getMarkerEventPairs } from '../utils/getActiveMechanicMarkers';
+import { getActiveTethers, getTetherEventPairs } from '../utils/getActiveTethers';
 import { DraggableList } from './DraggableList';
 import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
 import type { Role, MarkerType, AoEType, MechanicMarkerType, Position, GimmickObject, Player, CastEvent } from '../../data/types';
@@ -208,7 +209,7 @@ function VisibilityToggle({ isHidden, onToggle, showTitle, hideTitle }: Visibili
 // ObjectItem component
 interface ObjectItemProps {
   id: string;
-  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker';
+  objectType: 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker' | 'tether';
   name: string;
   subtitle?: string;
   color?: string;
@@ -637,6 +638,20 @@ export function ObjectListPanel() {
     [activeMechanicMarkersAtFrame]
   );
 
+  // Get tethers
+  const tetherEventPairs = useMemo(() =>
+    getTetherEventPairs(mechanic.timeline),
+    [mechanic.timeline]
+  );
+  const activeTethersAtFrame = useMemo(() =>
+    getActiveTethers(mechanic.timeline, currentFrame, mechanic),
+    [mechanic.timeline, currentFrame, mechanic]
+  );
+  const activeTetherIds = useMemo(() =>
+    new Set(activeTethersAtFrame.map(t => t.id)),
+    [activeTethersAtFrame]
+  );
+
   // Get cast events
   const castEvents = useMemo(() =>
     mechanic.timeline.filter((e): e is CastEvent => e.type === 'cast'),
@@ -667,6 +682,9 @@ export function ObjectListPanel() {
 
   const isMechanicMarkerSelected = (id: string) =>
     selectedObjectIds.includes(id) || (selectedObjectId === id && selectedObjectType === 'mechanic_marker');
+
+  const isTetherSelected = (id: string) =>
+    selectedObjectId === id && selectedObjectType === 'tether';
 
   // Handle multi-select clicks
   const handlePlayerSelect = (e: React.MouseEvent, id: string) => {
@@ -715,6 +733,10 @@ export function ObjectListPanel() {
     } else {
       selectObject(id, 'mechanic_marker');
     }
+  };
+
+  const handleTetherSelect = (_e: React.MouseEvent, id: string) => {
+    selectObject(id, 'tether');
   };
 
   // Get selected IDs by type
@@ -1059,6 +1081,43 @@ export function ObjectListPanel() {
                 onToggleVisibility={(e) => {
                   e.stopPropagation();
                   toggleVisibility(marker.id, 'mechanic_marker');
+                }}
+                showTitle={t('objectList.showItem')}
+                hideTitle={t('objectList.hideItem')}
+              />
+            );
+          })
+        )}
+      </CollapsibleGroup>
+
+      {/* Tethers */}
+      <CollapsibleGroup title={t('objectList.tethers')} count={tetherEventPairs.length}>
+        {tetherEventPairs.length === 0 ? (
+          <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px' }}>
+            {t('objectList.noTethers')}
+          </div>
+        ) : (
+          tetherEventPairs.map(({ tether, showFrame, hideFrame }) => {
+            const isActive = activeTetherIds.has(tether.id);
+            const frameInfo = hideFrame !== null
+              ? `${showFrame}f - ${hideFrame}f`
+              : `${showFrame}f -`;
+
+            return (
+              <ObjectItem
+                key={tether.id}
+                id={tether.id}
+                objectType="tether"
+                name={tether.name || `${tether.sourceType}→${tether.targetType}`}
+                subtitle={frameInfo}
+                color={tether.color}
+                isSelected={isTetherSelected(tether.id)}
+                isActive={isActive}
+                isHidden={isObjectHidden(tether.id, 'tether' as any)}
+                onSelect={(e) => handleTetherSelect(e, tether.id)}
+                onToggleVisibility={(e) => {
+                  e.stopPropagation();
+                  toggleVisibility(tether.id, 'tether' as any);
                 }}
                 showTitle={t('objectList.showItem')}
                 hideTitle={t('objectList.hideItem')}

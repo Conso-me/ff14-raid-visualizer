@@ -21,12 +21,15 @@ import { getActiveAoEs, type ActiveAoE } from '../utils/getActiveAoEs';
 import { getActiveAnnotations } from '../utils/getActiveAnnotations';
 import { getActiveObjects } from '../utils/getActiveObjects';
 import { getActiveMechanicMarkers } from '../utils/getActiveMechanicMarkers';
+import { getActiveTethers } from '../utils/getActiveTethers';
 import { getPlayerDebuffs } from '../utils/getPlayerDebuffs';
 import { getFieldAtFrame } from '../utils/getFieldAtFrame';
 import { MechanicMarker as MechanicMarkerComponent } from '../../components/markers/MechanicMarker';
+import { TetherLine } from '../../components/tether/TetherLine';
 import { MechanicMarkerDialog } from './MechanicMarkerDialog';
+import { TetherDialog } from './TetherDialog';
 import type { Position, Debuff, GimmickObject, CastEvent, CastDisplay } from '../../data/types';
-import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings, MechanicMarkerSettings } from '../context/editorReducer';
+import type { AoESettings, DebuffSettings, TextSettings, ObjectSettings, MechanicMarkerSettings, TetherSettings } from '../context/editorReducer';
 import { CastBar } from '../../components/ui/CastBar';
 
 const SCREEN_SIZE = 600;
@@ -62,6 +65,8 @@ export function FieldEditor() {
     completeMechanicMarkerPlacement,
     cancelMechanicMarkerPlacement,
     updateMechanicMarker,
+    completeTetherPlacement,
+    cancelTetherPlacement,
   } = useEditor();
 
   const { mechanic, selectedObjectId, selectedObjectType, selectedObjectIds, currentFrame, zoom, gridSnap, tool, pendingMoveEvent, pendingAoE, selectedAoEType, selectedAoEIndicator, pendingDebuff, moveFromListMode } = state;
@@ -88,6 +93,7 @@ export function FieldEditor() {
   const [pendingObjectPosition, setPendingObjectPosition] = useState<Position | null>(null);
   const [showMechanicMarkerDialog, setShowMechanicMarkerDialog] = useState(false);
   const [pendingMechanicMarkerPosition, setPendingMechanicMarkerPosition] = useState<Position | null>(null);
+  const [showTetherDialog, setShowTetherDialog] = useState(false);
 
   const fieldContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -143,6 +149,9 @@ export function FieldEditor() {
 
   // Get active mechanic markers
   const activeMechanicMarkers = useMemo(() => getActiveMechanicMarkers(mechanic.timeline, currentFrame), [mechanic.timeline, currentFrame]);
+
+  // Get active tethers
+  const activeTethers = useMemo(() => getActiveTethers(mechanic.timeline, currentFrame, mechanic), [mechanic.timeline, currentFrame, mechanic]);
 
   // Find all players at position (using calculated positions)
   const findPlayersAtPos = useCallback((gamePos: Position): Player[] => {
@@ -354,6 +363,12 @@ export function FieldEditor() {
         return;
       }
 
+      // Tether placement mode - open dialog on click
+      if (tool === 'add_tether') {
+        setShowTetherDialog(true);
+        return;
+      }
+
       // Normal selection/drag mode
       if (tool === 'select') {
         const found = findObjectAtPos(gamePos);
@@ -501,6 +516,10 @@ export function FieldEditor() {
           setPendingMechanicMarkerPosition(null);
           cancelMechanicMarkerPlacement();
         }
+        if (showTetherDialog) {
+          setShowTetherDialog(false);
+          cancelTetherPlacement();
+        }
         if (showPlayerSelectionDialog) {
           handlePlayerSelectionCancel();
         }
@@ -508,7 +527,7 @@ export function FieldEditor() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, showMechanicMarkerDialog, showPlayerSelectionDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, cancelMechanicMarkerPlacement, moveFromListMode, cancelMoveFromList, handlePlayerSelectionCancel]);
+  }, [pendingMoveEvent, showMoveDialog, showAoEDialog, showDebuffDialog, showTextDialog, showObjectDialog, showMechanicMarkerDialog, showTetherDialog, showPlayerSelectionDialog, cancelMoveEvent, cancelTextPlacement, cancelObjectPlacement, cancelMechanicMarkerPlacement, cancelTetherPlacement, moveFromListMode, cancelMoveFromList, handlePlayerSelectionCancel]);
 
   // Use activeAoEsForLookup as activeAoEs for rendering (already computed earlier)
   const activeAoEs = activeAoEsForLookup;
@@ -597,6 +616,16 @@ export function FieldEditor() {
     setShowMechanicMarkerDialog(false);
     setPendingMechanicMarkerPosition(null);
   }, []);
+
+  const handleTetherDialogConfirm = useCallback((settings: TetherSettings) => {
+    completeTetherPlacement(settings);
+    setShowTetherDialog(false);
+  }, [completeTetherPlacement]);
+
+  const handleTetherDialogCancel = useCallback(() => {
+    setShowTetherDialog(false);
+    cancelTetherPlacement();
+  }, [cancelTetherPlacement]);
 
   // Get debuffs for each player at current frame
   const playerDebuffs = useMemo(() => {
@@ -832,6 +861,7 @@ export function FieldEditor() {
     if (tool === 'add_text') return 'text';
     if (tool === 'add_object') return 'crosshair';
     if (tool === 'add_mechanic_marker') return 'crosshair';
+    if (tool === 'add_tether') return 'pointer';
     return 'crosshair';
   };
 
@@ -887,6 +917,9 @@ export function FieldEditor() {
     }
     if (tool === 'add_mechanic_marker') {
       return 'フィールドをクリックしてメカニクスマーカーを配置 | Escでキャンセル';
+    }
+    if (tool === 'add_tether') {
+      return 'フィールドをクリックしてテザーダイアログを表示 | Escでキャンセル';
     }
     return `${gridSnap ? 'Grid snap: ON (0.5 units)' : 'Grid snap: OFF'} | Frame: ${currentFrame} | Ctrl+Scroll to zoom`;
   };
@@ -993,6 +1026,16 @@ export function FieldEditor() {
                 key={aoe.id}
                 {...aoe}
                 opacity={aoe.currentOpacity}
+                fieldSize={mechanic.field.size}
+                screenSize={SCREEN_SIZE}
+              />
+            ))}
+
+            {/* Tethers */}
+            {activeTethers.filter((t) => !isObjectHidden(t.id, 'tether' as any)).map((tether) => (
+              <TetherLine
+                key={tether.id}
+                tether={tether}
                 fieldSize={mechanic.field.size}
                 screenSize={SCREEN_SIZE}
               />
@@ -1293,7 +1336,7 @@ export function FieldEditor() {
       </div>
 
       {/* Info bar */}
-      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : tool === 'add_mechanic_marker' ? '#ff4488' : '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: moveFromListMode.active ? '#2c9c3c' : (tool === 'add_move_event') ? '#ffcc00' : tool === 'add_aoe' ? '#ff6600' : tool === 'add_debuff' ? '#ff00ff' : tool === 'add_text' ? '#00aaff' : tool === 'add_object' ? '#ffaa00' : tool === 'add_mechanic_marker' ? '#ff4488' : tool === 'add_tether' ? '#ff4488' : '#666' }}>
         {getInfoText()}
       </div>
 
@@ -1374,6 +1417,18 @@ export function FieldEditor() {
           fps={mechanic.fps}
           onConfirm={handleMechanicMarkerDialogConfirm}
           onCancel={handleMechanicMarkerDialogCancel}
+        />
+      )}
+
+      {/* Tether Dialog */}
+      {showTetherDialog && (
+        <TetherDialog
+          key={currentFrame}
+          isOpen={showTetherDialog}
+          currentFrame={currentFrame}
+          fps={mechanic.fps}
+          onConfirm={handleTetherDialogConfirm}
+          onCancel={handleTetherDialogCancel}
         />
       )}
 

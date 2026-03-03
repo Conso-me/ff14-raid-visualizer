@@ -8,11 +8,13 @@ import { AoEProperties } from './properties/AoEProperties';
 import { TextAnnotationProperties } from './properties/TextAnnotationProperties';
 import { ObjectProperties } from './properties/ObjectProperties';
 import { MechanicMarkerProperties } from './properties/MechanicMarkerProperties';
+import { TetherProperties } from './properties/TetherProperties';
 import { CastEventProperties } from './properties/CastEventProperties';
 import { FieldChangeProperties } from './properties/FieldChangeProperties';
 import { getAnnotationEventPairs } from '../utils/getActiveAnnotations';
 import { getObjectEventPairs, getActiveObjects } from '../utils/getActiveObjects';
 import { getMarkerEventPairs } from '../utils/getActiveMechanicMarkers';
+import { getTetherEventPairs } from '../utils/getActiveTethers';
 import { getFieldChangeEventPairs } from '../utils/getFieldChangeEventPairs';
 import type { CastEvent, FieldOverride } from '../../data/types';
 
@@ -37,6 +39,8 @@ export function PropertyPanel() {
     deleteObject,
     updateMechanicMarker,
     deleteMechanicMarker,
+    updateTether,
+    deleteTether,
     updateTimelineEvent,
     addTimelineEvent,
   } = useEditor();
@@ -272,6 +276,47 @@ export function PropertyPanel() {
                   type: 'marker_hide' as const,
                   frame: newHideFrame,
                   markerId: selectedObjectId,
+                });
+              }
+            }}
+          />
+        );
+      }
+
+      case 'tether': {
+        const tetherPairs = getTetherEventPairs(mechanic.timeline);
+        const tetherPair = tetherPairs.find((p) => p.tether.id === selectedObjectId);
+        if (!tetherPair) return null;
+        return (
+          <TetherProperties
+            tether={tetherPair.tether}
+            showFrame={tetherPair.showFrame}
+            hideFrame={tetherPair.hideFrame}
+            fps={mechanic.fps}
+            onUpdate={(updates) => updateTether(selectedObjectId, updates)}
+            onDelete={() => deleteTether(selectedObjectId)}
+            onUpdateTiming={(newShowFrame, newHideFrame) => {
+              const showEvent = mechanic.timeline.find(
+                (e) => e.type === 'tether_show' && e.tether.id === selectedObjectId
+              );
+              if (showEvent) {
+                updateTimelineEvent(showEvent.id, { frame: newShowFrame });
+              }
+              const hideEvent = mechanic.timeline.find(
+                (e) => e.type === 'tether_hide' && e.tetherId === selectedObjectId
+              );
+              if (newHideFrame === null) {
+                if (hideEvent) {
+                  deleteTimelineEvent(hideEvent.id);
+                }
+              } else if (hideEvent) {
+                updateTimelineEvent(hideEvent.id, { frame: newHideFrame });
+              } else {
+                addTimelineEvent({
+                  id: `event_${Date.now()}`,
+                  type: 'tether_hide' as const,
+                  frame: newHideFrame,
+                  tetherId: selectedObjectId,
                 });
               }
             }}

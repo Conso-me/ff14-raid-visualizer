@@ -100,6 +100,35 @@ export interface AoE {
   offsetFromSource?: Position;
 }
 
+// テザー（線）のエンドポイント種類
+export type TetherEndpointType = 'player' | 'enemy' | 'object';
+
+// テザーの線種
+export type TetherLineStyle = 'solid' | 'dashed' | 'dotted';
+
+// テザー（エンティティ間の線）
+export interface Tether {
+  id: string;
+  name?: string;
+  sourceType: TetherEndpointType;
+  sourceId: string;
+  targetType: TetherEndpointType;
+  targetId: string;
+  color: string;
+  lineStyle: TetherLineStyle;
+  width?: number; // デフォルト: 2
+  distanceThreshold?: number; // ゲーム内座標の距離
+  colorBeyondThreshold?: string;
+}
+
+// テザー表示状態
+export interface TetherDisplay extends Tether {
+  currentOpacity: number;
+  sourcePosition: Position;
+  targetPosition: Position;
+  currentColor: string;
+}
+
 // メカニクスマーカーの種類
 export type MechanicMarkerType =
   | 'eye'
@@ -201,7 +230,10 @@ export type TimelineEventType =
   | 'field_change' // フィールド背景変更
   | 'field_revert' // フィールド背景復元
   | 'marker_show' // メカニクスマーカー表示
-  | 'marker_hide'; // メカニクスマーカー非表示
+  | 'marker_hide' // メカニクスマーカー非表示
+  | 'tether_show' // テザー表示
+  | 'tether_hide' // テザー非表示
+  | 'tether_update'; // テザー更新（起点/終点変更）
 
 // タイムラインイベント基底
 export interface TimelineEventBase {
@@ -337,6 +369,32 @@ export interface MarkerHideEvent extends TimelineEventBase {
   fadeOutDuration?: number;
 }
 
+// テザー表示イベント
+export interface TetherShowEvent extends TimelineEventBase {
+  type: 'tether_show';
+  tether: Tether;
+  fadeInDuration?: number;
+}
+
+// テザー非表示イベント
+export interface TetherHideEvent extends TimelineEventBase {
+  type: 'tether_hide';
+  tetherId: string;
+  fadeOutDuration?: number;
+}
+
+// テザー更新イベント（起点/終点変更）
+export interface TetherUpdateEvent extends TimelineEventBase {
+  type: 'tether_update';
+  tetherId: string;
+  sourceType?: TetherEndpointType;
+  sourceId?: string;
+  targetType?: TetherEndpointType;
+  targetId?: string;
+  color?: string;
+  colorBeyondThreshold?: string;
+}
+
 // 全イベント型
 export type TimelineEvent =
   | MoveEvent
@@ -354,7 +412,10 @@ export type TimelineEvent =
   | FieldChangeEvent
   | FieldRevertEvent
   | MarkerShowEvent
-  | MarkerHideEvent;
+  | MarkerHideEvent
+  | TetherShowEvent
+  | TetherHideEvent
+  | TetherUpdateEvent;
 
 // 敵（ボス）
 export interface Enemy {

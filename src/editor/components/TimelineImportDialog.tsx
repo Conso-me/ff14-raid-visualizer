@@ -808,6 +808,9 @@ export function TimelineImportDialog({
       field_revert: 'Background Revert',
       marker_show: 'Marker',
       marker_hide: 'Marker Hide',
+      tether_show: 'Tether',
+      tether_hide: 'Tether Hide',
+      tether_update: 'Tether Update',
     };
     return labels[type] || type;
   }, []);

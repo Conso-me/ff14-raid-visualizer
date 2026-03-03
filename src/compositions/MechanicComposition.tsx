@@ -9,6 +9,7 @@ import { Player } from '../components/player/Player';
 import { Enemy } from '../components/enemy/Enemy';
 import { AoE } from '../components/aoe/AoE';
 import { MechanicMarker } from '../components/markers/MechanicMarker';
+import { TetherLine } from '../components/tether/TetherLine';
 import { GimmickObjectRenderer } from '../components/object/GimmickObjectRenderer';
 import {
   ExplanationText,
@@ -91,6 +92,16 @@ export const MechanicComposition: React.FC<MechanicCompositionProps> = ({
             indicatorCount={aoe.indicatorCount}
             rectWidth={aoe.rectWidth}
             rectHeight={aoe.rectHeight}
+            fieldSize={mechanic.field.size}
+            screenSize={FIELD_DEFAULTS.screenSize}
+          />
+        ))}
+
+        {/* テザー */}
+        {state.activeTethers.map((tether) => (
+          <TetherLine
+            key={tether.id}
+            tether={tether}
             fieldSize={mechanic.field.size}
             screenSize={FIELD_DEFAULTS.screenSize}
           />

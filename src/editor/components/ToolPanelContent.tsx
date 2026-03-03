@@ -70,6 +70,7 @@ export function ToolPanelContent() {
     setAoEType,
     setAoEIndicator,
     setMechanicMarkerType,
+    startTetherPlacement,
   } = useEditor();
   const { t } = useLanguage();
 
@@ -386,6 +387,29 @@ export function ToolPanelContent() {
             <div style={{ fontSize: '11px', color: '#666', marginTop: '10px', textAlign: 'center' }}>
               {t('tools.clickFieldToPlace')}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Add Tether */}
+      <div style={sectionStyle}>
+        <button
+          onClick={() => {
+            setTool('add_tether');
+            startTetherPlacement();
+          }}
+          style={{
+            ...buttonStyle(state.tool === 'add_tether'),
+            width: '100%',
+            background: state.tool === 'add_tether' ? '#ff4488' : '#2a2a4a',
+          }}
+        >
+          <span>{state.tool === 'add_tether' ? t('tools.tetherModeOn') : t('tools.tetherMode')}</span>
+          <span style={shortcutStyle}>8</span>
+        </button>
+        {state.tool === 'add_tether' && (
+          <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', marginTop: '6px' }}>
+            {t('tools.tetherModeHint')}
           </div>
         )}
       </div>

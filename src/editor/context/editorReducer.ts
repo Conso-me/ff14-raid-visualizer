@@ -1,7 +1,7 @@
-import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent, FieldChangeEvent, FieldRevertEvent, MechanicMarkerType, MechanicMarker, MarkerShowEvent, MarkerHideEvent } from '../../data/types';
+import type { MechanicData, Player, Enemy, FieldMarker, AoE, TimelineEvent, Position, MoveEvent, AoEType, AoEIndicator, AoESourceType, AoETrackingMode, AoEShowEvent, AoEHideEvent, DebuffAddEvent, DebuffRemoveEvent, TextAnnotation, GimmickObject, TextShowEvent, TextHideEvent, ObjectShowEvent, ObjectHideEvent, FieldChangeEvent, FieldRevertEvent, MechanicMarkerType, MechanicMarker, MarkerShowEvent, MarkerHideEvent, Tether, TetherEndpointType, TetherLineStyle, TetherShowEvent, TetherHideEvent } from '../../data/types';
 
-export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object' | 'add_mechanic_marker';
-export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker' | null;
+export type Tool = 'select' | 'add_player' | 'add_marker' | 'add_aoe' | 'add_move_event' | 'add_debuff' | 'add_text' | 'add_object' | 'add_mechanic_marker' | 'add_tether';
+export type SelectedObjectType = 'player' | 'enemy' | 'marker' | 'aoe' | 'text' | 'object' | 'cast' | 'field_change' | 'mechanic_marker' | 'tether' | null;
 
 export interface PendingMoveEvent {
   playerIds: string[];
@@ -61,6 +61,23 @@ export interface MechanicMarkerSettings {
   opacity: number;
   rotation?: number;
   count?: number;
+  startFrame: number;
+  duration: number;
+  fadeInDuration: number;
+  fadeOutDuration: number;
+}
+
+export interface TetherSettings {
+  name?: string;
+  sourceType: TetherEndpointType;
+  sourceId: string;
+  targetType: TetherEndpointType;
+  targetId: string;
+  color: string;
+  lineStyle: TetherLineStyle;
+  width: number;
+  distanceThreshold?: number;
+  colorBeyondThreshold?: string;
   startFrame: number;
   duration: number;
   fadeInDuration: number;
@@ -142,6 +159,7 @@ export interface EditorState {
   pendingObject: PendingObject | null;
   pendingMechanicMarker: PendingMechanicMarker | null;
   selectedMechanicMarkerType: MechanicMarkerType;
+  pendingTether: boolean;
   // Mode for adding move from object list
   moveFromListMode: MoveFromListMode;
   // Hidden object IDs for editor preview (composite key: `${objectType}:${id}`)
@@ -218,6 +236,12 @@ export type EditorAction =
   | { type: 'CANCEL_MECHANIC_MARKER_PLACEMENT' }
   | { type: 'UPDATE_MECHANIC_MARKER'; payload: { id: string; updates: Partial<MechanicMarker> } }
   | { type: 'DELETE_MECHANIC_MARKER'; payload: string }
+  // Tether actions
+  | { type: 'START_TETHER_PLACEMENT' }
+  | { type: 'COMPLETE_TETHER_PLACEMENT'; payload: TetherSettings }
+  | { type: 'CANCEL_TETHER_PLACEMENT' }
+  | { type: 'UPDATE_TETHER'; payload: { id: string; updates: Partial<Tether> } }
+  | { type: 'DELETE_TETHER'; payload: string }
   // Visibility toggle (editor UI only)
   | { type: 'TOGGLE_VISIBILITY'; payload: { id: string; objectType: string } };
 
@@ -1280,6 +1304,108 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       };
     }
 
+    case 'START_TETHER_PLACEMENT': {
+      return {
+        ...state,
+        pendingTether: true,
+        tool: 'add_tether',
+      };
+    }
+
+    case 'COMPLETE_TETHER_PLACEMENT': {
+      const settings = action.payload;
+      const tetherId = `tether-${Date.now()}`;
+
+      const showEvent: TetherShowEvent = {
+        id: `${tetherId}-show`,
+        type: 'tether_show',
+        frame: settings.startFrame,
+        tether: {
+          id: tetherId,
+          name: settings.name,
+          sourceType: settings.sourceType,
+          sourceId: settings.sourceId,
+          targetType: settings.targetType,
+          targetId: settings.targetId,
+          color: settings.color,
+          lineStyle: settings.lineStyle,
+          width: settings.width,
+          ...(settings.distanceThreshold !== undefined && { distanceThreshold: settings.distanceThreshold }),
+          ...(settings.colorBeyondThreshold !== undefined && { colorBeyondThreshold: settings.colorBeyondThreshold }),
+        },
+        fadeInDuration: settings.fadeInDuration,
+      };
+
+      const hideEvent: TetherHideEvent = {
+        id: `${tetherId}-hide`,
+        type: 'tether_hide',
+        frame: settings.startFrame + settings.duration,
+        tetherId: tetherId,
+        fadeOutDuration: settings.fadeOutDuration,
+      };
+
+      const stateWithHistory = pushHistory(state);
+      const newTimeline = [...stateWithHistory.mechanic.timeline, showEvent, hideEvent]
+        .sort((a, b) => a.frame - b.frame);
+
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: newTimeline,
+        },
+        pendingTether: false,
+        tool: 'select',
+        selectedObjectId: tetherId,
+        selectedObjectType: 'tether',
+      };
+    }
+
+    case 'CANCEL_TETHER_PLACEMENT': {
+      return {
+        ...state,
+        pendingTether: false,
+        tool: 'select',
+      };
+    }
+
+    case 'UPDATE_TETHER': {
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: stateWithHistory.mechanic.timeline.map((event) => {
+            if (event.type === 'tether_show' && event.tether.id === action.payload.id) {
+              return {
+                ...event,
+                tether: { ...event.tether, ...action.payload.updates },
+              };
+            }
+            return event;
+          }),
+        },
+      };
+    }
+
+    case 'DELETE_TETHER': {
+      const stateWithHistory = pushHistory(state);
+      return {
+        ...stateWithHistory,
+        mechanic: {
+          ...stateWithHistory.mechanic,
+          timeline: stateWithHistory.mechanic.timeline.filter((event) => {
+            if (event.type === 'tether_show') return event.tether.id !== action.payload;
+            if (event.type === 'tether_hide') return event.tetherId !== action.payload;
+            if (event.type === 'tether_update') return event.tetherId !== action.payload;
+            return true;
+          }),
+        },
+        selectedObjectId: state.selectedObjectId === action.payload ? null : state.selectedObjectId,
+        selectedObjectType: state.selectedObjectId === action.payload ? null : state.selectedObjectType,
+      };
+    }
+
     case 'TOGGLE_VISIBILITY': {
       const compositeKey = `${action.payload.objectType}:${action.payload.id}`;
       const hiddenObjectIds = state.hiddenObjectIds.includes(compositeKey)
@@ -1318,6 +1444,7 @@ export function createInitialState(mechanic: MechanicData): EditorState {
     pendingObject: null,
     pendingMechanicMarker: null,
     selectedMechanicMarkerType: 'eye',
+    pendingTether: false,
     moveFromListMode: {
       active: false,
       playerId: null,

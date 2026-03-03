@@ -14,6 +14,8 @@ import {
   TextDisplay,
   CastDisplay,
   MechanicMarkerDisplay,
+  TetherDisplay,
+  Tether,
   MoveEvent,
   AoEShowEvent,
   AoEHideEvent,
@@ -27,6 +29,9 @@ import {
   FieldRevertEvent,
   MarkerShowEvent,
   MarkerHideEvent,
+  TetherShowEvent,
+  TetherHideEvent,
+  TetherUpdateEvent,
 } from '../data/types';
 import { animatePosition, animateOpacity } from '../utils/animation';
 import { getFieldAtFrame, type FieldAtFrame } from '../editor/utils/getFieldAtFrame';
@@ -40,6 +45,7 @@ export interface TimelineState {
   activeTexts: TextDisplay[];
   activeCasts: CastDisplay[];
   activeMechanicMarkers: MechanicMarkerDisplay[];
+  activeTethers: TetherDisplay[];
   fieldState: FieldAtFrame;
 }
 
@@ -78,6 +84,15 @@ interface ObjectTracker {
 // 内部で使用するメカニクスマーカー追跡用の型
 interface MechanicMarkerTracker {
   marker: MarkerShowEvent['marker'];
+  showFrame: number;
+  fadeInDuration: number;
+  hideFrame?: number;
+  fadeOutDuration?: number;
+}
+
+// 内部で使用するテザー追跡用の型
+interface TetherTracker {
+  tether: Tether;
   showFrame: number;
   fadeInDuration: number;
   hideFrame?: number;
@@ -142,6 +157,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
     const moveTrackers: Map<string, MoveTracker[]> = new Map();
     const objectTrackers: Map<string, ObjectTracker> = new Map();
     const mechanicMarkerTrackers: Map<string, MechanicMarkerTracker> = new Map();
+    const tetherTrackers: Map<string, TetherTracker> = new Map();
 
     // プレイヤーIDから現在位置を取得するヘルパー
     const getPlayerPosition = (playerId: string): Position => {
@@ -414,6 +430,46 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
             if (tracker) {
               tracker.hideFrame = event.frame;
               tracker.fadeOutDuration = hideEvent.fadeOutDuration ?? 0;
+            }
+          }
+          break;
+        }
+
+        case 'tether_show': {
+          const showEvent = event as TetherShowEvent;
+          if (event.frame <= frame) {
+            tetherTrackers.set(showEvent.tether.id, {
+              tether: { ...showEvent.tether },
+              showFrame: event.frame,
+              fadeInDuration: showEvent.fadeInDuration ?? 0,
+            });
+          }
+          break;
+        }
+
+        case 'tether_hide': {
+          const hideEvent = event as TetherHideEvent;
+          if (event.frame <= frame) {
+            const tracker = tetherTrackers.get(hideEvent.tetherId);
+            if (tracker) {
+              tracker.hideFrame = event.frame;
+              tracker.fadeOutDuration = hideEvent.fadeOutDuration ?? 0;
+            }
+          }
+          break;
+        }
+
+        case 'tether_update': {
+          const updateEvent = event as TetherUpdateEvent;
+          if (event.frame <= frame) {
+            const tracker = tetherTrackers.get(updateEvent.tetherId);
+            if (tracker) {
+              if (updateEvent.sourceType !== undefined) tracker.tether.sourceType = updateEvent.sourceType;
+              if (updateEvent.sourceId !== undefined) tracker.tether.sourceId = updateEvent.sourceId;
+              if (updateEvent.targetType !== undefined) tracker.tether.targetType = updateEvent.targetType;
+              if (updateEvent.targetId !== undefined) tracker.tether.targetId = updateEvent.targetId;
+              if (updateEvent.color !== undefined) tracker.tether.color = updateEvent.color;
+              if (updateEvent.colorBeyondThreshold !== undefined) tracker.tether.colorBeyondThreshold = updateEvent.colorBeyondThreshold;
             }
           }
           break;
@@ -742,6 +798,74 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       }
     }
 
+    // テザーの不透明度と位置を計算
+    const activeTethers: TetherDisplay[] = [];
+    for (const [, tracker] of tetherTrackers) {
+      const { tether, showFrame, fadeInDuration, hideFrame, fadeOutDuration } = tracker;
+
+      // 非表示フレームを過ぎたら表示しない
+      if (hideFrame !== undefined && fadeOutDuration !== undefined) {
+        const fadeOutEnd = hideFrame + fadeOutDuration;
+        if (frame >= fadeOutEnd) continue;
+      }
+
+      let opacity = 1;
+
+      // フェードイン
+      if (fadeInDuration > 0 && frame < showFrame + fadeInDuration) {
+        const progress = (frame - showFrame) / fadeInDuration;
+        opacity *= Math.max(0, Math.min(1, progress));
+      }
+
+      // フェードアウト
+      if (hideFrame !== undefined && fadeOutDuration !== undefined && fadeOutDuration > 0) {
+        if (frame >= hideFrame) {
+          const progress = (frame - hideFrame) / fadeOutDuration;
+          opacity *= Math.max(0, 1 - progress);
+        }
+      }
+
+      // エンドポイントの位置を解決
+      const getEndpointPosition = (endpointType: Tether['sourceType'], endpointId: string): Position | null => {
+        switch (endpointType) {
+          case 'player':
+            return players.find((p) => p.id === endpointId)?.position ?? null;
+          case 'enemy':
+            return enemies.find((e) => e.id === endpointId)?.position ?? null;
+          case 'object':
+            return objectTrackers.get(endpointId)?.object.position ?? null;
+          default:
+            return null;
+        }
+      };
+
+      const sourcePosition = getEndpointPosition(tether.sourceType, tether.sourceId);
+      const targetPosition = getEndpointPosition(tether.targetType, tether.targetId);
+
+      if (!sourcePosition || !targetPosition) continue;
+
+      // 距離に基づく色計算
+      let currentColor = tether.color;
+      if (tether.distanceThreshold && tether.colorBeyondThreshold) {
+        const dx = targetPosition.x - sourcePosition.x;
+        const dy = targetPosition.y - sourcePosition.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > tether.distanceThreshold) {
+          currentColor = tether.colorBeyondThreshold;
+        }
+      }
+
+      if (opacity > 0) {
+        activeTethers.push({
+          ...tether,
+          currentOpacity: opacity,
+          sourcePosition,
+          targetPosition,
+          currentColor,
+        });
+      }
+    }
+
     // フィールド状態を計算
     const fieldState = getFieldAtFrame(mechanic.field, mechanic.timeline, frame);
 
@@ -753,6 +877,7 @@ export function useTimeline(mechanic: MechanicData): TimelineState {
       activeTexts,
       activeCasts,
       activeMechanicMarkers,
+      activeTethers,
       fieldState,
     };
   }, [mechanic, frame]);
