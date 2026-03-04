@@ -15,6 +15,7 @@ import type {
   ObjectShowEvent,
   ObjectHideEvent,
 } from '../../data/types';
+import { applyEasing } from './getPlayersAtFrame';
 
 interface TetherState extends Tether {
   showFrame: number;
@@ -88,7 +89,18 @@ export function getActiveTethers(
         const moveEvent = event as MoveEvent;
         const player = players.find((p) => p.id === moveEvent.targetId);
         if (player) {
-          player.position = { ...moveEvent.to };
+          const endFrame = event.frame + moveEvent.duration;
+          if (currentFrame >= endFrame) {
+            player.position = { ...moveEvent.to };
+          } else {
+            const fromPos = moveEvent.from ?? { ...player.position };
+            const progress = (currentFrame - event.frame) / moveEvent.duration;
+            const easedProgress = applyEasing(progress, moveEvent.easing || 'linear');
+            player.position = {
+              x: fromPos.x + (moveEvent.to.x - fromPos.x) * easedProgress,
+              y: fromPos.y + (moveEvent.to.y - fromPos.y) * easedProgress,
+            };
+          }
         }
         break;
       }
@@ -97,7 +109,21 @@ export function getActiveTethers(
         const bossEvent = event as BossMoveEvent;
         const enemy = enemies.find((e) => e.id === bossEvent.targetId);
         if (enemy) {
-          enemy.position = { ...bossEvent.to };
+          if (bossEvent.teleport) {
+            enemy.position = { ...bossEvent.to };
+          } else {
+            const endFrame = event.frame + bossEvent.duration;
+            if (currentFrame >= endFrame) {
+              enemy.position = { ...bossEvent.to };
+            } else {
+              const fromPos = { ...enemy.position };
+              const progress = (currentFrame - event.frame) / bossEvent.duration;
+              enemy.position = {
+                x: fromPos.x + (bossEvent.to.x - fromPos.x) * progress,
+                y: fromPos.y + (bossEvent.to.y - fromPos.y) * progress,
+              };
+            }
+          }
         }
         break;
       }
